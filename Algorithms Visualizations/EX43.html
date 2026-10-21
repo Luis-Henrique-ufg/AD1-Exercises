@@ -1,0 +1,1344 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>Visualizador do Exercício 43 — Structs, Ordenação Composta e vemAntes (BOCA)</title>
+
+  <!-- Assets Locais do Design System -->
+  <script src="Design System/assets/resource_3fa48481346f.js"></script>
+  <script src="Design System/assets/lucide_latest_2eebd0ebe8c2.js"></script>
+  <link href="Design System/assets/css2_e01beb4f8743.css" rel="stylesheet"/>
+  <link href="Design System/assets/css2_8e191ef32247.css" rel="stylesheet"/>
+  <link href="Design System/assets/css2_62759cd015bd.css" rel="stylesheet"/>
+
+  <!-- Google Fonts Fallback & Resiliência -->
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    .font-oswald { font-family: 'Oswald', sans-serif; }
+    .font-space { font-family: 'Space Grotesk', sans-serif; }
+    .font-inter { font-family: 'Inter', sans-serif; }
+    .font-mono { font-family: 'Geist Mono', 'Space Mono', monospace; }
+
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.18); border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(0, 0, 0, 0.35); }
+
+    /* Estilo de borda degradê compartilhada do Design System */
+    [style*="--border-gradient"]::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      padding: 1px;
+      border-radius: var(--border-radius-before, inherit);
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      background: var(--border-gradient);
+      pointer-events: none;
+    }
+
+    /* Slider de progresso customizado no estilo Future UI */
+    input[type=range] {
+      -webkit-appearance: none;
+      background: #cbd5e1;
+      border-radius: 9999px;
+      height: 6px;
+      outline: none;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #0a0a0a;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.35);
+      transition: transform 0.15s ease, background 0.15s ease;
+    }
+    input[type=range]::-webkit-slider-thumb:hover {
+      transform: scale(1.2);
+      background: #ea580c;
+    }
+    input[type=range]::-moz-range-thumb {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #0a0a0a;
+      cursor: pointer;
+      border: none;
+    }
+
+    /* Linhas de Código C */
+    .code-line {
+      display: flex;
+      align-items: baseline;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-family: 'Geist Mono', monospace;
+      font-size: 11px;
+      line-height: 18px;
+      transition: all 0.15s ease;
+      cursor: pointer;
+      user-select: none;
+    }
+    .code-line:hover {
+      background: rgba(255, 255, 255, 0.05);
+    }
+    .code-line.active-line {
+      background: rgba(16, 185, 129, 0.22) !important;
+      border-left: 3px solid #10b981;
+      font-weight: 600;
+    }
+    .code-line.active-line .line-num {
+      color: #34d399;
+      font-weight: bold;
+    }
+    .code-line.active-line .line-text {
+      color: #ffffff;
+    }
+
+    .code-line.focus-swap {
+      background: rgba(245, 158, 11, 0.25) !important;
+      border-left: 3px solid #f59e0b;
+      font-weight: 600;
+    }
+    .code-line.focus-swap .line-num {
+      color: #fbbf24;
+    }
+
+    .code-line.focus-vemAntes {
+      background: rgba(14, 165, 233, 0.22) !important;
+      border-left: 3px solid #0ea5e9;
+    }
+
+    /* Cartão do Aluno */
+    .student-card {
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease, border-color 0.25s ease;
+    }
+    .student-card.comparing-x {
+      box-shadow: 0 0 0 3px #0ea5e9, 0 8px 20px rgba(14, 165, 233, 0.35);
+      transform: translateY(-4px) scale(1.02);
+      z-index: 10;
+    }
+    .student-card.comparing-y {
+      box-shadow: 0 0 0 3px #f59e0b, 0 8px 20px rgba(245, 158, 11, 0.35);
+      transform: translateY(-4px) scale(1.02);
+      z-index: 10;
+    }
+    .student-card.swapping {
+      animation: swapAnim 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    @keyframes swapAnim {
+      0% { transform: scale(1); }
+      50% { transform: translateY(-10px) scale(1.05); filter: drop-shadow(0 10px 14px rgba(245, 158, 11, 0.4)); }
+      100% { transform: scale(1); }
+    }
+
+    /* Pulso do Odômetro */
+    @keyframes pulseCounter {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.15); filter: drop-shadow(0 0 10px rgba(234, 88, 12, 0.8)); }
+      100% { transform: scale(1); }
+    }
+    .counter-pulse {
+      animation: pulseCounter 0.35s ease-out;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased xl:items-center xl:justify-center xl:p-8 text-neutral-950 font-space bg-neutral-400 px-0 py-0">
+
+  <!-- Container Principal do Design System -->
+  <main class="xl:rounded-[3.5rem] xl:p-12 overflow-hidden flex flex-col xl:max-w-[96rem] xl:shadow-2xl bg-[#E6E6E6] w-full rounded-none pt-6 pr-6 pb-6 pl-6 relative shadow-none border border-neutral-300">
+    
+    <!-- Efeito de Luz Difusa de Fundo -->
+    <div class="pointer-events-none bg-gradient-to-br from-white/50 via-transparent to-neutral-400/20 w-full h-full absolute top-0 left-0"></div>
+
+    <!-- Barra de Navegação e Marca -->
+    <nav class="relative z-20 flex flex-wrap items-center justify-between gap-6 pb-6 border-b border-neutral-300 mb-8">
+      
+      <!-- Logo do Design System: 3 Barras Características -->
+      <div class="flex items-center gap-3 group cursor-default">
+        <div class="flex gap-1">
+          <div class="w-3 h-8 bg-neutral-950 rounded-full"></div>
+          <div class="w-3 h-8 bg-neutral-950 rounded-full group-hover:h-5 transition-all duration-300"></div>
+          <div class="w-3 h-8 bg-neutral-950 rounded-full"></div>
+        </div>
+        <div>
+          <span class="text-xs font-mono font-bold tracking-widest uppercase text-neutral-950 block">FUTURE UI // STRUCT &amp; COMPARATOR LAB (EX43.C)</span>
+          <span class="text-[0.65rem] text-neutral-500 uppercase tracking-widest block font-medium">Vetor de Structs · Ordenação Composta (Nota + Ordem Alfabética) · Função vemAntes</span>
+        </div>
+      </div>
+
+      <!-- Links e Badges de Estado -->
+      <div class="flex flex-wrap items-center gap-2 sm:gap-3">
+        <a href="EX34.html" class="px-3.5 py-1.5 rounded-full border border-neutral-400 text-[0.65rem] font-bold uppercase tracking-widest hover:bg-neutral-300 transition-colors flex items-center gap-1.5 text-neutral-800" title="Ver visualizador de Detetives e Ladrões">
+          <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i> Ex. 34 (Detetives)
+        </a>
+        <a href="EX40.html" class="px-3.5 py-1.5 rounded-full border border-neutral-400 text-[0.65rem] font-bold uppercase tracking-widest hover:bg-neutral-300 transition-colors flex items-center gap-1.5 text-neutral-800" title="Ver visualizador de troca de trens">
+          Ex. 40 (Trens) <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+        </a>
+        <div class="bg-[#E6E6E6] border border-neutral-400 rounded-full px-3.5 py-1.5 shadow-sm items-center gap-2 hidden md:flex">
+          <div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+          <span class="text-[0.65rem] font-bold uppercase tracking-widest text-neutral-800">Simulador Ativo</span>
+        </div>
+        <div class="text-white bg-neutral-950 rounded-full px-4 py-1.5 shadow-md flex items-center gap-2">
+          <i data-lucide="graduation-cap" class="w-3.5 h-3.5 text-amber-400"></i>
+          <span class="text-[0.65rem] font-bold uppercase tracking-widest font-mono">BOCA · EX43</span>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Cabeçalho Monumental Hero -->
+    <header class="relative z-20 mb-8">
+      <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-8">
+        <div class="max-w-3xl">
+          <div class="flex items-center gap-3 text-xs font-semibold tracking-widest uppercase text-neutral-500 mb-3">
+            <span>Exercício 43 · Estruturas Heterogêneas (Structs)</span>
+            <span class="w-4 h-[1px] bg-neutral-400"></span>
+            <span class="text-neutral-800 font-bold">Classificação Escolar &amp; Desempate Alfabético</span>
+          </div>
+          <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-7xl uppercase font-medium text-neutral-950 tracking-tighter font-oswald leading-none mb-3">
+            Visualizador do <span class="text-neutral-600">Exercício 43</span>
+          </h1>
+          <p class="text-xs sm:text-sm text-neutral-700 leading-relaxed uppercase tracking-wide font-normal max-w-2xl">
+            Desmistifique o acesso e a cópia de <code class="bg-neutral-300/80 px-2 py-0.5 rounded font-mono text-neutral-900 font-bold">C.aluno[i]</code>. Veja como a função predicado <code class="bg-amber-300/90 text-amber-950 px-2 py-0.5 rounded font-mono font-bold">vemAntes(x, y)</code> decide a ordenação por <b>Nota Decrescente</b> e desempatada por <b>Ordem Alfabética</b> via <code class="bg-neutral-300/80 px-2 py-0.5 rounded font-mono text-neutral-900 font-bold">strcmp</code>!
+          </p>
+        </div>
+
+        <!-- Card de Dica de Ouro Didática (Orange/Amber Accent Card) -->
+        <div class="w-full lg:w-96 overflow-hidden bg-amber-400 border border-white/40 rounded-2xl p-5 shadow-lg shadow-amber-900/20 relative">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-[0.65rem] font-bold uppercase tracking-widest text-amber-950/80 flex items-center gap-1.5 font-mono">
+              <i data-lucide="zap" class="w-3.5 h-3.5 text-amber-950"></i> Desmistificando as Structs
+            </span>
+            <span class="text-[0.65rem] font-mono font-bold bg-amber-950/15 px-2 py-0.5 rounded-full text-amber-950">STRUCTS EM C</span>
+          </div>
+          <p class="text-xs text-amber-950 font-medium leading-relaxed">
+            <b>1. Acesso:</b> <code class="bg-amber-950/20 px-1 rounded font-bold font-mono">C.aluno[i]</code> pega a ficha completa do aluno $i$.<br/>
+            <b>2. Troca Total:</b> <code class="bg-amber-950/20 px-1 rounded font-bold font-mono">temp = alunos[j];</code> copia tanto o <b>nome</b> quanto a <b>nota</b> em um único comando de atribuição em C!
+          </p>
+        </div>
+      </div>
+    </header>
+
+    <!-- Mapa Anatômico da Estrutura de Dados (Diagrama Explicativo) -->
+    <section class="relative z-20 mb-8 bg-neutral-200/50 border border-neutral-300 rounded-3xl p-6 shadow-sm">
+      <div class="flex items-center justify-between pb-3 border-b border-neutral-300 mb-4">
+        <div class="flex items-center gap-2">
+          <i data-lucide="layers" class="w-4 h-4 text-neutral-800"></i>
+          <h2 class="text-xs font-semibold uppercase tracking-widest text-neutral-900">Mapa de Memória: Como os "Links" de Struct Funcionam</h2>
+        </div>
+        <span class="text-[0.65rem] font-mono bg-neutral-300 px-2 py-0.5 rounded text-neutral-700">CLASSE C &rarr; aluno[i] &rarr; { nome, nota }</span>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+        <!-- Nível 1: CLASSE C -->
+        <div class="bg-white p-4 rounded-2xl border border-neutral-300 shadow-sm flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-1.5">
+              <span class="font-mono font-bold text-neutral-900 uppercase">1. Nível Superior: CLASSE C</span>
+              <span class="text-[0.6rem] font-mono bg-neutral-100 border border-neutral-300 px-1.5 py-0.5 rounded">Instância Global</span>
+            </div>
+            <p class="text-neutral-600 leading-relaxed text-[0.7rem]">
+              <code class="font-bold text-neutral-900 font-mono">CLASSE C;</code> cria o container da turma inteira. Dentro de <code class="font-mono">C</code> existe um único membro: o vetor <code class="font-mono font-bold">aluno[100]</code>.
+            </p>
+          </div>
+          <div class="mt-3 p-2 bg-neutral-100 rounded-xl font-mono text-[0.65rem] text-neutral-800 border border-neutral-200">
+            C = { aluno[0], aluno[1], ... }
+          </div>
+        </div>
+
+        <!-- Nível 2: C.aluno[i] -->
+        <div class="bg-white p-4 rounded-2xl border border-neutral-300 shadow-sm flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-1.5">
+              <span class="font-mono font-bold text-neutral-900 uppercase">2. Vetor: C.aluno[i]</span>
+              <span class="text-[0.6rem] font-mono bg-neutral-100 border border-neutral-300 px-1.5 py-0.5 rounded">Vetor de Structs</span>
+            </div>
+            <p class="text-neutral-600 leading-relaxed text-[0.7rem]">
+              Ao chamar <code class="font-bold text-neutral-900 font-mono">bubble(C.aluno, n)</code>, passamos apenas o vetor para a função. Dentro dela, cada elemento <code class="font-mono font-bold">alunos[j]</code> é uma struct <code class="font-mono">ALUNO</code> completa!
+            </p>
+          </div>
+          <div class="mt-3 p-2 bg-sky-50 rounded-xl font-mono text-[0.65rem] text-sky-950 border border-sky-200">
+            alunos[j] &harr; C.aluno[j] (passagem por referência)
+          </div>
+        </div>
+
+        <!-- Nível 3: Campos .nome e .nota -->
+        <div class="bg-white p-4 rounded-2xl border border-neutral-300 shadow-sm flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-1.5">
+              <span class="font-mono font-bold text-neutral-900 uppercase">3. Campos: .nome e .nota</span>
+              <span class="text-[0.6rem] font-mono bg-neutral-100 border border-neutral-300 px-1.5 py-0.5 rounded">Membros Primitivos</span>
+            </div>
+            <p class="text-neutral-600 leading-relaxed text-[0.7rem]">
+              O operador ponto (<code class="font-bold font-mono">.</code>) acessa a propriedade interna: <code class="font-mono font-bold">x.nota</code> é o inteiro e <code class="font-mono font-bold">x.nome</code> é a cadeia de caracteres para o <code class="font-mono">strcmp</code>.
+            </p>
+          </div>
+          <div class="mt-3 p-2 bg-amber-50 rounded-xl font-mono text-[0.65rem] text-amber-950 border border-amber-200">
+            x = { char nome[21], int nota }
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Escaninho de Presets Oficiais -->
+    <section class="relative z-20 mb-8 bg-neutral-200/50 border border-neutral-300 rounded-3xl p-6 shadow-sm">
+      <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-4 border-b border-neutral-300 mb-5">
+        <div class="flex items-center gap-2">
+          <i data-lucide="sliders" class="w-4 h-4 text-neutral-800"></i>
+          <h2 class="text-xs font-semibold uppercase tracking-widest text-neutral-900">Escaninho de Turmas e Presets Didáticos</h2>
+        </div>
+        
+        <!-- Presets -->
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="text-[0.65rem] font-mono uppercase text-neutral-500 font-bold">Presets:</span>
+          <button onclick="carregarPreset(1)" id="presetBtn1" class="px-3.5 py-1.5 rounded-full border border-neutral-950 bg-neutral-950 text-white text-[0.65rem] font-semibold uppercase tracking-widest transition-all shadow-sm">
+            Exemplo 1: Caso Real do BOCA (10 Alunos)
+          </button>
+          <button onclick="carregarPreset(2)" id="presetBtn2" class="px-3.5 py-1.5 rounded-full border border-neutral-400 text-[0.65rem] font-semibold uppercase tracking-widest hover:bg-neutral-300 transition-all text-neutral-800">
+            Exemplo 2: Empate Total de Notas (Todos 10)
+          </button>
+          <button onclick="carregarPreset(3)" id="presetBtn3" class="px-3.5 py-1.5 rounded-full border border-neutral-400 text-[0.65rem] font-semibold uppercase tracking-widest hover:bg-neutral-300 transition-all text-neutral-800">
+            Exemplo 3: Notas Decrescentes Sem Empates (5 Alunos)
+          </button>
+          <button onclick="carregarPreset(4)" id="presetBtn4" class="px-3.5 py-1.5 rounded-full border border-neutral-400 text-[0.65rem] font-semibold uppercase tracking-widest hover:bg-neutral-300 transition-all text-neutral-800">
+            Exemplo 4: Pior Caso Invertido
+          </button>
+        </div>
+      </div>
+
+      <!-- Ações Rápidas de Customização -->
+      <div class="flex flex-wrap items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+          <span class="text-xs font-mono font-bold text-neutral-800">Total de Alunos na Turma: <span id="labelTotalAlunos" class="bg-neutral-300/80 px-2 py-0.5 rounded">10</span></span>
+          <span class="text-[0.65rem] text-neutral-500 font-mono">Último colocado será marcado como #reprovado(a)</span>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button onclick="embaralharAlunos()" class="px-3.5 py-2 bg-neutral-300/80 hover:bg-neutral-300 text-neutral-800 text-xs font-semibold uppercase tracking-wider rounded-xl border border-neutral-400 transition-colors flex items-center gap-1.5">
+            <i data-lucide="shuffle" class="w-3.5 h-3.5"></i> Embaralhar Turma
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Centro de Comando e Telemetria em Tempo Real -->
+    <section class="relative z-20 mb-8 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+      <!-- Total de Comparações -->
+      <div class="bg-white/70 border border-neutral-300 rounded-2xl p-4 shadow-sm flex flex-col justify-between">
+        <span class="text-[0.65rem] font-mono font-bold tracking-widest uppercase text-neutral-500 block">
+          Comparações vemAntes
+        </span>
+        <div class="flex items-baseline justify-between mt-1">
+          <span id="teleComparacoes" class="text-2xl font-mono font-bold text-neutral-900">0</span>
+          <span class="text-xs font-mono text-neutral-500">testes</span>
+        </div>
+      </div>
+
+      <!-- Total de Trocas (Swaps) -->
+      <div class="bg-neutral-950 text-white rounded-2xl p-4 shadow-md flex items-center justify-between border border-neutral-800 col-span-2">
+        <div>
+          <span class="text-[0.65rem] font-mono font-bold tracking-widest uppercase text-neutral-400 block mb-1">
+            Trocas de Structs (temp = v[j])
+          </span>
+          <div class="flex items-baseline gap-2">
+            <span id="teleTrocas" class="text-4xl font-mono font-bold text-amber-400 leading-none">0</span>
+            <span class="text-xs text-neutral-400 font-mono">inversões corrigidas</span>
+          </div>
+        </div>
+        <div class="w-12 h-12 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400">
+          <i data-lucide="arrow-left-right" class="w-6 h-6"></i>
+        </div>
+      </div>
+
+      <!-- Rodada Atual do Bubble Sort (i e j) -->
+      <div class="bg-white/70 border border-neutral-300 rounded-2xl p-4 shadow-sm flex flex-col justify-between col-span-2">
+        <span class="text-[0.65rem] font-mono font-bold tracking-widest uppercase text-neutral-500 block">
+          Ponteiros de Varredura (Bubble Sort)
+        </span>
+        <div class="flex items-center gap-3 mt-1">
+          <span class="px-2.5 py-1 rounded-full text-xs font-mono font-bold bg-neutral-200 text-neutral-800 border border-neutral-300">
+            Passada i = <span id="teleVarI">1</span>
+          </span>
+          <span class="px-2.5 py-1 rounded-full text-xs font-mono font-bold bg-neutral-200 text-neutral-800 border border-neutral-300">
+            Índice j = <span id="teleVarJ">0</span>
+          </span>
+          <span id="teleStatusStep" class="text-xs font-mono font-semibold text-neutral-600">Iniciando</span>
+        </div>
+      </div>
+
+      <!-- Critério Ativo de Desempate -->
+      <div class="bg-white/70 border border-neutral-300 rounded-2xl p-4 shadow-sm flex flex-col justify-between">
+        <span class="text-[0.65rem] font-mono font-bold tracking-widest uppercase text-neutral-500 block">
+          Critério Decisivo
+        </span>
+        <span id="teleCriterioBadge" class="text-xs font-mono font-bold text-sky-700 bg-sky-100 border border-sky-300 px-2 py-1 rounded-lg text-center mt-1">
+          Aguardando
+        </span>
+      </div>
+    </section>
+
+    <!-- Layout Principal: Alunos em Lista + Microscópio do vemAntes + Código C -->
+    <div class="relative z-20 grid grid-cols-1 lg:grid-cols-12 gap-8 mb-8 items-start">
+      
+      <!-- Coluna da Esquerda: Fila dos Alunos e Mesa do vemAntes (7 Colunas) -->
+      <div class="lg:col-span-7 flex flex-col gap-6">
+
+        <!-- Microscópio da Função vemAntes(x, y) -->
+        <div class="bg-white border border-neutral-300 rounded-3xl p-6 shadow-md relative overflow-hidden">
+          <div class="flex items-center justify-between pb-3 border-b border-neutral-200 mb-4">
+            <div class="flex items-center gap-2">
+              <i data-lucide="microscope" class="w-4 h-4 text-sky-600"></i>
+              <h3 class="text-xs font-mono font-bold uppercase tracking-wider text-neutral-900">
+                Microscópio da Decisão: bool vemAntes(ALUNO x, ALUNO y)
+              </h3>
+            </div>
+            <span id="microscopeResultBadge" class="text-xs font-mono font-bold px-2.5 py-1 rounded-full bg-neutral-100 text-neutral-600 border border-neutral-300">
+              Aguardando Par
+            </span>
+          </div>
+
+          <!-- Comparação Visual Lado a Lado de X e Y -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+            <!-- Aluno X (alunos[j]) -->
+            <div id="cardBoxX" class="p-4 rounded-2xl border border-sky-300 bg-sky-50/70 flex items-center justify-between">
+              <div>
+                <span class="text-[0.6rem] font-mono uppercase tracking-widest text-sky-700 font-bold block mb-1">
+                  Parâmetro x = alunos[j] (pos j)
+                </span>
+                <span id="microscopeNomeX" class="text-lg font-bold font-oswald text-neutral-950 uppercase block leading-none">
+                  -
+                </span>
+                <span class="text-xs font-mono text-neutral-600 mt-1 block">
+                  x.nome: <code id="microscopeStrX" class="font-bold text-neutral-900">"-"</code>
+                </span>
+              </div>
+              <div class="text-right">
+                <span class="text-[0.6rem] font-mono uppercase text-sky-700 font-bold block">x.nota</span>
+                <span id="microscopeNotaX" class="text-3xl font-mono font-bold text-sky-950 leading-none">0</span>
+              </div>
+            </div>
+
+            <!-- Aluno Y (alunos[j+1]) -->
+            <div id="cardBoxY" class="p-4 rounded-2xl border border-amber-300 bg-amber-50/70 flex items-center justify-between">
+              <div>
+                <span class="text-[0.6rem] font-mono uppercase tracking-widest text-amber-700 font-bold block mb-1">
+                  Parâmetro y = alunos[j+1] (pos j+1)
+                </span>
+                <span id="microscopeNomeY" class="text-lg font-bold font-oswald text-neutral-950 uppercase block leading-none">
+                  -
+                </span>
+                <span class="text-xs font-mono text-neutral-600 mt-1 block">
+                  y.nome: <code id="microscopeStrY" class="font-bold text-neutral-900">"-"</code>
+                </span>
+              </div>
+              <div class="text-right">
+                <span class="text-[0.6rem] font-mono uppercase text-amber-700 font-bold block">y.nota</span>
+                <span id="microscopeNotaY" class="text-3xl font-mono font-bold text-amber-950 leading-none">0</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Raciocínio Passo a Passo da Função vemAntes -->
+          <div class="space-y-2.5 font-mono text-xs">
+            <!-- Critério 1: Notas -->
+            <div id="stepNotaBox" class="p-3 rounded-xl bg-neutral-100 border border-neutral-200 flex items-center justify-between">
+              <div>
+                <span class="font-bold text-neutral-900 block">Critério 1: if (x.nota != y.nota)</span>
+                <span id="stepNotaDesc" class="text-[0.7rem] text-neutral-600">Verificando se as notas são diferentes...</span>
+              </div>
+              <span id="stepNotaResult" class="text-[0.65rem] font-bold px-2 py-0.5 rounded bg-neutral-200 text-neutral-700">-</span>
+            </div>
+
+            <!-- Critério 2: strcmp -->
+            <div id="stepStrcmpBox" class="p-3 rounded-xl bg-neutral-100 border border-neutral-200 flex items-center justify-between">
+              <div>
+                <span class="font-bold text-neutral-900 block">Critério 2 (Desempate): strcmp(x.nome, y.nome) &lt; 0</span>
+                <span id="stepStrcmpDesc" class="text-[0.7rem] text-neutral-600">Inativo (só acionado quando x.nota == y.nota)</span>
+              </div>
+              <span id="stepStrcmpResult" class="text-[0.65rem] font-bold px-2 py-0.5 rounded bg-neutral-200 text-neutral-700">-</span>
+            </div>
+
+            <!-- Decisão do Bubble Sort: !vemAntes -->
+            <div id="stepDecisionBox" class="p-3 rounded-xl bg-neutral-900 text-white flex items-center justify-between">
+              <div>
+                <span class="font-bold text-amber-400 block">Condição do Bubble: if (!vemAntes(alunos[j], alunos[j + 1]))</span>
+                <span id="stepDecisionDesc" class="text-[0.7rem] text-neutral-300">Determina se as structs devem ser trocadas de lugar.</span>
+              </div>
+              <span id="stepDecisionBadge" class="text-xs font-bold px-2.5 py-1 rounded-lg bg-neutral-800 text-neutral-400">AGUARDANDO</span>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Fila de Alunos (Representação Gráfica do Vetor C.aluno[]) -->
+        <div class="bg-neutral-100/90 border border-neutral-300 rounded-3xl p-6 shadow-md relative">
+          <div class="flex items-center justify-between pb-3 border-b border-neutral-300 mb-4">
+            <div>
+              <h3 class="text-xs font-mono font-bold uppercase tracking-wider text-neutral-900 flex items-center gap-2">
+                <i data-lucide="users" class="w-4 h-4 text-neutral-800"></i>
+                Vetor de Structs: C.aluno[i]
+              </h3>
+              <p class="text-[0.65rem] text-neutral-500 uppercase tracking-widest mt-0.5">
+                Alunos ordenados do 1º colocado (topo) ao último colocado (reprovado)
+              </p>
+            </div>
+            
+            <!-- Vaga Temporária para a Troca -->
+            <div id="tempSlotBox" class="flex items-center gap-2 bg-neutral-200/80 px-3 py-1.5 rounded-2xl border border-neutral-300">
+              <span class="text-[0.65rem] font-mono font-bold text-neutral-600 uppercase">ALUNO temp:</span>
+              <span id="tempSlotContent" class="text-xs font-mono font-bold text-neutral-400">[vazio]</span>
+            </div>
+          </div>
+
+          <!-- Container com Lista Vertical de Cartões dos Alunos -->
+          <div id="studentsListContainer" class="space-y-2.5">
+            <!-- Gerado dinamicamente via JavaScript -->
+          </div>
+
+        </div>
+
+        <!-- Painel de Controles de Reprodução e Barra de Scrubbing -->
+        <div class="bg-neutral-100/90 border border-neutral-300 rounded-3xl p-6 shadow-md flex flex-col gap-4">
+          <div class="flex items-center justify-between text-xs font-mono font-bold uppercase tracking-wider text-neutral-700">
+            <span class="flex items-center gap-1.5"><i data-lucide="sliders-horizontal" class="w-4 h-4"></i> Linha do Tempo da Simulação</span>
+            <span id="sliderStepText">Passo 0 de 0</span>
+          </div>
+
+          <!-- Slider de Passos -->
+          <input type="range" id="simSlider" min="0" max="0" value="0" oninput="irParaPasso(parseInt(this.value))" class="w-full cursor-pointer"/>
+
+          <!-- Botões de Ação Rápida -->
+          <div class="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-neutral-200">
+            <div class="flex items-center gap-1.5 sm:gap-2">
+              <button onclick="reiniciarSimulacao()" class="p-2 sm:px-3 sm:py-2 rounded-xl bg-white hover:bg-neutral-200 border border-neutral-300 text-neutral-800 text-xs font-bold uppercase transition-all shadow-sm flex items-center gap-1" title="Reiniciar do Início">
+                <i data-lucide="rotate-ccw" class="w-4 h-4"></i> <span class="hidden sm:inline">Reiniciar</span>
+              </button>
+              <button onclick="passoAnterior()" class="p-2 sm:px-3 sm:py-2 rounded-xl bg-white hover:bg-neutral-200 border border-neutral-300 text-neutral-800 text-xs font-bold uppercase transition-all shadow-sm flex items-center gap-1" title="Passo Anterior">
+                <i data-lucide="skip-back" class="w-4 h-4"></i> <span class="hidden sm:inline">Voltar</span>
+              </button>
+              <button id="playPauseBtn" onclick="togglePlayPause()" class="px-4 py-2 rounded-xl bg-neutral-950 hover:bg-neutral-800 text-white text-xs font-bold uppercase transition-all shadow-sm flex items-center gap-1.5">
+                <i data-lucide="play" class="w-4 h-4 text-emerald-400"></i> <span id="playBtnText">Play</span>
+              </button>
+              <button onclick="proximoPasso()" class="p-2 sm:px-3 sm:py-2 rounded-xl bg-white hover:bg-neutral-200 border border-neutral-300 text-neutral-800 text-xs font-bold uppercase transition-all shadow-sm flex items-center gap-1" title="Próximo Passo">
+                <span class="hidden sm:inline">Avançar</span> <i data-lucide="skip-forward" class="w-4 h-4"></i>
+              </button>
+            </div>
+
+            <!-- Botões de Salto Estratégico -->
+            <div class="flex items-center gap-2">
+              <button onclick="pularParaProximaTroca()" class="px-3 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-amber-950 border border-amber-500 text-xs font-bold uppercase tracking-wider transition-all shadow-sm flex items-center gap-1.5" title="Avançar diretamente para a próxima troca de alunos">
+                <i data-lucide="zap" class="w-3.5 h-3.5"></i> <span>Próx. Troca</span>
+              </button>
+              <button onclick="pularParaEmpateStrcmp()" class="px-3 py-2 rounded-xl bg-sky-100 hover:bg-sky-200 text-sky-950 border border-sky-300 text-xs font-bold uppercase tracking-wider transition-all shadow-sm flex items-center gap-1.5" title="Avançar para o próximo empate de notas (desempate strcmp)">
+                <i data-lucide="git-commit" class="w-3.5 h-3.5 text-sky-700"></i> <span class="hidden md:inline">Próx. Desempate strcmp</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Controle de Velocidade -->
+          <div class="flex items-center justify-between text-[0.65rem] font-mono text-neutral-500 pt-1">
+            <span>Velocidade de Reprodução</span>
+            <div class="flex items-center gap-2">
+              <button onclick="ajustarVelocidade(1200)" class="speed-btn px-2 py-0.5 rounded border border-neutral-300 hover:bg-neutral-200">0.5x</button>
+              <button onclick="ajustarVelocidade(600)" class="speed-btn px-2 py-0.5 rounded border border-neutral-950 bg-neutral-950 text-white font-bold">1x</button>
+              <button onclick="ajustarVelocidade(250)" class="speed-btn px-2 py-0.5 rounded border border-neutral-300 hover:bg-neutral-200">2x</button>
+              <button onclick="ajustarVelocidade(80)" class="speed-btn px-2 py-0.5 rounded border border-neutral-300 hover:bg-neutral-200">Turbo</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Coluna da Direita: Código C Sincronizado + Terminal BOCA + Explicação Detalhada (5 Colunas) -->
+      <div class="lg:col-span-5 flex flex-col gap-6">
+
+        <!-- Caixa de Código C Sincronizado -->
+        <div class="bg-neutral-950 text-white rounded-3xl p-5 shadow-xl border border-neutral-800 flex flex-col">
+          <div class="flex items-center justify-between pb-3 border-b border-neutral-800 mb-3">
+            <div class="flex items-center gap-2">
+              <i data-lucide="code" class="w-4 h-4 text-emerald-400"></i>
+              <span class="text-xs font-mono font-bold uppercase tracking-wider text-neutral-300">Código C Original · EX43.c</span>
+            </div>
+            <span class="text-[0.65rem] font-mono bg-neutral-800 text-neutral-400 px-2 py-0.5 rounded">
+              struct ALUNO + vemAntes
+            </span>
+          </div>
+
+          <!-- Bloco com Rolagem e Numeração de Linhas -->
+          <div class="overflow-x-auto max-h-[440px] rounded-xl bg-neutral-900/80 p-2 border border-neutral-800/80" id="codeContainer">
+            <div class="code-line" id="line-8"><span class="line-num w-7 text-neutral-600 font-mono text-right pr-2">8</span><span class="line-text text-neutral-500">typedef struct { char nome[21]; int nota; } ALUNO;</span></div>
+            <div class="code-line" id="line-13"><span class="line-num w-7 text-neutral-600 font-mono text-right pr-2">13</span><span class="line-text text-neutral-500">typedef struct { ALUNO aluno[N]; } CLASSE;</span></div>
+            <div class="code-line" id="line-36"><span class="line-num w-7 text-neutral-600 font-mono text-right pr-2">36</span><span class="line-text text-neutral-300">bubble(C.aluno, n);</span></div>
+            <div class="code-line" id="line-48"><span class="line-num w-7 text-neutral-600 font-mono text-right pr-2">48</span><span class="line-text text-sky-400 font-bold">bool vemAntes(ALUNO x, ALUNO y) {</span></div>
+            <div class="code-line" id="line-49"><span class="line-num w-7 text-neutral-600 font-mono text-right pr-2">49</span><span class="line-text text-neutral-300 pl-3">if (x.nota != y.nota) {</span></div>
+            <div class="code-line" id="line-50"><span class="line-num w-7 text-neutral-600 font-mono text-right pr-2">50</span><span class="line-text text-neutral-300 pl-6">return x.nota &gt; y.nota;</span></div>
+            <div class="code-line" id="line-51"><span class="line-num w-7 text-neutral-600 font-mono text-right pr-2">51</span><span class="line-text text-neutral-300 pl-3">}</span></div>
+            <div class="code-line" id="line-52"><span class="line-num w-7 text-neutral-600 font-mono text-right pr-2">52</span><span class="line-text text-amber-300 font-bold pl-3">return strcmp(x.nome, y.nome) &lt; 0;</span></div>
+            <div class="code-line" id="line-53"><span class="line-num w-7 text-neutral-600 font-mono text-right pr-2">53</span><span class="line-text text-neutral-300">}</span></div>
+            <div class="code-line" id="line-55"><span class="line-num w-7 text-neutral-600 font-mono text-right pr-2">55</span><span class="line-text text-neutral-400">void bubble(ALUNO alunos[], int n) {</span></div>
+            <div class="code-line" id="line-56"><span class="line-num w-7 text-neutral-600 font-mono text-right pr-2">56</span><span class="line-text text-neutral-400 pl-3">ALUNO temp;</span></div>
+            <div class="code-line" id="line-57"><span class="line-num w-7 text-neutral-600 font-mono text-right pr-2">57</span><span class="line-text text-neutral-300 pl-3">for (int i = 1; i &lt; n; i++) {</span></div>
+            <div class="code-line" id="line-58"><span class="line-num w-7 text-neutral-600 font-mono text-right pr-2">58</span><span class="line-text text-neutral-300 pl-6">for (int j = 0; j &lt; n - i; j++) {</span></div>
+            <div class="code-line" id="line-59"><span class="line-num w-7 text-neutral-600 font-mono text-right pr-2">59</span><span class="line-text text-sky-400 font-bold pl-9">if (!vemAntes(alunos[j], alunos[j + 1])) {</span></div>
+            <div class="code-line" id="line-60"><span class="line-num w-7 text-neutral-600 font-mono text-right pr-2">60</span><span class="line-text text-amber-400 font-bold pl-12">temp = alunos[j];</span></div>
+            <div class="code-line" id="line-61"><span class="line-num w-7 text-neutral-600 font-mono text-right pr-2">61</span><span class="line-text text-amber-400 font-bold pl-12">alunos[j] = alunos[j + 1];</span></div>
+            <div class="code-line" id="line-62"><span class="line-num w-7 text-neutral-600 font-mono text-right pr-2">62</span><span class="line-text text-amber-400 font-bold pl-12">alunos[j + 1] = temp;</span></div>
+            <div class="code-line" id="line-63"><span class="line-num w-7 text-neutral-600 font-mono text-right pr-2">63</span><span class="line-text text-neutral-300 pl-9">}</span></div>
+            <div class="code-line" id="line-64"><span class="line-num w-7 text-neutral-600 font-mono text-right pr-2">64</span><span class="line-text text-neutral-300 pl-6">}</span></div>
+            <div class="code-line" id="line-65"><span class="line-num w-7 text-neutral-600 font-mono text-right pr-2">65</span><span class="line-text text-neutral-300 pl-3">}</span></div>
+            <div class="code-line" id="line-43"><span class="line-num w-7 text-neutral-600 font-mono text-right pr-2">43</span><span class="line-text text-rose-400 pl-0">printf("%s %d #reprovado(a)\n", C.aluno[n-1].nome, ...);</span></div>
+          </div>
+        </div>
+
+        <!-- Terminal BOCA stdout Console -->
+        <div class="bg-neutral-950 text-white rounded-3xl p-5 shadow-xl border border-neutral-800 flex flex-col font-mono">
+          <div class="flex items-center justify-between pb-3 border-b border-neutral-800 mb-3">
+            <div class="flex items-center gap-2">
+              <i data-lucide="terminal" class="w-4 h-4 text-amber-400"></i>
+              <span class="text-xs font-bold uppercase tracking-wider text-neutral-300">Terminal stdout (BOCA)</span>
+            </div>
+            <span class="text-[0.65rem] text-emerald-400 flex items-center gap-1 font-semibold">
+              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> EX43.EXE
+            </span>
+          </div>
+
+          <div class="bg-black/80 rounded-xl p-3 border border-neutral-800/80 text-xs text-neutral-300 space-y-1 min-h-[140px] max-h-[220px] overflow-y-auto">
+            <div class="text-neutral-500">// Saída em Tempo Real:</div>
+            <div id="terminalStdoutLines" class="space-y-0.5">
+              <!-- Linhas de saída atualizadas dinamicamente -->
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- Abas Didáticas com Guia de Estudo Completo -->
+    <section class="relative z-20 mt-4 bg-neutral-100/90 border border-neutral-300 rounded-3xl p-6 shadow-md">
+      <div class="flex flex-wrap items-center gap-2 border-b border-neutral-300 pb-4 mb-6">
+        <button onclick="mudarAba('structs')" id="tabBtn-structs" class="px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wider bg-neutral-950 text-white shadow-sm transition-all">
+          1. Como Entender os "Links" de Struct
+        </button>
+        <button onclick="mudarAba('vemAntes')" id="tabBtn-vemAntes" class="px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wider bg-neutral-200 text-neutral-700 hover:bg-neutral-300 transition-all">
+          2. A Lógica da Função vemAntes e strcmp
+        </button>
+        <button onclick="mudarAba('bubble')" id="tabBtn-bubble" class="px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wider bg-neutral-200 text-neutral-700 hover:bg-neutral-300 transition-all">
+          3. A Troca e o #reprovado(a)
+        </button>
+      </div>
+
+      <!-- Conteúdo da Aba 1: Structs -->
+      <div id="tabContent-structs" class="space-y-4 text-xs text-neutral-700 leading-relaxed">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="bg-white p-5 rounded-2xl border border-neutral-200 shadow-sm">
+            <h4 class="font-bold text-sm text-neutral-900 mb-2 uppercase tracking-wide flex items-center gap-2">
+              <i data-lucide="box" class="w-4 h-4 text-amber-600"></i> Por que existem duas structs: ALUNO e CLASSE?
+            </h4>
+            <p>
+              Em C, uma <code class="font-bold font-mono">struct ALUNO</code> funciona como a ficha individual de uma pessoa, agrupando tipos diferentes de variáveis:
+            </p>
+            <div class="mt-2 p-3 bg-neutral-50 rounded-xl font-mono text-[0.7rem] text-neutral-800 border border-neutral-200">
+              typedef struct {<br/>
+              &nbsp;&nbsp;char nome[21]; // texto (vetor de char)<br/>
+              &nbsp;&nbsp;int nota; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// inteiro<br/>
+              } ALUNO;
+            </div>
+            <p class="mt-2">
+              Já a <code class="font-bold font-mono">CLASSE</code> é uma "pasta" que guarda até 100 fichas: <code class="font-mono">typedef struct { ALUNO aluno[N]; } CLASSE;</code>. Na <code class="font-mono">main</code>, a variável <code class="font-mono">C</code> representa a turma inteira!
+            </p>
+          </div>
+
+          <div class="bg-white p-5 rounded-2xl border border-neutral-200 shadow-sm">
+            <h4 class="font-bold text-sm text-neutral-900 mb-2 uppercase tracking-wide flex items-center gap-2">
+              <i data-lucide="check-circle" class="w-4 h-4 text-emerald-600"></i> O que acontece na passagem para bubble()?
+            </h4>
+            <p>
+              Ao fazer <code class="font-mono font-bold bg-neutral-100 px-1 py-0.5 rounded text-neutral-900">bubble(C.aluno, n)</code>:
+            </p>
+            <ul class="list-disc list-inside mt-2 space-y-1.5 text-neutral-800 text-[0.7rem]">
+              <li><code class="font-mono font-bold">C.aluno</code> é o vetor de fichas. Passamos o endereço inicial dele.</li>
+              <li>A função recebe <code class="font-mono font-bold">ALUNO alunos[]</code>. Dentro do bubble, o nome local do vetor é <code class="font-mono">alunos</code>.</li>
+              <li>Logo, <code class="font-mono font-bold">alunos[j]</code> acessa diretamente a ficha completa do aluno na posição $j$! Não precisamos mais escrever <code class="font-mono">C.aluno[j]</code> lá dentro.</li>
+              <li>E ao fazer <code class="font-mono font-bold">temp = alunos[j];</code>, o compilador C copia <b>o nome e a nota juntos</b> automaticamente!</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Conteúdo da Aba 2: vemAntes -->
+      <div id="tabContent-vemAntes" class="hidden space-y-4 text-xs text-neutral-700 leading-relaxed">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="bg-white p-5 rounded-2xl border border-neutral-200 shadow-sm">
+            <h4 class="font-bold text-sm text-neutral-900 mb-2 uppercase tracking-wide flex items-center gap-2">
+              <i data-lucide="scale" class="w-4 h-4 text-sky-600"></i> A Pergunta Fundamental do vemAntes
+            </h4>
+            <p>
+              A função <code class="font-bold font-mono">vemAntes(x, y)</code> responde a uma pergunta direta:<br/>
+              <span class="text-neutral-900 font-bold font-mono">"O aluno X tem o direito de aparecer ANTES do aluno Y na classificação final?"</span>
+            </p>
+            <div class="mt-3 space-y-2 text-[0.7rem]">
+              <div class="p-2 bg-neutral-50 rounded-lg border border-neutral-200">
+                <b>1º Critério: Notas Diferentes</b><br/>
+                Se <code class="font-mono">x.nota != y.nota</code>, quem tem a <b>maior nota</b> vem antes (<code class="font-mono">return x.nota > y.nota</code>). Se a nota de X for 10 e Y for 9, retorna <code class="font-mono text-emerald-600 font-bold">true</code>!
+              </div>
+              <div class="p-2 bg-amber-50 rounded-lg border border-amber-200 text-amber-950">
+                <b>2º Critério: Empate de Notas!</b><br/>
+                Se as notas forem rigorosamente iguais, o primeiro <code class="font-mono">if</code> NÃO é acionado. O código passa para: <code class="font-mono font-bold">return strcmp(x.nome, y.nome) < 0;</code>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-white p-5 rounded-2xl border border-neutral-200 shadow-sm">
+            <h4 class="font-bold text-sm text-neutral-900 mb-2 uppercase tracking-wide flex items-center gap-2">
+              <i data-lucide="book-open" class="w-4 h-4 text-indigo-600"></i> O Mistério do strcmp &lt; 0
+            </h4>
+            <p>
+              A função <code class="font-mono font-bold">strcmp(a, b)</code> compara strings caractere por caractere via código ASCII:
+            </p>
+            <ul class="list-disc list-inside mt-2 space-y-1 font-mono text-[0.7rem] text-neutral-800">
+              <li><span class="text-emerald-700 font-bold">negativo (&lt; 0):</span> a vem ANTES de b no dicionário (ex: "andre" antes de "beatriz").</li>
+              <li><span class="text-neutral-600 font-bold">zero (== 0):</span> os nomes são exatamente iguais.</li>
+              <li><span class="text-rose-700 font-bold">positivo (&gt; 0):</span> a vem DEPOIS de b no dicionário (ex: "marcos" depois de "joaozinho").</li>
+            </ul>
+            <p class="mt-2 text-neutral-700">
+              Portanto, <code class="font-mono font-bold bg-neutral-100 px-1 py-0.5 rounded text-neutral-900">strcmp(x.nome, y.nome) &lt; 0</code> devolve <code class="font-mono text-emerald-600 font-bold">true</code> se e somente se o nome de X for alfabeticamente menor que o nome de Y!
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Conteúdo da Aba 3: Bubble e Reprovado -->
+      <div id="tabContent-bubble" class="hidden space-y-4 text-xs text-neutral-700 leading-relaxed">
+        <div class="bg-white p-5 rounded-2xl border border-neutral-200 shadow-sm">
+          <h4 class="font-bold text-sm text-neutral-900 mb-2 uppercase tracking-wide">
+            Por que o Bubble Sort usa <code class="font-mono">if (!vemAntes(alunos[j], alunos[j + 1]))</code>?
+          </h4>
+          <p class="mt-1">
+            O ponto de exclamação (<code class="font-mono font-bold text-rose-600">!</code>) significa "NÃO".
+          </p>
+          <p class="mt-2 text-neutral-800">
+            Se <code class="font-mono font-bold">vemAntes(alunos[j], alunos[j + 1])</code> devolver <code class="font-mono text-rose-600 font-bold">false</code>, significa que <code class="font-mono">alunos[j]</code> <b>NÃO</b> deveria estar antes de <code class="font-mono">alunos[j + 1]</code>. Ou seja, eles estão <b>fora de ordem</b>!
+          </p>
+          <p class="mt-2">
+            Nesse momento, <code class="font-mono font-bold">!false</code> vira <code class="font-mono text-emerald-600 font-bold">true</code>, acionando a troca com a variável <code class="font-mono">temp</code>. Ao final de todas as passadas, a turma inteira estará perfeitamente classificada, e o último colocado na posição <code class="font-mono">n - 1</code> é quem tirou a menor nota (ou teve o pior desempate), recebendo a tag <code class="font-mono font-bold text-rose-600">#reprovado(a)</code>!
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Rodapé Minimalista -->
+    <footer class="relative z-20 mt-8 pt-4 border-t border-neutral-300 flex flex-wrap items-center justify-between text-[0.65rem] font-mono text-neutral-500 uppercase tracking-widest">
+      <span>Future UI Industrial Standard · BOCA EX43.c</span>
+      <span>Algoritmos e Estruturas de Dados · Structs, Bubble Sort &amp; Comparadores</span>
+    </footer>
+
+  </main>
+
+  <script>
+    // --- ESTADO GLOBAL DA SIMULAÇÃO ---
+    let currentStudents = [];
+    let simulationSteps = [];
+    let currentStepIdx = 0;
+    let isPlaying = false;
+    let playInterval = null;
+    let playSpeed = 600; // ms por passo
+
+    // Presets Oficiais
+    const PRESETS = {
+      1: [ // Caso Real do BOCA (10 Alunos)
+        { nome: "joaozinho", nota: 9 },
+        { nome: "marcela", nota: 8 },
+        { nome: "marcos", nota: 9 },
+        { nome: "frodo", nota: 7 },
+        { nome: "jailson", nota: 10 },
+        { nome: "jolei", nota: 8 },
+        { nome: "andre", nota: 10 },
+        { nome: "maria", nota: 8 },
+        { nome: "beatriz", nota: 10 },
+        { nome: "ana", nota: 9 }
+      ],
+      2: [ // Empate Total de Notas (Todos 10)
+        { nome: "frodo", nota: 10 },
+        { nome: "beatriz", nota: 10 },
+        { nome: "jailson", nota: 10 },
+        { nome: "ana", nota: 10 },
+        { nome: "andre", nota: 10 }
+      ],
+      3: [ // Notas Decrescentes Sem Empates (5 Alunos)
+        { nome: "carlos", nota: 6 },
+        { nome: "daniel", nota: 9 },
+        { nome: "alice", nota: 10 },
+        { nome: "bruna", nota: 8 },
+        { nome: "eduardo", nota: 7 }
+      ],
+      4: [ // Pior Caso Invertido
+        { nome: "maria", nota: 6 },
+        { nome: "luis", nota: 7 },
+        { nome: "joao", nota: 8 },
+        { nome: "bruno", nota: 9 },
+        { nome: "ana", nota: 10 }
+      ]
+    };
+
+    // Função de Comparação Exata de EX43.c
+    function c_vemAntes(x, y) {
+      if (x.nota !== y.nota) {
+        return {
+          result: x.nota > y.nota,
+          reason: 'NOTA',
+          detail: `x.nota (${x.nota}) ${x.nota > y.nota ? '>' : '<'} y.nota (${y.nota})`
+        };
+      }
+      const cmp = x.nome.localeCompare(y.nome);
+      return {
+        result: cmp < 0,
+        reason: 'STRCMP',
+        detail: `Notas iguais (${x.nota}). strcmp("${x.nome}", "${y.nome}") = ${cmp < 0 ? '< 0' : '> 0'}`
+      };
+    }
+
+    // --- GERADOR EXATO DE PASSOS DE EX43.C ---
+    function gerarPassosSimulacao(alunosOrig) {
+      const steps = [];
+      const v = alunosOrig.map(a => ({ ...a }));
+      const n = v.length;
+      let trocasCount = 0;
+      let compCount = 0;
+
+      // Passo Inicial (Estado 0)
+      steps.push({
+        v: v.map(a => ({ ...a })),
+        i: 1,
+        j: 0,
+        temp: null,
+        compCount: 0,
+        trocasCount: 0,
+        comparingIndices: null,
+        decision: null,
+        isSwap: false,
+        activeLines: [36],
+        title: "Início da Ordenação",
+        desc: `Turma de ${n} alunos carregada. Pronto para iniciar a função bubble(C.aluno, ${n}).`
+      });
+
+      // Algoritmo Bubble Sort Exato de EX43.c
+      for (let i = 1; i < n; i++) {
+        for (let j = 0; j < n - i; j++) {
+          compCount++;
+          const x = { ...v[j] };
+          const y = { ...v[j + 1] };
+          const compResult = c_vemAntes(x, y);
+          const needsSwap = !compResult.result;
+
+          // Passo 1: Avaliando if (!vemAntes(alunos[j], alunos[j + 1]))
+          steps.push({
+            v: v.map(a => ({ ...a })),
+            i: i,
+            j: j,
+            temp: null,
+            compCount: compCount,
+            trocasCount: trocasCount,
+            comparingIndices: [j, j + 1],
+            x: x,
+            y: y,
+            compResult: compResult,
+            needsSwap: needsSwap,
+            isSwap: false,
+            activeLines: compResult.reason === 'NOTA' ? [48, 49, 50, 59] : [48, 49, 52, 59],
+            title: `Comparando alunos[${j}] e alunos[${j + 1}]`,
+            desc: `Analisando se <b>${x.nome}</b> (${x.nota}) vem antes de <b>${y.nome}</b> (${y.nota}).<br/>` +
+                  (compResult.reason === 'NOTA' 
+                    ? `Critério de Notas: ${compResult.detail} &rarr; vemAntes = <b>${compResult.result}</b>.`
+                    : `Empate de Notas (${x.nota})! Ativado strcmp("${x.nome}", "${y.nome}") &rarr; vemAntes = <b>${compResult.result}</b>.`) +
+                  `<br/>Condição !vemAntes é <b>${needsSwap}</b> (${needsSwap ? 'Precisa trocar!' : 'Já está na ordem certa!'}).`
+          });
+
+          // Se precisar trocar:
+          if (needsSwap) {
+            trocasCount++;
+            const temp = { ...v[j] };
+            v[j] = { ...v[j + 1] };
+            v[j + 1] = { ...temp };
+
+            steps.push({
+              v: v.map(a => ({ ...a })),
+              i: i,
+              j: j,
+              temp: temp,
+              compCount: compCount,
+              trocasCount: trocasCount,
+              comparingIndices: [j, j + 1],
+              x: x,
+              y: y,
+              compResult: compResult,
+              needsSwap: true,
+              isSwap: true,
+              activeLines: [60, 61, 62],
+              title: `Troca de Structs Efetuada! (Troca #${trocasCount})`,
+              desc: `Executado: <code class="font-bold text-amber-900">temp = alunos[${j}]; alunos[${j}] = alunos[${j + 1}]; alunos[${j + 1}] = temp;</code><br/>` +
+                    `<b>${y.nome}</b> subiu para a posição ${j} e <b>${x.nome}</b> desceu para a posição ${j + 1}.`
+            });
+          }
+        }
+      }
+
+      // Passo Final: Conclusão e Impressão
+      steps.push({
+        v: v.map(a => ({ ...a })),
+        i: n,
+        j: 0,
+        temp: null,
+        compCount: compCount,
+        trocasCount: trocasCount,
+        comparingIndices: null,
+        decision: null,
+        isSwap: false,
+        activeLines: [43],
+        title: "Classificação Final Concluída!",
+        desc: `Todos os ${n} alunos estão ordenados com sucesso. O último colocado <b>${v[n - 1].nome}</b> (${v[n - 1].nota}) é impresso com <b>#reprovado(a)</b>.`
+      });
+
+      return steps;
+    }
+
+    // --- RENDERIZAÇÃO DA FILA DE ALUNOS ---
+    function renderizarListaAlunos(step) {
+      const container = document.getElementById('studentsListContainer');
+      container.innerHTML = '';
+      const v = step.v;
+      const n = v.length;
+      const comparing = step.comparingIndices || [];
+
+      v.forEach((aluno, idx) => {
+        const isX = comparing[0] === idx;
+        const isY = comparing[1] === idx;
+        const isLast = idx === n - 1;
+        const isCompletedStep = step.activeLines.includes(43);
+
+        const card = document.createElement('div');
+        let cardStyle = 'student-card bg-white border border-neutral-300 rounded-2xl p-3 flex items-center justify-between shadow-sm relative overflow-hidden';
+
+        if (isX) {
+          cardStyle += ' comparing-x bg-sky-50/80 border-sky-400';
+        } else if (isY) {
+          cardStyle += ' comparing-y bg-amber-50/80 border-amber-400';
+        }
+
+        if (step.isSwap && (isX || isY)) {
+          cardStyle += ' swapping';
+        }
+
+        card.className = cardStyle;
+
+        // Badge de Posição
+        let posBadgeClass = 'bg-neutral-200 text-neutral-700';
+        if (idx === 0) posBadgeClass = 'bg-amber-400 text-amber-950 font-bold';
+        else if (idx === 1) posBadgeClass = 'bg-neutral-300 text-neutral-900 font-bold';
+        else if (idx === 2) posBadgeClass = 'bg-amber-700 text-white font-bold';
+
+        // Badge de Nota
+        let notaBadgeClass = 'bg-neutral-950 text-white';
+        if (aluno.nota === 10) notaBadgeClass = 'bg-emerald-600 text-white font-bold';
+        else if (aluno.nota >= 8) notaBadgeClass = 'bg-sky-600 text-white font-bold';
+        else if (aluno.nota < 8) notaBadgeClass = 'bg-rose-600 text-white font-bold';
+
+        card.innerHTML = `
+          <div class="flex items-center gap-3">
+            <span class="w-6 h-6 rounded-lg ${posBadgeClass} flex items-center justify-center font-mono text-[0.65rem] shrink-0">
+              ${idx + 1}º
+            </span>
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="font-oswald text-base font-bold uppercase text-neutral-950 tracking-wide">
+                  ${aluno.nome}
+                </span>
+                ${isCompletedStep && isLast ? '<span class="text-[0.6rem] font-mono font-bold px-2 py-0.5 rounded bg-rose-100 text-rose-800 border border-rose-300 animate-pulse">#reprovado(a)</span>' : ''}
+                ${isX ? '<span class="text-[0.55rem] font-mono font-bold px-1.5 py-0.5 rounded bg-sky-600 text-white">x (alunos[j])</span>' : ''}
+                ${isY ? '<span class="text-[0.55rem] font-mono font-bold px-1.5 py-0.5 rounded bg-amber-500 text-white">y (alunos[j+1])</span>' : ''}
+              </div>
+              <span class="text-[0.6rem] font-mono text-neutral-500">C.aluno[${idx}] &middot; strlen: ${aluno.nome.length} chars</span>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <span class="text-[0.65rem] font-mono text-neutral-500 uppercase font-semibold">nota:</span>
+            <span class="px-2.5 py-0.5 rounded-lg ${notaBadgeClass} font-mono font-bold text-sm">
+              ${aluno.nota}
+            </span>
+          </div>
+        `;
+
+        container.appendChild(card);
+      });
+    }
+
+    // --- RENDERIZAÇÃO DO MICROSCÓPIO VEMANTES ---
+    function renderizarMicroscopio(step) {
+      const boxX = document.getElementById('cardBoxX');
+      const boxY = document.getElementById('cardBoxY');
+      const resBadge = document.getElementById('microscopeResultBadge');
+
+      if (!step.comparingIndices) {
+        document.getElementById('microscopeNomeX').textContent = '-';
+        document.getElementById('microscopeStrX').textContent = `"-"`;
+        document.getElementById('microscopeNotaX').textContent = '0';
+        document.getElementById('microscopeNomeY').textContent = '-';
+        document.getElementById('microscopeStrY').textContent = `"-"`;
+        document.getElementById('microscopeNotaY').textContent = '0';
+        resBadge.textContent = 'Aguardando Par';
+        resBadge.className = 'text-xs font-mono font-bold px-2.5 py-1 rounded-full bg-neutral-100 text-neutral-600 border border-neutral-300';
+
+        document.getElementById('stepNotaDesc').textContent = 'Aguardando início do passo...';
+        document.getElementById('stepNotaResult').textContent = '-';
+        document.getElementById('stepNotaResult').className = 'text-[0.65rem] font-bold px-2 py-0.5 rounded bg-neutral-200 text-neutral-700';
+
+        document.getElementById('stepStrcmpDesc').textContent = 'Inativo';
+        document.getElementById('stepStrcmpResult').textContent = '-';
+        document.getElementById('stepStrcmpResult').className = 'text-[0.65rem] font-bold px-2 py-0.5 rounded bg-neutral-200 text-neutral-700';
+
+        document.getElementById('stepDecisionDesc').textContent = 'Determina se as structs devem ser trocadas de lugar.';
+        document.getElementById('stepDecisionBadge').textContent = 'AGUARDANDO';
+        document.getElementById('stepDecisionBadge').className = 'text-xs font-bold px-2.5 py-1 rounded-lg bg-neutral-800 text-neutral-400';
+        return;
+      }
+
+      const x = step.x;
+      const y = step.y;
+      const comp = step.compResult;
+      const needsSwap = step.needsSwap;
+
+      document.getElementById('microscopeNomeX').textContent = x.nome;
+      document.getElementById('microscopeStrX').textContent = `"${x.nome}"`;
+      document.getElementById('microscopeNotaX').textContent = x.nota;
+
+      document.getElementById('microscopeNomeY').textContent = y.nome;
+      document.getElementById('microscopeStrY').textContent = `"${y.nome}"`;
+      document.getElementById('microscopeNotaY').textContent = y.nota;
+
+      // Badge geral do resultado de vemAntes
+      resBadge.textContent = `vemAntes = ${comp.result}`;
+      resBadge.className = comp.result
+        ? 'text-xs font-mono font-bold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300'
+        : 'text-xs font-mono font-bold px-2.5 py-1 rounded-full bg-rose-100 text-rose-800 border border-rose-300';
+
+      // Critério 1: Notas
+      const isNotaDifferent = x.nota !== y.nota;
+      if (isNotaDifferent) {
+        document.getElementById('stepNotaDesc').innerHTML = `Notas diferentes (${x.nota} &ne; ${y.nota}) &rarr; <code class="font-bold">x.nota > y.nota</code> (${x.nota > y.nota})`;
+        document.getElementById('stepNotaResult').textContent = x.nota > y.nota ? 'x.nota > y.nota (TRUE)' : 'x.nota < y.nota (FALSE)';
+        document.getElementById('stepNotaResult').className = x.nota > y.nota 
+          ? 'text-[0.65rem] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-300'
+          : 'text-[0.65rem] font-bold px-2 py-0.5 rounded bg-rose-100 text-rose-800 border border-rose-300';
+
+        document.getElementById('stepStrcmpDesc').textContent = 'Ignorado (desempate não necessário pois as notas diferem).';
+        document.getElementById('stepStrcmpResult').textContent = 'NÃO EXECUTADO';
+        document.getElementById('stepStrcmpResult').className = 'text-[0.65rem] font-bold px-2 py-0.5 rounded bg-neutral-200 text-neutral-500';
+      } else {
+        document.getElementById('stepNotaDesc').innerHTML = `Notas iguais (${x.nota} == ${y.nota}) &rarr; <code class="font-bold text-amber-600">EMPATE! Acionando strcmp!</code>`;
+        document.getElementById('stepNotaResult').textContent = 'EMPATE (Pula p/ strcmp)';
+        document.getElementById('stepNotaResult').className = 'text-[0.65rem] font-bold px-2 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-300';
+
+        const cmpVal = x.nome.localeCompare(y.nome);
+        document.getElementById('stepStrcmpDesc').innerHTML = `Comparando "${x.nome}" com "${y.nome}" &rarr; retorno: <b>${cmpVal < 0 ? '< 0' : '> 0'}</b>`;
+        document.getElementById('stepStrcmpResult').textContent = cmpVal < 0 ? 'ORDEM ALFABÉTICA OK (TRUE)' : 'ORDEM INVERSA (FALSE)';
+        document.getElementById('stepStrcmpResult').className = cmpVal < 0
+          ? 'text-[0.65rem] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-300'
+          : 'text-[0.65rem] font-bold px-2 py-0.5 rounded bg-rose-100 text-rose-800 border border-rose-300';
+      }
+
+      // Decisão do Bubble (!vemAntes)
+      if (needsSwap) {
+        document.getElementById('stepDecisionDesc').innerHTML = `!vemAntes é <b class="text-amber-400">TRUE</b>. Os alunos estão desordenados!`;
+        document.getElementById('stepDecisionBadge').textContent = 'EXECUTAR TROCA!';
+        document.getElementById('stepDecisionBadge').className = 'text-xs font-bold px-2.5 py-1 rounded-lg bg-amber-500 text-neutral-950 animate-pulse';
+      } else {
+        document.getElementById('stepDecisionDesc').innerHTML = `!vemAntes é <b class="text-emerald-400">FALSE</b>. Os alunos já estão na ordem certa.`;
+        document.getElementById('stepDecisionBadge').textContent = 'MANTER ORDEM';
+        document.getElementById('stepDecisionBadge').className = 'text-xs font-bold px-2.5 py-1 rounded-lg bg-emerald-500 text-neutral-950';
+      }
+    }
+
+    // --- ATUALIZAÇÃO DA TELA PARA UM DETERMINADO PASSO ---
+    function renderizarPasso(idx) {
+      if (!simulationSteps || simulationSteps.length === 0) return;
+      if (idx < 0) idx = 0;
+      if (idx >= simulationSteps.length) idx = simulationSteps.length - 1;
+      currentStepIdx = idx;
+
+      const step = simulationSteps[idx];
+
+      // 1. Telemetria
+      const teleTrocas = document.getElementById('teleTrocas');
+      const prevTrocas = parseInt(teleTrocas.textContent) || 0;
+      teleTrocas.textContent = step.trocasCount;
+      if (step.trocasCount > prevTrocas) {
+        teleTrocas.classList.remove('counter-pulse');
+        void teleTrocas.offsetWidth;
+        teleTrocas.classList.add('counter-pulse');
+      }
+
+      document.getElementById('teleComparacoes').textContent = step.compCount;
+      document.getElementById('teleVarI').textContent = step.i;
+      document.getElementById('teleVarJ').textContent = step.j;
+      document.getElementById('teleStatusStep').textContent = step.title;
+      document.getElementById('sliderStepText').textContent = `Passo ${idx + 1} de ${simulationSteps.length}`;
+      document.getElementById('simSlider').value = idx;
+
+      // Badge do Critério Ativo
+      const critBadge = document.getElementById('teleCriterioBadge');
+      if (step.compResult) {
+        if (step.compResult.reason === 'NOTA') {
+          critBadge.textContent = '1º: Nota';
+          critBadge.className = 'text-xs font-mono font-bold text-sky-800 bg-sky-100 border border-sky-300 px-2 py-1 rounded-lg text-center mt-1';
+        } else {
+          critBadge.textContent = '2º: strcmp';
+          critBadge.className = 'text-xs font-mono font-bold text-amber-900 bg-amber-100 border border-amber-300 px-2 py-1 rounded-lg text-center mt-1 animate-pulse';
+        }
+      } else {
+        critBadge.textContent = 'Início/Fim';
+        critBadge.className = 'text-xs font-mono font-bold text-neutral-600 bg-neutral-200 border border-neutral-300 px-2 py-1 rounded-lg text-center mt-1';
+      }
+
+      // Slot Temporário ALUNO temp
+      const tempSlot = document.getElementById('tempSlotContent');
+      if (step.temp) {
+        tempSlot.textContent = `${step.temp.nome} (${step.temp.nota})`;
+        tempSlot.className = 'text-xs font-mono font-bold text-amber-900 bg-amber-200 px-2 py-0.5 rounded';
+      } else {
+        tempSlot.textContent = '[vazio]';
+        tempSlot.className = 'text-xs font-mono font-bold text-neutral-400';
+      }
+
+      // 2. Renderizar Lista e Microscópio
+      renderizarListaAlunos(step);
+      renderizarMicroscopio(step);
+
+      // 3. Atualizar Linhas Ativas do Código C
+      atualizarLinhasCodigo(step.activeLines, step.isSwap);
+
+      // 4. Terminal BOCA
+      atualizarTerminalStdout(step);
+
+      if (window.lucide) lucide.createIcons();
+    }
+
+    // --- ATUALIZAÇÃO DO TERMINAL STDOUT ---
+    function atualizarTerminalStdout(step) {
+      const container = document.getElementById('terminalStdoutLines');
+      container.innerHTML = '';
+      const v = step.v;
+      const n = v.length;
+      const isFinished = step.activeLines.includes(43);
+
+      v.forEach((aluno, idx) => {
+        const line = document.createElement('div');
+        if (idx === n - 1 && isFinished) {
+          line.className = 'text-rose-400 font-bold';
+          line.textContent = `${aluno.nome} ${aluno.nota} #reprovado(a)`;
+        } else {
+          line.className = isFinished ? 'text-emerald-400' : 'text-neutral-400';
+          line.textContent = `${aluno.nome} ${aluno.nota}`;
+        }
+        container.appendChild(line);
+      });
+    }
+
+    // --- DESTAQUE DE CÓDIGO C ---
+    function atualizarLinhasCodigo(activeLineNumbers, isSwap) {
+      const lines = document.querySelectorAll('.code-line');
+      lines.forEach(l => {
+        l.classList.remove('active-line', 'focus-swap', 'focus-vemAntes');
+      });
+
+      if (!activeLineNumbers || activeLineNumbers.length === 0) return;
+
+      activeLineNumbers.forEach(num => {
+        const el = document.getElementById(`line-${num}`);
+        if (el) {
+          el.classList.add('active-line');
+          if (isSwap) {
+            el.classList.add('focus-swap');
+          }
+        }
+      });
+
+      const firstActive = document.getElementById(`line-${activeLineNumbers[0]}`);
+      if (firstActive) {
+        const container = document.getElementById('codeContainer');
+        const offset = firstActive.offsetTop - container.offsetTop;
+        if (offset < container.scrollTop || offset > container.scrollTop + container.clientHeight - 60) {
+          container.scrollTo({ top: Math.max(0, offset - 40), behavior: 'smooth' });
+        }
+      }
+    }
+
+    // --- CONTROLES DE REPRODUÇÃO ---
+    function proximoPasso() {
+      if (currentStepIdx < simulationSteps.length - 1) {
+        renderizarPasso(currentStepIdx + 1);
+      } else {
+        pausar();
+      }
+    }
+
+    function passoAnterior() {
+      if (currentStepIdx > 0) {
+        renderizarPasso(currentStepIdx - 1);
+      }
+    }
+
+    function irParaPasso(idx) {
+      renderizarPasso(idx);
+    }
+
+    function reiniciarSimulacao() {
+      pausar();
+      renderizarPasso(0);
+    }
+
+    function togglePlayPause() {
+      if (isPlaying) {
+        pausar();
+      } else {
+        iniciarPlay();
+      }
+    }
+
+    function iniciarPlay() {
+      if (currentStepIdx >= simulationSteps.length - 1) {
+        currentStepIdx = 0;
+      }
+      isPlaying = true;
+      document.getElementById('playBtnText').textContent = 'Pausar';
+      const playIcon = document.querySelector('#playPauseBtn i');
+      if (playIcon) playIcon.setAttribute('data-lucide', 'pause');
+
+      if (playInterval) clearInterval(playInterval);
+      playInterval = setInterval(() => {
+        if (currentStepIdx < simulationSteps.length - 1) {
+          proximoPasso();
+        } else {
+          pausar();
+        }
+      }, playSpeed);
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function pausar() {
+      isPlaying = false;
+      if (playInterval) {
+        clearInterval(playInterval);
+        playInterval = null;
+      }
+      document.getElementById('playBtnText').textContent = 'Play';
+      const playIcon = document.querySelector('#playPauseBtn i');
+      if (playIcon) playIcon.setAttribute('data-lucide', 'play');
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function ajustarVelocidade(speedMs) {
+      playSpeed = speedMs;
+      document.querySelectorAll('.speed-btn').forEach(btn => {
+        btn.className = 'speed-btn px-2 py-0.5 rounded border border-neutral-300 hover:bg-neutral-200';
+      });
+      event.target.className = 'speed-btn px-2 py-0.5 rounded border border-neutral-950 bg-neutral-950 text-white font-bold';
+      if (isPlaying) {
+        iniciarPlay();
+      }
+    }
+
+    // --- SALTO INTELIGENTE ---
+    function pularParaProximaTroca() {
+      pausar();
+      for (let i = currentStepIdx + 1; i < simulationSteps.length; i++) {
+        if (simulationSteps[i].isSwap) {
+          renderizarPasso(i);
+          return;
+        }
+      }
+      renderizarPasso(simulationSteps.length - 1);
+    }
+
+    function pularParaEmpateStrcmp() {
+      pausar();
+      for (let i = currentStepIdx + 1; i < simulationSteps.length; i++) {
+        if (simulationSteps[i].compResult && simulationSteps[i].compResult.reason === 'STRCMP') {
+          renderizarPasso(i);
+          return;
+        }
+      }
+    }
+
+    // --- PRESETS ---
+    function carregarPreset(presetId) {
+      pausar();
+      const p = PRESETS[presetId];
+      if (!p) return;
+
+      currentStudents = p.map(a => ({ ...a }));
+
+      for (let i = 1; i <= 4; i++) {
+        const btn = document.getElementById(`presetBtn${i}`);
+        if (btn) {
+          if (i === presetId) {
+            btn.className = 'px-3.5 py-1.5 rounded-full border border-neutral-950 bg-neutral-950 text-white text-[0.65rem] font-semibold uppercase tracking-widest transition-all shadow-sm';
+          } else {
+            btn.className = 'px-3.5 py-1.5 rounded-full border border-neutral-400 text-[0.65rem] font-semibold uppercase tracking-widest hover:bg-neutral-300 transition-all text-neutral-800';
+          }
+        }
+      }
+
+      recompilarSimulacao();
+    }
+
+    function embaralharAlunos() {
+      pausar();
+      for (let i = currentStudents.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [currentStudents[i], currentStudents[j]] = [currentStudents[j], currentStudents[i]];
+      }
+      recompilarSimulacao();
+    }
+
+    function recompilarSimulacao() {
+      document.getElementById('labelTotalAlunos').textContent = currentStudents.length;
+      simulationSteps = gerarPassosSimulacao(currentStudents);
+      document.getElementById('simSlider.max')
+      document.getElementById('simSlider').max = simulationSteps.length - 1;
+      renderizarPasso(0);
+    }
+
+    // --- ABAS DIDÁTICAS ---
+    function mudarAba(abaId) {
+      const abas = ['structs', 'vemAntes', 'bubble'];
+      abas.forEach(a => {
+        const btn = document.getElementById(`tabBtn-${a}`);
+        const content = document.getElementById(`tabContent-${a}`);
+        if (a === abaId) {
+          btn.className = 'px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wider bg-neutral-950 text-white shadow-sm transition-all';
+          content.classList.remove('hidden');
+        } else {
+          btn.className = 'px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wider bg-neutral-200 text-neutral-700 hover:bg-neutral-300 transition-all';
+          content.classList.add('hidden');
+        }
+      });
+      if (window.lucide) lucide.createIcons();
+    }
+
+    // --- INICIALIZAÇÃO ---
+    window.addEventListener('DOMContentLoaded', () => {
+      carregarPreset(1);
+    });
+  </script>
+</body>
+</html>

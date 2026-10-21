@@ -1,0 +1,1722 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>Visualizador do Exercício 22 — DSU (Union-Find) & Famílias</title>
+  
+  <!-- Assets Locais do Design System -->
+  <script src="Design System/assets/resource_3fa48481346f.js"></script>
+  <script src="Design System/assets/lucide_latest_2eebd0ebe8c2.js"></script>
+  <link href="Design System/assets/css2_e01beb4f8743.css" rel="stylesheet"/>
+  <link href="Design System/assets/css2_8e191ef32247.css" rel="stylesheet"/>
+  <link href="Design System/assets/css2_62759cd015bd.css" rel="stylesheet"/>
+  
+  <!-- Google Fonts Fallback & Resiliência -->
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+
+  <style>
+    .font-oswald { font-family: 'Oswald', sans-serif; }
+    .font-space { font-family: 'Space Grotesk', sans-serif; }
+    .font-inter { font-family: 'Inter', sans-serif; }
+    .font-mono { font-family: 'Geist Mono', 'Space Mono', monospace; }
+
+    /* Mobile-first touch containment */
+    html, body {
+      max-width: 100vw;
+      overflow-x: hidden;
+    }
+
+    ::-webkit-scrollbar { display: none; }
+    body { -ms-overflow-style: none; scrollbar-width: none; }
+    html { scroll-behavior: smooth; }
+
+    /* Slider de progresso customizado no estilo Future UI com suporte a toque */
+    input[type=range] {
+      -webkit-appearance: none;
+      appearance: none;
+      background: #cbd5e1;
+      border-radius: 9999px;
+      height: 8px;
+      outline: none;
+      touch-action: pan-y;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: #0a0a0a;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+      transition: transform 0.15s ease, background 0.15s ease;
+    }
+    input[type=range]::-webkit-slider-thumb:hover,
+    input[type=range]::-webkit-slider-thumb:active {
+      transform: scale(1.15);
+      background: #0284c7; /* Sky Blue theme */
+    }
+    input[type=range]::-moz-range-thumb {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: #0a0a0a;
+      cursor: pointer;
+      border: none;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+    }
+
+    /* Animações e Estilos dos Nós do Grafo SVG */
+    .dsu-node-circle {
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .dsu-node-circle.active {
+      transform: scale(1.18);
+      filter: drop-shadow(0 0 12px rgba(14, 165, 233, 0.8));
+    }
+    .dsu-node-circle.root-leader {
+      stroke-dasharray: 4 2;
+      animation: rotateDash 10s linear infinite;
+    }
+    @keyframes rotateDash {
+      to { stroke-dashoffset: 60; }
+    }
+    .dsu-edge {
+      transition: stroke 0.25s ease, stroke-width 0.25s ease;
+    }
+    .dsu-edge.active-path {
+      stroke: #38bdf8 !important;
+      stroke-width: 3.5 !important;
+      filter: drop-shadow(0 0 6px rgba(56, 189, 248, 0.6));
+    }
+    .dsu-edge.compressed-edge {
+      stroke: #10b981 !important;
+      stroke-width: 3 !important;
+      stroke-dasharray: 4 2;
+      animation: compressGlow 1s ease-in-out infinite alternate;
+    }
+    @keyframes compressGlow {
+      from { stroke-dashoffset: 0; filter: drop-shadow(0 0 4px #10b981); }
+      to { stroke-dashoffset: 12; filter: drop-shadow(0 0 10px #34d399); }
+    }
+
+    /* Células de Memória do Array pai[] */
+    .mem-cell {
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .mem-cell.highlight-read {
+      background-color: #e0f2fe !important;
+      border-color: #0284c7 !important;
+      color: #0369a1 !important;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(2, 132, 199, 0.2);
+    }
+    .mem-cell.highlight-write {
+      background-color: #dcfce7 !important;
+      border-color: #16a34a !important;
+      color: #15803d !important;
+      transform: translateY(-3px) scale(1.05);
+      box-shadow: 0 6px 16px rgba(22, 163, 74, 0.3);
+    }
+
+    /* Terminal blinking cursor */
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+    .terminal-cursor {
+      display: inline-block;
+      width: 8px;
+      height: 15px;
+      background-color: #38bdf8;
+      vertical-align: middle;
+      animation: blink 1s infinite;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased xl:items-center xl:justify-center xl:p-8 text-neutral-950 font-space bg-neutral-400 p-0 overflow-x-hidden w-full max-w-full">
+
+  <!-- Container Principal do Design System -->
+  <main class="xl:rounded-[3.5rem] xl:p-12 overflow-hidden flex flex-col xl:max-w-[96rem] xl:shadow-2xl bg-[#E6E6E6] w-full max-w-full rounded-none px-3 sm:px-6 py-6 xl:p-12 relative shadow-none border-x-0 sm:border border-neutral-300">
+    
+    <!-- Efeito de Luz Difusa de Fundo -->
+    <div class="pointer-events-none bg-gradient-to-br from-white/50 via-transparent to-neutral-400/20 w-full h-full absolute top-0 left-0"></div>
+
+    <!-- Barra de Navegação e Marca -->
+    <nav class="relative z-20 flex flex-wrap items-center justify-between gap-6 pb-6 border-b border-neutral-300 mb-8">
+      <!-- Logo do Design System: 3 Barras Características -->
+      <div class="flex items-center gap-3 group cursor-default">
+        <div class="flex gap-1">
+          <div class="w-3 h-8 bg-neutral-950 rounded-full"></div>
+          <div class="w-3 h-8 bg-neutral-950 rounded-full group-hover:h-5 transition-all duration-300"></div>
+          <div class="w-3 h-8 bg-neutral-950 rounded-full"></div>
+        </div>
+        <div>
+          <span class="text-xs font-mono font-bold tracking-widest uppercase text-neutral-950 block">FUTURE UI // DSU &amp; GRAFOS</span>
+          <span class="text-[0.6rem] sm:text-[0.65rem] text-neutral-500 uppercase tracking-wider block font-medium leading-tight max-w-[230px] sm:max-w-none">Exercício 22 · DSU, Compressão de Caminhos &amp; Famílias</span>
+        </div>
+      </div>
+
+      <!-- Links e Badges de Estado -->
+      <div class="flex flex-wrap items-center gap-2 sm:gap-3">
+        <a href="visualizador-recursao.html" class="px-3 py-1.5 rounded-full border border-neutral-400 text-[0.65rem] font-bold uppercase tracking-widest hover:bg-neutral-300 transition-colors flex items-center gap-1 text-neutral-800" title="Ver visualizador de Recursão (Soma)">Ex. 1</a>
+        <a href="visualizador-fibonacci.html" class="px-3 py-1.5 rounded-full border border-neutral-400 text-[0.65rem] font-bold uppercase tracking-widest hover:bg-neutral-300 transition-colors flex items-center gap-1 text-neutral-800" title="Ver visualizador de Fibonacci">Fib</a>
+        <a href="visualizador-ex21.html" class="px-3 py-1.5 rounded-full border border-neutral-400 text-[0.65rem] font-bold uppercase tracking-widest hover:bg-neutral-300 transition-colors flex items-center gap-1 text-neutral-800" title="Ver visualizador de Saque ATM">Ex. 21</a>
+        <a href="reverso_recursivo.html" class="px-3 py-1.5 rounded-full border border-neutral-400 text-[0.65rem] font-bold uppercase tracking-widest hover:bg-neutral-300 transition-colors flex items-center gap-1 text-neutral-800" title="Ver Reverso Recursivo">Reverso</a>
+        <a href="visualizador-ex150.html" class="px-3 py-1.5 rounded-full border border-neutral-400 text-[0.65rem] font-bold uppercase tracking-widest hover:bg-neutral-300 transition-colors flex items-center gap-1 text-neutral-800" title="Ver visualizador de Bordas (Ex. 150)">Ex. 150</a>
+        <a href="fibonacci_recursivo.html" class="px-3 py-1.5 rounded-full border border-neutral-400 text-[0.65rem] font-bold uppercase tracking-widest hover:bg-neutral-300 transition-colors flex items-center gap-1 text-neutral-800" title="Ver visualizador de Fibonacci Recursivo (Árvore)">Fib (Árvore)</a>
+        <a href="visualizador-ex146.html" class="px-3 py-1.5 rounded-full border border-neutral-400 text-[0.65rem] font-bold uppercase tracking-widest hover:bg-neutral-300 transition-colors flex items-center gap-1 text-neutral-800" title="Ver visualizador de Matriz (Ex. 146)">Matriz 146</a>
+        
+        <div class="bg-neutral-950 text-white border border-neutral-800 rounded-full px-3.5 py-1.5 shadow-md flex items-center gap-2">
+          <i data-lucide="network" class="w-3.5 h-3.5 text-sky-400"></i>
+          <span class="text-[0.65rem] font-bold uppercase tracking-widest">DSU Famílias (Ex. 22)</span>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Cabeçalho Monumental Hero -->
+    <header class="relative z-20 mb-8">
+      <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-6 sm:gap-8">
+        <div class="max-w-3xl">
+          <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-[0.65rem] sm:text-xs font-semibold tracking-widest uppercase text-neutral-500 mb-3">
+            <span>Exercício 22 · Estruturas de Dados</span>
+            <span class="w-1.5 h-1.5 rounded-full bg-neutral-400"></span>
+            <span class="text-neutral-800 font-bold">Disjoint Set Union (Union-Find)</span>
+          </div>
+          <h1 class="text-3xl sm:text-5xl md:text-6xl lg:text-7xl uppercase font-medium text-neutral-950 tracking-tighter font-oswald leading-tight sm:leading-none mb-3">
+            A Floresta de <span class="text-sky-700">Famílias</span>
+          </h1>
+          <p class="text-xs sm:text-sm text-neutral-700 leading-relaxed uppercase tracking-wide font-normal max-w-2xl">
+            Como pessoas isoladas se agrupam em clãs através de relações de parentesco? Descubra o poder do <b>Union-Find</b> com <b>Compressão de Caminhos</b>, onde árvores altas se achatam instantaneamente para responder em tempo quase-constante quem lidera cada família.
+          </p>
+        </div>
+
+        <!-- Card de Dica de Ouro Didática (Sky Accent Card) -->
+        <div class="w-full lg:w-96 overflow-hidden bg-sky-700 border border-white/30 rounded-2xl p-4 sm:p-5 shadow-lg shadow-sky-950/20 relative text-white">
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+            <span class="text-[0.65rem] font-bold uppercase tracking-widest text-sky-200 flex items-center gap-1.5">
+              <i data-lucide="sparkles" class="w-3.5 h-3.5 text-sky-300"></i> Dica de Ouro
+            </span>
+            <span class="text-[0.65rem] font-mono font-bold bg-sky-950/50 px-2 py-0.5 rounded-full text-sky-200">UNIÃO DE RAÍZES</span>
+          </div>
+          <p class="text-xs text-sky-100 font-medium leading-relaxed">
+            Nunca faça <code>pai[a] = b</code>! Isso quebraria os subordinados de <code>a</code>. No DSU, unimos os <b>líderes supremos</b>: <code>pai[raizA] = raizB</code>. Assim, todos os membros de ambos os clãs continuam unidos debaixo do mesmo teto!
+          </p>
+        </div>
+      </div>
+    </header>
+
+    <!-- Barra de Controles de Reprodução e Configuração -->
+    <section class="relative z-20 mb-8 bg-neutral-200/60 border border-neutral-300 rounded-3xl p-4 sm:p-5 backdrop-blur-sm">
+      <div class="flex flex-col gap-5">
+        
+        <!-- Linha 1: Configurações, Presets e Entrada Customizada -->
+        <div class="flex flex-wrap items-start sm:items-center justify-between gap-4 pb-4 border-b border-neutral-300/80">
+          <div class="flex items-center gap-3 flex-wrap">
+            
+            <!-- Controle de Pessoas (N) -->
+            <div class="flex flex-col">
+              <span class="text-[0.65rem] font-bold uppercase tracking-widest text-neutral-500 mb-1 flex items-center gap-1">
+                <i data-lucide="users" class="w-3 h-3 text-sky-700"></i> Pessoas (N)
+              </span>
+              <div class="flex items-center gap-1 bg-white border border-neutral-400 rounded-xl p-1 shadow-sm">
+                <button onclick="adjustN(-1)" class="w-8 h-8 rounded-lg hover:bg-neutral-100 flex items-center justify-center font-bold text-neutral-700 active:scale-95 transition-all text-sm" aria-label="Diminuir N">-</button>
+                <input type="number" id="inpN" value="6" min="2" max="8" class="w-10 text-center font-mono font-bold text-sm bg-transparent outline-none"/>
+                <button onclick="adjustN(1)" class="w-8 h-8 rounded-lg hover:bg-neutral-100 flex items-center justify-center font-bold text-neutral-700 active:scale-95 transition-all text-sm" aria-label="Aumentar N">+</button>
+              </div>
+            </div>
+
+            <!-- Presets Pedagógicos -->
+            <div class="flex flex-col">
+              <span class="text-[0.65rem] font-bold uppercase tracking-widest text-neutral-500 mb-1 flex items-center gap-1">
+                <i data-lucide="bookmark" class="w-3 h-3 text-sky-700"></i> Casos Pedagógicos
+              </span>
+              <div class="flex items-center gap-1.5 flex-wrap">
+                <button onclick="loadPreset('padrao')" class="preset-btn px-2.5 py-1.5 rounded-xl border border-sky-600 bg-sky-100 text-sky-900 text-[0.65rem] font-bold uppercase tracking-wider transition-all min-h-[36px]" data-preset="padrao">Padrão (N=6)</button>
+                <button onclick="loadPreset('compressao')" class="preset-btn px-2.5 py-1.5 rounded-xl border border-neutral-400 bg-white hover:bg-sky-50 text-[0.65rem] font-bold uppercase tracking-wider transition-all min-h-[36px]" data-preset="compressao">Cadeia &amp; Compressão (N=5)</button>
+                <button onclick="loadPreset('ciclo')" class="preset-btn px-2.5 py-1.5 rounded-xl border border-neutral-400 bg-white hover:bg-sky-50 text-[0.65rem] font-bold uppercase tracking-wider transition-all min-h-[36px]" data-preset="ciclo">Ciclo (N=4)</button>
+                <button onclick="loadPreset('isolados')" class="preset-btn px-2.5 py-1.5 rounded-xl border border-neutral-400 bg-white hover:bg-sky-50 text-[0.65rem] font-bold uppercase tracking-wider transition-all min-h-[36px]" data-preset="isolados">Isolados (N=5)</button>
+                <button onclick="loadPreset('unidos')" class="preset-btn px-2.5 py-1.5 rounded-xl border border-neutral-400 bg-white hover:bg-sky-50 text-[0.65rem] font-bold uppercase tracking-wider transition-all min-h-[36px]" data-preset="unidos">Família Única (N=5)</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Relações Atuais (M) & Input de Pares -->
+          <div class="flex items-center gap-3 w-full sm:w-auto">
+            <div class="flex flex-col w-full sm:w-auto">
+              <span class="text-[0.65rem] font-bold uppercase tracking-widest text-neutral-500 mb-1 flex items-center gap-1">
+                <i data-lucide="git-merge" class="w-3 h-3 text-sky-700"></i> Conexões a b (M)
+              </span>
+              <div class="flex flex-wrap sm:flex-nowrap items-center gap-2 w-full sm:w-auto">
+                <input type="text" id="inpEdges" value="1 2, 2 3, 4 5, 5 6" class="px-3 py-2 bg-white border border-neutral-400 rounded-xl font-mono text-xs font-semibold text-neutral-800 w-full sm:w-56 shadow-sm focus:border-sky-600 outline-none" title="Exemplo: 1 2, 2 3, 4 5"/>
+                <button onclick="applyCustomConfig()" class="px-3.5 py-2 bg-neutral-950 text-white hover:bg-sky-700 rounded-xl text-[0.65rem] font-bold uppercase tracking-widest shadow-sm transition-all flex items-center justify-center gap-1 min-h-[40px] w-full sm:w-auto">
+                  <i data-lucide="play" class="w-3 h-3"></i> Aplicar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Linha 2: Barra de Reprodução, Passos e Velocidade -->
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div class="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+            <button id="btnReset" onclick="resetSim()" class="w-10 h-10 rounded-xl bg-white border border-neutral-400 hover:bg-neutral-100 flex items-center justify-center text-neutral-800 shadow-sm active:scale-95 transition-all min-h-[40px]" title="Reiniciar Simulação">
+              <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+            </button>
+            <button id="btnPrev" onclick="stepBackward()" class="w-10 h-10 rounded-xl bg-white border border-neutral-400 hover:bg-neutral-100 flex items-center justify-center text-neutral-800 shadow-sm active:scale-95 transition-all min-h-[40px]" title="Passo Anterior (←)">
+              <i data-lucide="skip-back" class="w-4 h-4"></i>
+            </button>
+            <button id="btnPlay" onclick="togglePlay()" class="px-4 h-10 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs uppercase tracking-widest flex items-center gap-1.5 shadow-md shadow-sky-950/20 active:scale-95 transition-all min-h-[40px]" title="Iniciar / Pausar (Espaço)">
+              <i id="playIcon" data-lucide="play" class="w-4 h-4"></i>
+              <span id="playText">Executar</span>
+            </button>
+            <button id="btnNext" onclick="stepForward()" class="w-10 h-10 rounded-xl bg-white border border-neutral-400 hover:bg-neutral-100 flex items-center justify-center text-neutral-800 shadow-sm active:scale-95 transition-all min-h-[40px]" title="Próximo Passo (→)">
+              <i data-lucide="skip-forward" class="w-4 h-4"></i>
+            </button>
+          </div>
+
+          <!-- Timeline Scrubber -->
+          <div class="w-full sm:w-auto flex-1 min-w-[200px] flex items-center gap-2.5">
+            <span id="lblCurrentStep" class="text-xs font-mono font-bold text-neutral-700 min-w-[58px]">0 / 0</span>
+            <input type="range" id="stepRange" min="0" max="0" value="0" oninput="onScrub(this.value)" class="flex-1 cursor-pointer w-full"/>
+            <span id="lblProgressPct" class="text-xs font-mono font-bold text-sky-700 min-w-[38px] text-right">0%</span>
+          </div>
+
+          <!-- Velocidade de Execução -->
+          <div class="flex items-center gap-1 bg-white border border-neutral-400 rounded-xl p-1 shadow-sm">
+            <button onclick="setSpeed(0.5)" class="speed-btn px-2 py-1 rounded-lg text-[0.65rem] font-bold text-neutral-600 hover:bg-neutral-100 transition-colors" data-speed="0.5">0.5x</button>
+            <button onclick="setSpeed(1)" class="speed-btn px-2 py-1 rounded-lg text-[0.65rem] font-bold bg-neutral-950 text-white shadow-sm transition-colors" data-speed="1">1.0x</button>
+            <button onclick="setSpeed(2)" class="speed-btn px-2 py-1 rounded-lg text-[0.65rem] font-bold text-neutral-600 hover:bg-neutral-100 transition-colors" data-speed="2">2.0x</button>
+            <button onclick="setSpeed(3)" class="speed-btn px-2 py-1 rounded-lg text-[0.65rem] font-bold text-neutral-600 hover:bg-neutral-100 transition-colors" data-speed="3">3.0x</button>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Radar Cognitivo em 4 Pilares -->
+    <section class="relative z-20 mb-8 bg-neutral-950 border border-neutral-800 rounded-3xl p-5 sm:p-6 text-white shadow-xl">
+      <div class="flex flex-wrap items-center justify-between gap-3 mb-4 pb-3 border-b border-neutral-800">
+        <div class="flex items-center gap-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-sky-400 animate-pulse"></span>
+          <span class="text-xs font-mono font-bold uppercase tracking-widest text-neutral-400">RADAR COGNITIVO // EXECUÇÃO DA CPU</span>
+        </div>
+        <div class="flex items-center gap-3">
+          <span id="badgeCurrentPhase" class="text-[0.65rem] font-mono font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-sky-950 text-sky-400 border border-sky-800">INICIALIZAÇÃO</span>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6">
+        <!-- Pilar 1: Operação e Linha C -->
+        <div class="flex flex-col">
+          <span class="text-[0.65rem] font-bold uppercase tracking-widest text-neutral-400 mb-1 flex items-center gap-1">
+            <i data-lucide="cpu" class="w-3.5 h-3.5 text-sky-400"></i> 1. Operação Atual
+          </span>
+          <div class="text-sm font-mono font-bold text-sky-300 mb-1" id="radarOp">pai[i] = i</div>
+          <p class="text-xs text-neutral-400 leading-snug" id="radarOpSub">Inicializando array de famílias.</p>
+        </div>
+
+        <!-- Pilar 2: Pergunta Decisória (Condicional) -->
+        <div class="flex flex-col">
+          <span class="text-[0.65rem] font-bold uppercase tracking-widest text-neutral-400 mb-1 flex items-center gap-1">
+            <i data-lucide="help-circle" class="w-3.5 h-3.5 text-amber-400"></i> 2. Pergunta Decisória
+          </span>
+          <div class="text-sm font-mono font-bold text-amber-300 mb-1" id="radarCond">pai[x] != x?</div>
+          <p class="text-xs text-neutral-400 leading-snug" id="radarCondExpl">Testando se o nó é líder de si mesmo.</p>
+        </div>
+
+        <!-- Pilar 3: Registradores Vivos -->
+        <div class="flex flex-col">
+          <span class="text-[0.65rem] font-bold uppercase tracking-widest text-neutral-400 mb-1 flex items-center gap-1">
+            <i data-lucide="database" class="w-3.5 h-3.5 text-emerald-400"></i> 3. Registradores Vivos
+          </span>
+          <div class="flex flex-wrap gap-2 text-xs font-mono font-bold">
+            <span class="bg-neutral-900 border border-neutral-800 px-2 py-0.5 rounded text-neutral-300">N: <b id="regN" class="text-white">6</b></span>
+            <span class="bg-neutral-900 border border-neutral-800 px-2 py-0.5 rounded text-neutral-300">a: <b id="regA" class="text-sky-300">-</b></span>
+            <span class="bg-neutral-900 border border-neutral-800 px-2 py-0.5 rounded text-neutral-300">b: <b id="regB" class="text-sky-300">-</b></span>
+            <span class="bg-neutral-900 border border-neutral-800 px-2 py-0.5 rounded text-neutral-300">rzA: <b id="regRzA" class="text-amber-300">-</b></span>
+            <span class="bg-neutral-900 border border-neutral-800 px-2 py-0.5 rounded text-neutral-300">rzB: <b id="regRzB" class="text-amber-300">-</b></span>
+            <span class="bg-neutral-900 border border-neutral-800 px-2 py-0.5 rounded text-neutral-300">fam: <b id="regFam" class="text-emerald-400">0</b></span>
+          </div>
+        </div>
+
+        <!-- Pilar 4: Narrativa em Português Claro -->
+        <div class="flex flex-col">
+          <span class="text-[0.65rem] font-bold uppercase tracking-widest text-neutral-400 mb-1 flex items-center gap-1">
+            <i data-lucide="message-square" class="w-3.5 h-3.5 text-purple-400"></i> 4. Tradução em Português
+          </span>
+          <p class="text-xs text-neutral-200 leading-relaxed font-normal" id="radarNarrative">
+            Cada pessoa começa no seu próprio clã isolado. O pai de cada nó é ele mesmo.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Arena Visual Principal: Grafo de Famílias (SVG) & Inspetor de Memória pai[] -->
+    <section class="relative z-20 mb-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
+      
+      <!-- Esquerda: Grafo Visual da Floresta de DSU (SVG Dinâmico) -->
+      <div class="lg:col-span-8 flex flex-col bg-white border border-neutral-300 rounded-3xl p-4 sm:p-6 shadow-md relative overflow-hidden">
+        <div class="flex flex-wrap items-center justify-between gap-3 pb-4 mb-4 border-b border-neutral-200">
+          <div class="flex items-center gap-2">
+            <i data-lucide="share-2" class="w-4 h-4 text-sky-600"></i>
+            <h2 class="text-xs font-mono font-bold uppercase tracking-widest text-neutral-800">FLORESTA DE CLÃS // REPRESENTAÇÃO VISUAL</h2>
+          </div>
+          <div class="flex flex-wrap items-center gap-2.5 text-[0.65rem] font-mono text-neutral-500">
+            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full border-2 border-amber-500 bg-amber-100"></span> Raiz (Líder)</span>
+            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-sky-500"></span> Filho / Membro</span>
+            <span class="flex items-center gap-1"><span class="w-3 h-0.5 bg-emerald-500"></span> Compressão</span>
+          </div>
+        </div>
+
+        <!-- Canvas SVG Interativo -->
+        <div class="relative w-full h-[360px] sm:h-[400px] flex items-center justify-center bg-neutral-50/70 border border-neutral-200 rounded-2xl overflow-hidden" id="graphContainer">
+          <svg id="dsuSvg" class="w-full h-full" viewBox="0 0 700 380" preserveAspectRatio="xMidYMid meet">
+            <defs>
+              <!-- Marcador de Seta Normal -->
+              <marker id="arrowNormal" markerWidth="8" markerHeight="8" refX="22" refY="4" orient="auto">
+                <path d="M 0 0 L 8 4 L 0 8 Z" fill="#64748b" />
+              </marker>
+              <!-- Marcador de Seta Ativa -->
+              <marker id="arrowActive" markerWidth="8" markerHeight="8" refX="22" refY="4" orient="auto">
+                <path d="M 0 0 L 8 4 L 0 8 Z" fill="#0284c7" />
+              </marker>
+              <!-- Marcador de Seta Comprimida (Verde) -->
+              <marker id="arrowCompressed" markerWidth="8" markerHeight="8" refX="22" refY="4" orient="auto">
+                <path d="M 0 0 L 8 4 L 0 8 Z" fill="#10b981" />
+              </marker>
+            </defs>
+
+            <!-- Camada de Arestas -->
+            <g id="svgEdges"></g>
+
+            <!-- Camada de Nós -->
+            <g id="svgNodes"></g>
+          </svg>
+
+          <!-- Legenda Flutuante das Famílias Detectadas -->
+          <div class="absolute bottom-3 left-3 bg-white/90 backdrop-blur-sm border border-neutral-300 rounded-xl px-3 py-1.5 shadow-sm text-xs font-mono">
+            <span class="text-neutral-500 text-[0.65rem] uppercase block font-bold">Famílias Ativas:</span>
+            <div id="activeClansList" class="flex flex-wrap gap-1.5 mt-1">
+              <!-- Renderizado dinamicamente -->
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-4 flex flex-wrap items-center justify-between text-xs text-neutral-600 gap-2">
+          <div class="flex items-center gap-1.5">
+            <i data-lucide="info" class="w-3.5 h-3.5 text-sky-600"></i>
+            <span>Setas apontam de cada pessoa para o seu <b>pai direto</b>. O nó que aponta para si mesmo é o <b>Líder da Família</b>.</span>
+          </div>
+          <span id="lblGraphStatus" class="font-mono font-bold text-sky-800 bg-sky-50 px-2 py-0.5 rounded-md border border-sky-200">Pronto</span>
+        </div>
+      </div>
+
+      <!-- Direita: Inspetor do Vetor pai[] na Memória -->
+      <div class="lg:col-span-4 flex flex-col bg-white border border-neutral-300 rounded-3xl p-6 shadow-md">
+        <div class="flex items-center justify-between pb-4 mb-4 border-b border-neutral-200">
+          <div class="flex items-center gap-2">
+            <i data-lucide="hard-drive" class="w-4 h-4 text-sky-600"></i>
+            <h2 class="text-xs font-mono font-bold uppercase tracking-widest text-neutral-800">VETOR pai[] NA MEMÓRIA</h2>
+          </div>
+          <span class="text-[0.65rem] font-mono text-neutral-500 font-bold">Tamanho N+1</span>
+        </div>
+
+        <p class="text-xs text-neutral-600 mb-4 leading-relaxed">
+          O array <code>pai[i]</code> armazena quem é o pai da pessoa <code>i</code>. Se <code>pai[i] == i</code>, a pessoa é a <b>raiz/líder supremo</b> de sua família!
+        </p>
+
+        <!-- Tabela do Array pai[] -->
+        <div class="overflow-x-auto pb-2">
+          <table class="w-full text-center border-collapse">
+            <thead>
+              <tr class="text-[0.65rem] font-mono text-neutral-400 border-b border-neutral-200">
+                <th class="py-1.5 px-2 text-left">Pessoa (i)</th>
+                <th class="py-1.5 px-2">pai[i]</th>
+                <th class="py-1.5 px-2 text-right">Papel</th>
+              </tr>
+            </thead>
+            <tbody id="memTableBody" class="font-mono text-xs">
+              <!-- Renderizado dinamicamente -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Card de Resumo de Famílias -->
+        <div class="mt-auto pt-4 border-t border-neutral-200">
+          <div class="bg-neutral-900 text-white rounded-2xl p-4 flex items-center justify-between">
+            <div class="flex flex-col">
+              <span class="text-[0.65rem] font-mono uppercase tracking-widest text-neutral-400">Total de Famílias</span>
+              <span class="text-2xl font-oswald font-bold text-emerald-400 leading-tight" id="lblFinalFamCount">0</span>
+            </div>
+            <div class="text-right">
+              <span class="text-[0.65rem] font-mono text-neutral-400 block uppercase">Nós Raiz (find(i) == i)</span>
+              <span class="text-xs font-mono font-bold text-sky-300" id="lblRootNodesList">-</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Arena Inferior: Código C Original Sincronizado & Terminal stdout -->
+    <section class="relative z-20 mb-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
+      
+      <!-- Esquerda: Visualizador do Código EX22.c (Linha a Linha) -->
+      <div class="lg:col-span-8 flex flex-col bg-neutral-950 border border-neutral-800 rounded-3xl p-6 shadow-xl text-neutral-200">
+        <div class="flex items-center justify-between pb-4 mb-3 border-b border-neutral-800">
+          <div class="flex items-center gap-2">
+            <i data-lucide="code-2" class="w-4 h-4 text-sky-400"></i>
+            <span class="text-xs font-mono font-bold uppercase tracking-widest text-neutral-300">EX22.c // CÓDIGO FONTE SINCRONIZADO</span>
+          </div>
+          <span class="text-[0.65rem] font-mono px-2 py-0.5 rounded bg-neutral-900 text-neutral-400 border border-neutral-800">GCC / ANSI C</span>
+        </div>
+
+        <div id="cCodeContainer" class="font-mono text-[0.72rem] sm:text-xs overflow-x-auto max-h-[360px] leading-relaxed select-text space-y-0.5">
+          <!-- Código em C injetado com spans e números de linha -->
+        </div>
+      </div>
+
+      <!-- Direita: Saída do Terminal stdout -->
+      <div class="lg:col-span-4 flex flex-col bg-neutral-950 border border-neutral-800 rounded-3xl p-6 shadow-xl text-neutral-200">
+        <div class="flex items-center justify-between pb-4 mb-3 border-b border-neutral-800">
+          <div class="flex items-center gap-2">
+            <i data-lucide="terminal" class="w-4 h-4 text-emerald-400"></i>
+            <span class="text-xs font-mono font-bold uppercase tracking-widest text-neutral-300">TERMINAL // STDOUT</span>
+          </div>
+          <span class="text-[0.65rem] font-mono px-2 py-0.5 rounded bg-emerald-950/40 text-emerald-400 border border-emerald-800">LIVE</span>
+        </div>
+
+        <div class="bg-black/80 rounded-2xl p-4 font-mono text-xs flex-1 flex flex-col justify-between border border-neutral-900 min-h-[220px]">
+          <div id="terminalStdout" class="space-y-1 text-neutral-300 overflow-y-auto max-h-[280px]">
+            <span class="text-neutral-500 block text-[0.65rem]">$ gcc EX22.c -o ex22 && ./ex22</span>
+            <!-- Linhas de stdout dinâmicas -->
+          </div>
+          <div class="pt-2 border-t border-neutral-900 flex items-center justify-between text-[0.7rem] text-neutral-500">
+            <span>Status: <b id="termStatus" class="text-sky-400 font-normal">Executando</b></span>
+            <span>Retorno: <b class="text-emerald-400 font-normal">0</b></span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Abas Didáticas de Aprofundamento Conceitual -->
+    <section class="relative z-20 mb-8 bg-white border border-neutral-300 rounded-3xl p-6 sm:p-8 shadow-md">
+      <div class="flex flex-wrap items-center gap-2 pb-6 border-b border-neutral-200 mb-6">
+        <button onclick="switchTab('dsugeral')" class="tab-btn px-4 py-2 rounded-2xl font-bold text-xs uppercase tracking-wider transition-all bg-neutral-950 text-white" data-tab="dsugeral">
+          A Mágica do DSU
+        </button>
+        <button onclick="switchTab('compressao')" class="tab-btn px-4 py-2 rounded-2xl font-bold text-xs uppercase tracking-wider transition-all bg-neutral-100 hover:bg-neutral-200 text-neutral-700" data-tab="compressao">
+          Compressão de Caminho
+        </button>
+        <button onclick="switchTab('raiz')" class="tab-btn px-4 py-2 rounded-2xl font-bold text-xs uppercase tracking-wider transition-all bg-neutral-100 hover:bg-neutral-200 text-neutral-700" data-tab="raiz">
+          Por que Raiz com Raiz?
+        </button>
+        <button onclick="switchTab('complexidade')" class="tab-btn px-4 py-2 rounded-2xl font-bold text-xs uppercase tracking-wider transition-all bg-neutral-100 hover:bg-neutral-200 text-neutral-700" data-tab="complexidade">
+          Complexidade &amp; Ackermann
+        </button>
+        <button onclick="switchTab('passo')" class="tab-btn px-4 py-2 rounded-2xl font-bold text-xs uppercase tracking-wider transition-all bg-neutral-100 hover:bg-neutral-200 text-neutral-700" data-tab="passo">
+          Passo Matemático
+        </button>
+      </div>
+
+      <!-- Conteúdo da Aba 1: A Mágica do DSU -->
+      <div id="tab-dsugeral" class="tab-content block">
+        <h3 class="text-xl font-oswald uppercase font-bold text-neutral-900 mb-3">A Metáfora dos Clãs e Líderes</h3>
+        <p class="text-sm text-neutral-700 leading-relaxed mb-4">
+          O <b>Disjoint Set Union (DSU)</b>, também chamado de <b>Union-Find</b>, é uma das estruturas de dados mais brilhantes da computação. Imagine uma sociedade onde cada pessoa começa como líder absoluto do seu próprio clã de 1 pessoa só (<code>pai[i] = i</code>).
+        </p>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 my-6">
+          <div class="bg-sky-50 border border-sky-200 rounded-2xl p-4">
+            <b class="text-xs font-mono uppercase text-sky-800 block mb-1">1. Inicialização</b>
+            <p class="text-xs text-neutral-700 leading-relaxed">
+              <code>pai[i] = i</code>: Ninguém tem chefe superior a si mesmo. Existem exatamente <b>N</b> famílias independentes.
+            </p>
+          </div>
+          <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4">
+            <b class="text-xs font-mono uppercase text-amber-800 block mb-1">2. find(x)</b>
+            <p class="text-xs text-neutral-700 leading-relaxed">
+              Sobe a hierarquia de pais até encontrar o nó que é pai de si mesmo: o <b>Líder Supremo</b> da família de <code>x</code>.
+            </p>
+          </div>
+          <div class="bg-emerald-50 border border-emerald-200 rounded-2xl p-4">
+            <b class="text-xs font-mono uppercase text-emerald-800 block mb-1">3. unir(a, b)</b>
+            <p class="text-xs text-neutral-700 leading-relaxed">
+              Se as pessoas têm líderes diferentes, um líder se curva ao outro (<code>pai[raizA] = raizB</code>). Agora os dois clãs viram um só!
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Conteúdo da Aba 2: Compressão de Caminho -->
+      <div id="tab-compressao" class="tab-content hidden">
+        <h3 class="text-xl font-oswald uppercase font-bold text-neutral-900 mb-3">Compressão de Caminho (Path Compression)</h3>
+        <p class="text-sm text-neutral-700 leading-relaxed mb-4">
+          Sem otimização, uma sequência de uniões pode formar uma linha comprida como uma lista encadeada: <code>1 → 2 → 3 → 4 → 5</code>. Buscar o líder de <code>1</code> exigiria 4 passos!
+        </p>
+        <div class="bg-neutral-900 text-white p-5 rounded-2xl font-mono text-xs mb-4">
+          <span class="text-neutral-400 block mb-2">// O truque de 1 linha que muda tudo:</span>
+          <span class="text-sky-300">if (pai[x] != x) {</span><br/>
+          &nbsp;&nbsp;<span class="text-emerald-400">pai[x] = find(pai, pai[x]);</span> <span class="text-neutral-500">// Atualiza direto para a raiz!</span><br/>
+          <span class="text-sky-300">}</span><br/>
+          <span class="text-sky-300">return pai[x];</span>
+        </div>
+        <p class="text-sm text-neutral-700 leading-relaxed">
+          Na volta da recursão, todos os nós por onde a busca passou reescrevem seu ponteiro <code>pai[x]</code> para apontar <b>diretamente para o líder supremo</b>. A árvore alta vira uma estrela achatada de profundidade 1!
+        </p>
+      </div>
+
+      <!-- Conteúdo da Aba 3: Por que Raiz com Raiz? -->
+      <div id="tab-raiz" class="tab-content hidden">
+        <h3 class="text-xl font-oswald uppercase font-bold text-neutral-900 mb-3">Por que pai[raizA] = raizB e NÃO pai[a] = b?</h3>
+        <p class="text-sm text-neutral-700 leading-relaxed mb-4">
+          Este é o erro número 1 de iniciantes em DSU! Se você fizer <code>pai[a] = b</code>, você está apenas dizendo que <code>a</code> agora tem <code>b</code> como pai.
+        </p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 my-4">
+          <div class="bg-rose-50 border border-rose-200 rounded-2xl p-4">
+            <span class="text-xs font-mono font-bold text-rose-700 block mb-1">❌ Erro Fatal: pai[a] = b</span>
+            <p class="text-xs text-neutral-700 leading-relaxed">
+              Se <code>a</code> já tinha subordinados abaixo dele e um líder acima dele, ligar <code>a</code> diretamente em <code>b</code> rompe a estrutura da árvore anterior ou perde a raiz verdadeira, gerando ciclos ou clãs fragmentados.
+            </p>
+          </div>
+          <div class="bg-emerald-50 border border-emerald-200 rounded-2xl p-4">
+            <span class="text-xs font-mono font-bold text-emerald-700 block mb-1">✅ Correto: pai[raizA] = raizB</span>
+            <p class="text-xs text-neutral-700 leading-relaxed">
+              Primeiro descobrimos os chefes supremos: <code>raizA = find(a)</code> e <code>raizB = find(b)</code>. Ao ligar a raiz de A na raiz de B, a árvore inteira de A é anexada como filha da árvore de B! Nenhum subordinado é esquecido.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Conteúdo da Aba 4: Complexidade & Ackermann -->
+      <div id="tab-complexidade" class="tab-content hidden">
+        <h3 class="text-xl font-oswald uppercase font-bold text-neutral-900 mb-3">Tempo Quase-Linear: O(M · α(N))</h3>
+        <p class="text-sm text-neutral-700 leading-relaxed mb-4">
+          Com a <b>Compressão de Caminhos</b>, o custo de cada operação de <code>find</code> ou <code>unir</code> é amortizado para praticamente <b>tempo constante O(1)</b>.
+        </p>
+        <p class="text-sm text-neutral-700 leading-relaxed mb-4">
+          O termo $\alpha(N)$ é a <b>Função Inversa de Ackermann</b>. Ela cresce tão ridiculamente devagar que, para qualquer número $N$ menor que o número de átomos do universo observável ($10^{80}$), temos:
+        </p>
+        <div class="bg-sky-50 border border-sky-200 rounded-2xl p-4 font-mono text-center text-sm font-bold text-sky-900 my-4">
+          α(N) ≤ 4 &nbsp;&nbsp;⟹&nbsp;&nbsp; Tempo praticamente O(M)!
+        </div>
+      </div>
+
+      <!-- Conteúdo da Aba 5: Passo Matemático -->
+      <div id="tab-passo" class="tab-content hidden">
+        <h3 class="text-xl font-oswald uppercase font-bold text-neutral-900 mb-3">Estruturação do Pseudocódigo antes da Resolução</h3>
+        <p class="text-sm text-neutral-700 leading-relaxed mb-4">
+          Para quem tem dificuldade na estruturação lógica, quebre o problema nos seguintes 4 passos mentais bem definidos:
+        </p>
+        <ol class="list-decimal list-inside space-y-2 text-xs sm:text-sm text-neutral-700">
+          <li><b>Definição de Estado</b>: Vetor <code>pai[N + 1]</code> onde cada índice representa uma pessoa.</li>
+          <li><b>Caso Base Inicial</b>: Todo elemento $i \in [1..N]$ começa com $pai[i] = i$.</li>
+          <li><b>Processamento de Arestas</b>: Para cada par $(a, b)$, encontre os líderes supremos. Se diferentes, faça o casamento dos clãs ligando uma raiz na outra.</li>
+          <li><b>Contagem de Invariante</b>: Uma família tem <b>exatamente 1 líder supremo</b> (nó onde $find(i) == i$). Logo, basta contar quantos nós atendem a essa condição!</li>
+        </ol>
+      </div>
+
+    </section>
+
+    <!-- Rodapé Monumental com Créditos -->
+    <footer class="relative z-20 pt-8 border-t border-neutral-300 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-neutral-500">
+      <div class="flex items-center gap-2">
+        <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+        <span class="font-mono">FUTURE UI // EX22 DSU SUITE</span>
+      </div>
+      <div>
+        <span>Design System · Visualizador Didático de Algoritmos em C</span>
+      </div>
+    </footer>
+
+  </main>
+
+  <script>
+    /* =========================================================================
+       ESTADO GLOBAL E CONFIGURAÇÃO DO SIMULADOR (EX22.c)
+       ========================================================================= */
+    const C_SOURCE_CODE = [
+      '#include <stdio.h>',
+      '',
+      'int find(int pai[], int x);',
+      'void unir(int pai[], int a, int b);',
+      '',
+      'int main(void) {',
+      '  int n, m;',
+      '  scanf("%d %d", &n, &m);',
+      '',
+      '  int pai[n + 1];',
+      '  for (int i = 1; i <= n; i++) {',
+      '    pai[i] = i; // cada pessoa começa como sua própria família',
+      '  }',
+      '',
+      '  for (int i = 0; i < m; i++) {',
+      '    int a, b;',
+      '    scanf("%d %d", &a, &b);',
+      '    unir(pai, a, b);',
+      '  }',
+      '',
+      '  int familias = 0;',
+      '  for (int i = 1; i <= n; i++) {',
+      '    if (find(pai, i) == i) {',
+      '      familias++;',
+      '    }',
+      '  }',
+      '',
+      '  printf("%d\\n", familias);',
+      '  return 0;',
+      '}',
+      '',
+      'int find(int pai[], int x) {',
+      '  if (pai[x] != x) {',
+      '    pai[x] = find(pai, pai[x]);',
+      '  }',
+      '  return pai[x];',
+      '}',
+      '',
+      'void unir(int pai[], int a, int b) {',
+      '  int raizA = find(pai, a);',
+      '  int raizB = find(pai, b);',
+      '  if (raizA != raizB) {',
+      '    pai[raizA] = raizB;',
+      '  }',
+      '}'
+    ];
+
+    // Paleta de cores para os clãs/famílias
+    const CLAN_COLORS = [
+      { bg: '#0284c7', light: '#e0f2fe', border: '#0369a1', text: '#0284c7', name: 'Azul Celeste' },
+      { bg: '#10b981', light: '#d1fae5', border: '#047857', text: '#059669', name: 'Esmeralda' },
+      { bg: '#f59e0b', light: '#fef3c7', border: '#b45309', text: '#d97706', name: 'Âmbar' },
+      { bg: '#8b5cf6', light: '#ede9fe', border: '#6d28d9', text: '#7c3aed', name: 'Violeta' },
+      { bg: '#ec4899', light: '#fce7f3', border: '#be185d', text: '#db2777', name: 'Rosa Neon' },
+      { bg: '#06b6d4', light: '#cffafe', border: '#0e7490', text: '#0891b2', name: 'Ciano' },
+      { bg: '#f97316', light: '#ffedd5', border: '#c2410c', text: '#ea580c', name: 'Laranja' },
+      { bg: '#64748b', light: '#f1f5f9', border: '#334155', text: '#475569', name: 'Ardósia' }
+    ];
+
+    let currentN = 6;
+    let currentEdges = [[1, 2], [2, 3], [4, 5], [5, 6]];
+    let trace = [];
+    let currentStep = 0;
+    let isPlaying = false;
+    let timer = null;
+    let speed = 1.0;
+
+    /* =========================================================================
+       MOTOR DE SIMULAÇÃO (GERAÇÃO DE TRACE PASSO A PASSO)
+       ========================================================================= */
+    function buildTrace(n, edges) {
+      const steps = [];
+      const pai = new Array(n + 1).fill(0);
+      let familias = 0;
+      let stdoutLog = [`$ ./ex22`, `Entrada: N = ${n}, M = ${edges.length}`];
+
+      // Helper para salvar snapshot
+      function record(opts) {
+        steps.push({
+          line: opts.line,
+          phase: opts.phase || 'EXECUÇÃO',
+          op: opts.op,
+          opSub: opts.opSub || '',
+          cond: opts.cond || '-',
+          condExpl: opts.condExpl || '',
+          narrative: opts.narrative || '',
+          pai: [...pai],
+          activeNodes: opts.activeNodes || [],
+          activeEdge: opts.activeEdge || null,
+          compressedEdge: opts.compressedEdge || null,
+          readCell: opts.readCell !== undefined ? opts.readCell : null,
+          writeCell: opts.writeCell !== undefined ? opts.writeCell : null,
+          reg: {
+            n: n,
+            m: edges.length,
+            a: opts.regA !== undefined ? opts.regA : '-',
+            b: opts.regB !== undefined ? opts.regB : '-',
+            rzA: opts.regRzA !== undefined ? opts.regRzA : '-',
+            rzB: opts.regRzB !== undefined ? opts.regRzB : '-',
+            fam: familias
+          },
+          stdout: [...stdoutLog]
+        });
+      }
+
+      // 1. Início do main
+      record({
+        line: 8,
+        phase: 'INICIALIZAÇÃO',
+        op: `scanf("%d %d", &n, &m)`,
+        opSub: `Lendo n=${n} pessoas e m=${edges.length} conexões`,
+        cond: '-',
+        narrative: `Iniciamos o programa lendo ${n} pessoas e ${edges.length} pares de relacionamento.`
+      });
+
+      // 2. Loop de Inicialização: pai[i] = i
+      record({
+        line: 11,
+        phase: 'INICIALIZAÇÃO',
+        op: `for (int i = 1; i <= n; i++)`,
+        opSub: `Preparando cada pessoa para ser seu próprio líder`,
+        cond: `i <= ${n}`,
+        narrative: `Cada pessoa começará como chefe do seu próprio clã independente.`
+      });
+
+      for (let i = 1; i <= n; i++) {
+        pai[i] = i;
+        record({
+          line: 12,
+          phase: 'INICIALIZAÇÃO',
+          op: `pai[${i}] = ${i};`,
+          opSub: `Pessoa ${i} é líder de si mesma`,
+          cond: `pai[${i}] == ${i}`,
+          condExpl: `Auto-referência: o nó aponta para si mesmo`,
+          narrative: `A pessoa ${i} agora aponta para si mesma. Ela é a fundadora da Família ${i}.`,
+          activeNodes: [i],
+          writeCell: i
+        });
+      }
+
+      // Função Find com rastreamento detalhado
+      function simFind(x, originContext) {
+        record({
+          line: 32,
+          phase: 'BUSCA (FIND)',
+          op: `find(pai, ${x})`,
+          opSub: `Buscando quem é o líder supremo de ${x}`,
+          cond: `pai[${x}] != ${x} ? (${pai[x]} != ${x})`,
+          condExpl: pai[x] !== x ? `Nó ${x} aponta para ${pai[x]}. Precisa subir!` : `Nó ${x} aponta para si mesmo. É a raiz!`,
+          narrative: `Avaliando a pessoa ${x}. Seu pai direto na memória é pai[${x}] = ${pai[x]}.`,
+          activeNodes: [x],
+          readCell: x,
+          regA: originContext.a,
+          regB: originContext.b,
+          regRzA: originContext.rzA,
+          regRzB: originContext.rzB
+        });
+
+        if (pai[x] !== x) {
+          record({
+            line: 34,
+            phase: 'BUSCA (FIND)',
+            op: `pai[${x}] = find(pai, ${pai[x]})`,
+            opSub: `Subindo recursivamente pelo pai ${pai[x]}`,
+            cond: `pai[${x}] != ${x} (Verdadeiro)`,
+            narrative: `Como ${x} não é o líder final, chamamos find recursivamente para o pai direto ${pai[x]}.`,
+            activeNodes: [x, pai[x]],
+            activeEdge: [x, pai[x]],
+            readCell: x,
+            regA: originContext.a,
+            regB: originContext.b,
+            regRzA: originContext.rzA,
+            regRzB: originContext.rzB
+          });
+
+          const root = simFind(pai[x], originContext);
+
+          // Compressão de caminho se o pai não era direto
+          if (pai[x] !== root) {
+            pai[x] = root;
+            record({
+              line: 34,
+              phase: 'COMPRESSÃO DE CAMINHO',
+              op: `pai[${x}] = ${root}; // COMPRESSÃO!`,
+              opSub: `Atalho direto: ${x} agora aponta direto para ${root}`,
+              cond: `Novo pai de ${x} agora é o líder ${root}`,
+              condExpl: `Árvore achatada! O(1) para próximas consultas!`,
+              narrative: `MÁGICA DA COMPRESSÃO: O nó ${x} não precisa mais passar por intermediários. Ele agora se conecta DIRETAMENTE à raiz ${root}!`,
+              activeNodes: [x, root],
+              compressedEdge: [x, root],
+              writeCell: x,
+              regA: originContext.a,
+              regB: originContext.b,
+              regRzA: originContext.rzA,
+              regRzB: originContext.rzB
+            });
+          } else {
+            pai[x] = root;
+          }
+
+          record({
+            line: 36,
+            phase: 'BUSCA (FIND)',
+            op: `return pai[${x}] -> ${root}`,
+            opSub: `Líder supremo de ${x} confirmado como ${root}`,
+            cond: `-`,
+            narrative: `Retornando da recursão: o líder supremo de ${x} é ${root}.`,
+            activeNodes: [x, root],
+            regA: originContext.a,
+            regB: originContext.b,
+            regRzA: originContext.rzA,
+            regRzB: originContext.rzB
+          });
+
+          return root;
+        }
+
+        record({
+          line: 36,
+          phase: 'BUSCA (FIND)',
+          op: `return ${x}; // É a raiz`,
+          opSub: `Nó ${x} é seu próprio chefe supremo`,
+          cond: `pai[${x}] == ${x}`,
+          narrative: `Chegamos no topo da hierarquia! A pessoa ${x} é a raiz líder da sua família.`,
+          activeNodes: [x],
+          regA: originContext.a,
+          regB: originContext.b,
+          regRzA: originContext.rzA,
+          regRzB: originContext.rzB
+        });
+        return x;
+      }
+
+      // 3. Loop de Arestas: unir(a, b)
+      for (let i = 0; i < edges.length; i++) {
+        const [a, b] = edges[i];
+
+        record({
+          line: 18,
+          phase: 'UNIÃO (UNIR)',
+          op: `unir(pai, ${a}, ${b});`,
+          opSub: `Processando relação entre ${a} e ${b} (par ${i+1}/${edges.length})`,
+          cond: `Relação de parentesco: ${a} e ${b}`,
+          narrative: `Recebemos a informação de que a pessoa ${a} e a pessoa ${b} pertencem à mesma família. Vamos unificar seus clãs.`,
+          activeNodes: [a, b],
+          regA: a,
+          regB: b
+        });
+
+        // Entrando em unir: busca raizA
+        record({
+          line: 40,
+          phase: 'UNIÃO (UNIR)',
+          op: `int raizA = find(pai, ${a});`,
+          opSub: `Buscando o líder da família da pessoa ${a}`,
+          narrative: `Primeiro passo: descobrir quem é o líder da família da pessoa ${a}.`,
+          activeNodes: [a],
+          regA: a,
+          regB: b
+        });
+
+        const ctx = { a: a, b: b, rzA: '-', rzB: '-' };
+        const raizA = simFind(a, ctx);
+        ctx.rzA = raizA;
+
+        // Busca raizB
+        record({
+          line: 41,
+          phase: 'UNIÃO (UNIR)',
+          op: `int raizB = find(pai, ${b});`,
+          opSub: `Buscando o líder da família da pessoa ${b}`,
+          narrative: `Segundo passo: descobrir quem é o líder da família da pessoa ${b}.`,
+          activeNodes: [b],
+          regA: a,
+          regB: b,
+          regRzA: raizA
+        });
+
+        const raizB = simFind(b, ctx);
+        ctx.rzB = raizB;
+
+        // Linha 42: if (raizA != raizB)
+        const saoDiferentes = (raizA !== raizB);
+        record({
+          line: 42,
+          phase: 'UNIÃO (UNIR)',
+          op: `if (raizA != raizB)`,
+          opSub: `Comparando líderes: ${raizA} != ${raizB}`,
+          cond: `${raizA} != ${raizB} ? ${saoDiferentes ? 'SIM (Diferentes)' : 'NÃO (Já Unidos)'}`,
+          condExpl: saoDiferentes ? `Clãs distintos! Precisamos fundir.` : `Já pertencem à mesma família!`,
+          narrative: saoDiferentes 
+            ? `As pessoas ${a} e ${b} pertencem a famílias com chefes diferentes (${raizA} e ${raizB}). Vamos fundir os dois clãs!`
+            : `As pessoas ${a} e ${b} já possuem o mesmo chefe (${raizA}). Já eram da mesma família! Nenhuma alteração feita.`,
+          activeNodes: [raizA, raizB],
+          regA: a,
+          regB: b,
+          regRzA: raizA,
+          regRzB: raizB
+        });
+
+        if (saoDiferentes) {
+          pai[raizA] = raizB;
+          record({
+            line: 43,
+            phase: 'UNIÃO (UNIR)',
+            op: `pai[${raizA}] = ${raizB};`,
+            opSub: `Raiz ${raizA} agora se submete à Raiz ${raizB}`,
+            cond: `pai[${raizA}] passa a valer ${raizB}`,
+            condExpl: `Todos os nós de ${raizA} agora pertencem à família de ${raizB}`,
+            narrative: `UNIÃO REALIZADA: O líder ${raizA} agora aponta para ${raizB}. Toda a árvore de ${raizA} agora faz parte do clã liderado por ${raizB}!`,
+            activeNodes: [raizA, raizB],
+            activeEdge: [raizA, raizB],
+            writeCell: raizA,
+            regA: a,
+            regB: b,
+            regRzA: raizA,
+            regRzB: raizB
+          });
+        }
+      }
+
+      // 4. Contagem de Famílias: loop i=1 até n
+      record({
+        line: 21,
+        phase: 'CONTAGEM FINAL',
+        op: `int familias = 0;`,
+        opSub: `Iniciando contador de famílias independentes`,
+        cond: `familias = 0`,
+        narrative: `Todas as uniões foram processadas! Agora vamos contar quantas famílias distintas sobraram na sociedade.`,
+        regA: '-',
+        regB: '-',
+        regRzA: '-',
+        regRzB: '-'
+      });
+
+      for (let i = 1; i <= n; i++) {
+        record({
+          line: 22,
+          phase: 'CONTAGEM FINAL',
+          op: `for (int i = ${i}; i <= ${n}; i++)`,
+          opSub: `Avaliando se a pessoa ${i} é a cabeça de uma família`,
+          cond: `i = ${i}`,
+          narrative: `Consultando o representante da pessoa ${i}...`,
+          activeNodes: [i],
+          readCell: i
+        });
+
+        const ctxCount = { a: '-', b: '-', rzA: '-', rzB: '-' };
+        const rootI = simFind(i, ctxCount);
+        const isLeader = (rootI === i);
+
+        record({
+          line: 23,
+          phase: 'CONTAGEM FINAL',
+          op: `if (find(pai, ${i}) == ${i})`,
+          opSub: `Testando se ${rootI} == ${i}`,
+          cond: `${rootI} == ${i} ? ${isLeader ? 'SIM (É Líder)' : 'NÃO (É Membro)'}`,
+          condExpl: isLeader ? `Encontramos o líder de um clã! Incrementa familias.` : `Apenas um membro. Seu líder é ${rootI}.`,
+          narrative: isLeader 
+            ? `A pessoa ${i} é o líder absoluto da sua família (find(${i}) == ${i})! Contabilizamos +1 família.`
+            : `A pessoa ${i} NÃO é líder (o líder dela é ${rootI}). Portanto ela já faz parte de uma família já contada.`,
+          activeNodes: [i],
+          readCell: i
+        });
+
+        if (isLeader) {
+          familias++;
+          record({
+            line: 24,
+            phase: 'CONTAGEM FINAL',
+            op: `familias++; // Total agora: ${familias}`,
+            opSub: `Família detectada com líder ${i}`,
+            cond: `familias = ${familias}`,
+            narrative: `Contador de famílias atualizado para ${familias}.`,
+            activeNodes: [i],
+            regFam: familias
+          });
+        }
+      }
+
+      // 5. printf("%d\n", familias)
+      stdoutLog.push(`Saída: ${familias}`);
+      record({
+        line: 28,
+        phase: 'FINALIZADO',
+        op: `printf("%d\\n", familias);`,
+        opSub: `Imprimindo resultado final na saída padrão: ${familias}`,
+        cond: `Resultado: ${familias}`,
+        narrative: `ALGORITMO CONCLUÍDO! O número total de famílias independentes no grupo é ${familias}.`,
+        regFam: familias
+      });
+
+      return steps;
+    }
+
+    /* =========================================================================
+       LAYOUT DO GRAFO SVG & COORDENADAS
+       ========================================================================= */
+    function computeNodePositions(n, paiArray) {
+      // Agrupa nós por raiz
+      const roots = new Set();
+      const parentOf = (u) => paiArray[u] || u;
+      
+      // Encontra raiz de cada nó (sem alterar o paiArray)
+      function getRoot(u) {
+        let curr = u;
+        while (parentOf(curr) !== curr) {
+          curr = parentOf(curr);
+        }
+        return curr;
+      }
+
+      const groups = {};
+      for (let i = 1; i <= n; i++) {
+        const r = getRoot(i);
+        if (!groups[r]) groups[r] = [];
+        groups[r].push(i);
+      }
+
+      const positions = {};
+      const sortedRoots = Object.keys(groups).map(Number).sort((a, b) => a - b);
+      const totalClans = sortedRoots.length;
+
+      // Distribui os clãs horizontalmente no canvas SVG (700 x 380)
+      sortedRoots.forEach((root, cIdx) => {
+        const members = groups[root];
+        const clanColorIdx = (root - 1) % CLAN_COLORS.length;
+        
+        // Área horizontal para este clã
+        const clanXMin = 50 + (cIdx * (600 / totalClans));
+        const clanXMax = clanXMin + (600 / totalClans);
+        const clanXCenter = (clanXMin + clanXMax) / 2;
+
+        // Se tem só 1 nó (a própria raiz isolada)
+        if (members.length === 1) {
+          positions[root] = { x: clanXCenter, y: 190, colorIdx: clanColorIdx, isRoot: true };
+        } else {
+          // Raiz no topo do seu cluster
+          positions[root] = { x: clanXCenter, y: 90, colorIdx: clanColorIdx, isRoot: true };
+          
+          // Subordinados distribuídos abaixo
+          const subs = members.filter(m => m !== root);
+          subs.forEach((m, sIdx) => {
+            const subX = (subs.length === 1)
+              ? clanXCenter
+              : clanXMin + 25 + (sIdx * ((clanXMax - clanXMin - 50) / (subs.length - 1 || 1)));
+            
+            // Se o pai direto é a raiz, fica na camada 2; se tem profundidade maior, camada 3
+            const p = parentOf(m);
+            const yLevel = (p === root) ? 230 : 310;
+            positions[m] = { x: subX, y: yLevel, colorIdx: clanColorIdx, isRoot: false };
+          });
+        }
+      });
+
+      return positions;
+    }
+
+    /* =========================================================================
+       RENDERIZAÇÃO DO GRAFO SVG
+       ========================================================================= */
+    function renderSvgGraph(stepObj) {
+      const svgNodes = document.getElementById('svgNodes');
+      const svgEdges = document.getElementById('svgEdges');
+      if (!svgNodes || !svgEdges) return;
+
+      svgNodes.innerHTML = '';
+      svgEdges.innerHTML = '';
+
+      const n = currentN;
+      const pai = stepObj.pai;
+      const pos = computeNodePositions(n, pai);
+      const activeSet = new Set(stepObj.activeNodes || []);
+      const activeEdge = stepObj.activeEdge;
+      const compressedEdge = stepObj.compressedEdge;
+
+      // 1. Renderiza Arestas
+      for (let i = 1; i <= n; i++) {
+        const p = pai[i];
+        if (p && p !== i && pos[i] && pos[p]) {
+          const from = pos[i];
+          const to = pos[p];
+          
+          const isAct = activeEdge && ((activeEdge[0] === i && activeEdge[1] === p) || (activeEdge[0] === p && activeEdge[1] === i));
+          const isComp = compressedEdge && (compressedEdge[0] === i && compressedEdge[1] === p);
+
+          // Linha SVG com marcador
+          const line = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+          
+          // Curva suave para evitar sobreposição
+          const dx = to.x - from.x;
+          const dy = to.y - from.y;
+          const cx = (from.x + to.x) / 2 + (dy * 0.15);
+          const cy = (from.y + to.y) / 2 - (dx * 0.15);
+
+          line.setAttribute('d', `M ${from.x} ${from.y} Q ${cx} ${cy} ${to.x} ${to.y}`);
+          line.setAttribute('fill', 'none');
+          
+          if (isComp) {
+            line.setAttribute('class', 'dsu-edge compressed-edge');
+            line.setAttribute('marker-end', 'url(#arrowCompressed)');
+          } else if (isAct) {
+            line.setAttribute('class', 'dsu-edge active-path');
+            line.setAttribute('marker-end', 'url(#arrowActive)');
+          } else {
+            line.setAttribute('class', 'dsu-edge');
+            line.setAttribute('stroke', '#94a3b8');
+            line.setAttribute('stroke-width', '2');
+            line.setAttribute('marker-end', 'url(#arrowNormal)');
+          }
+
+          svgEdges.appendChild(line);
+        }
+      }
+
+      // 2. Renderiza Nós
+      for (let i = 1; i <= n; i++) {
+        const pInfo = pos[i] || { x: 100, y: 100, colorIdx: 0, isRoot: false };
+        const color = CLAN_COLORS[pInfo.colorIdx % CLAN_COLORS.length];
+        const isLeader = (pai[i] === i);
+        const isActive = activeSet.has(i);
+
+        const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        g.setAttribute('transform', `translate(${pInfo.x}, ${pInfo.y})`);
+        g.setAttribute('class', 'cursor-pointer group');
+        g.setAttribute('title', `Pessoa ${i} | Pai: ${pai[i]}`);
+
+        // Círculo de Pulso se ativo
+        if (isActive) {
+          const pulse = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+          pulse.setAttribute('r', '28');
+          pulse.setAttribute('fill', '#38bdf8');
+          pulse.setAttribute('opacity', '0.3');
+          pulse.setAttribute('class', 'animate-ping');
+          g.appendChild(pulse);
+        }
+
+        // Anel de Líder de Família
+        if (isLeader) {
+          const leaderRing = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+          leaderRing.setAttribute('r', '24');
+          leaderRing.setAttribute('fill', 'none');
+          leaderRing.setAttribute('stroke', '#f59e0b');
+          leaderRing.setAttribute('stroke-width', '2.5');
+          leaderRing.setAttribute('class', 'dsu-node-circle root-leader');
+          g.appendChild(leaderRing);
+
+          // Ícone de Coroa / Badge de Líder
+          const crownBg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+          crownBg.setAttribute('x', '-14');
+          crownBg.setAttribute('y', '-32');
+          crownBg.setAttribute('width', '28');
+          crownBg.setAttribute('height', '12');
+          crownBg.setAttribute('rx', '6');
+          crownBg.setAttribute('fill', '#f59e0b');
+          g.appendChild(crownBg);
+
+          const crownText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+          crownText.setAttribute('x', '0');
+          crownText.setAttribute('y', '-23');
+          crownText.setAttribute('text-anchor', 'middle');
+          crownText.setAttribute('font-family', 'sans-serif');
+          crownText.setAttribute('font-size', '8px');
+          crownText.setAttribute('font-weight', 'bold');
+          crownText.setAttribute('fill', '#ffffff');
+          crownText.textContent = 'LÍDER';
+          g.appendChild(crownText);
+        }
+
+        // Círculo do Nó Principal
+        const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        circle.setAttribute('r', '18');
+        circle.setAttribute('fill', color.light);
+        circle.setAttribute('stroke', isLeader ? '#f59e0b' : color.border);
+        circle.setAttribute('stroke-width', isActive ? '3.5' : '2');
+        circle.setAttribute('class', `dsu-node-circle ${isActive ? 'active' : ''}`);
+        g.appendChild(circle);
+
+        // Texto do ID do Nó
+        const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        text.setAttribute('x', '0');
+        text.setAttribute('y', '5');
+        text.setAttribute('text-anchor', 'middle');
+        text.setAttribute('font-family', 'Geist Mono, monospace');
+        text.setAttribute('font-size', '13px');
+        text.setAttribute('font-weight', 'bold');
+        text.setAttribute('fill', color.border);
+        text.textContent = i;
+        g.appendChild(text);
+
+        // Subtítulo: pai direto
+        const sub = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        sub.setAttribute('x', '0');
+        sub.setAttribute('y', '32');
+        sub.setAttribute('text-anchor', 'middle');
+        sub.setAttribute('font-family', 'sans-serif');
+        sub.setAttribute('font-size', '9px');
+        sub.setAttribute('font-weight', 'bold');
+        sub.setAttribute('fill', '#64748b');
+        sub.textContent = `p[${i}]=${pai[i]}`;
+        g.appendChild(sub);
+
+        svgNodes.appendChild(g);
+      }
+
+      // 3. Atualiza Lista Flutuante de Clãs Ativos
+      updateClansBadgeList(n, pai);
+    }
+
+    function updateClansBadgeList(n, pai) {
+      const activeClansList = document.getElementById('activeClansList');
+      if (!activeClansList) return;
+
+      const roots = {};
+      for (let i = 1; i <= n; i++) {
+        // Acha a raiz navegando no snapshot
+        let curr = i;
+        while (pai[curr] !== curr && pai[curr] !== 0) {
+          curr = pai[curr];
+        }
+        if (!roots[curr]) roots[curr] = [];
+        roots[curr].push(i);
+      }
+
+      activeClansList.innerHTML = Object.entries(roots).map(([root, members]) => {
+        const color = CLAN_COLORS[(Number(root) - 1) % CLAN_COLORS.length];
+        return `
+          <div class="px-2 py-0.5 rounded-md text-[0.65rem] font-mono font-bold flex items-center gap-1 border"
+               style="background-color: ${color.light}; border-color: ${color.border}; color: ${color.border};">
+            <span>👑 Clã ${root}:</span>
+            <span class="text-neutral-700">{${members.join(', ')}}</span>
+          </div>
+        `;
+      }).join('');
+    }
+
+    /* =========================================================================
+       RENDERIZAÇÃO DA TABELA DE MEMÓRIA pai[]
+       ========================================================================= */
+    function renderMemoryTable(stepObj) {
+      const tbody = document.getElementById('memTableBody');
+      if (!tbody) return;
+
+      const n = currentN;
+      const pai = stepObj.pai;
+      let html = '';
+
+      for (let i = 1; i <= n; i++) {
+        const isRoot = (pai[i] === i);
+        const isRead = (stepObj.readCell === i);
+        const isWrite = (stepObj.writeCell === i);
+
+        let cellClass = 'mem-cell py-1.5 px-2 border-b border-neutral-100 font-semibold';
+        if (isWrite) cellClass += ' highlight-write';
+        else if (isRead) cellClass += ' highlight-read';
+
+        html += `
+          <tr class="${cellClass}">
+            <td class="text-left font-bold text-neutral-800">
+              <span class="w-5 h-5 inline-flex items-center justify-center rounded-full bg-neutral-100 text-neutral-700 mr-1 text-[0.7rem]">${i}</span>
+            </td>
+            <td class="font-bold font-mono ${isRoot ? 'text-amber-600' : 'text-neutral-700'}">
+              ${pai[i]} ${isRoot ? '👑' : '➔'}
+            </td>
+            <td class="text-right">
+              ${isRoot 
+                ? '<span class="px-1.5 py-0.5 rounded text-[0.6rem] font-bold uppercase bg-amber-100 text-amber-800 border border-amber-300">Líder</span>' 
+                : '<span class="px-1.5 py-0.5 rounded text-[0.6rem] font-bold uppercase bg-neutral-100 text-neutral-600">Membro</span>'}
+            </td>
+          </tr>
+        `;
+      }
+
+      tbody.innerHTML = html;
+
+      // Resumo de Raízes
+      const rootList = [];
+      for (let i = 1; i <= n; i++) {
+        if (pai[i] === i) rootList.push(i);
+      }
+      const lblRootNodesList = document.getElementById('lblRootNodesList');
+      if (lblRootNodesList) {
+        lblRootNodesList.textContent = rootList.length > 0 ? rootList.join(', ') : 'Nenhum';
+      }
+
+      const lblFinalFamCount = document.getElementById('lblFinalFamCount');
+      if (lblFinalFamCount) {
+        lblFinalFamCount.textContent = stepObj.reg ? stepObj.reg.fam : '0';
+      }
+    }
+
+    /* =========================================================================
+       RENDERIZAÇÃO DO CÓDIGO FONTE SINCRONIZADO (EX22.c)
+       ========================================================================= */
+    function initCodeViewer() {
+      const cCodeContainer = document.getElementById('cCodeContainer');
+      if (!cCodeContainer) return;
+
+      cCodeContainer.innerHTML = C_SOURCE_CODE.map((line, idx) => {
+        const lineNum = idx + 1;
+        const cleanLine = line
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;');
+
+        return `
+          <div id="codeLine-${lineNum}" class="code-line flex items-center px-3 py-0.5 rounded transition-all duration-150 text-neutral-400">
+            <span class="w-8 text-neutral-600 select-none text-[0.65rem] text-right pr-3 font-mono">${lineNum}</span>
+            <span class="code-indicator w-4 text-sky-400 font-bold opacity-0 transition-opacity">▶</span>
+            <span class="code-text font-mono flex-1 whitespace-pre">${cleanLine}</span>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function highlightCodeLine(targetLine) {
+      document.querySelectorAll('.code-line').forEach(el => {
+        el.classList.remove('bg-sky-950/80', 'text-sky-200', 'font-bold', 'border-l-2', 'border-sky-400');
+        el.classList.add('text-neutral-400');
+        const ind = el.querySelector('.code-indicator');
+        if (ind) ind.style.opacity = '0';
+      });
+
+      if (!targetLine) return;
+
+      const activeEl = document.getElementById(`codeLine-${targetLine}`);
+      if (activeEl) {
+        activeEl.classList.remove('text-neutral-400');
+        activeEl.classList.add('bg-sky-950/80', 'text-sky-200', 'font-bold', 'border-l-2', 'border-sky-400');
+        const ind = activeEl.querySelector('.code-indicator');
+        if (ind) ind.style.opacity = '1';
+
+        // Auto scroll suave do painel de código
+        activeEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    }
+
+    /* =========================================================================
+       RENDERIZAÇÃO DO RADAR COGNITIVO E TERMINAL
+       ========================================================================= */
+    function updateStepUI(stepIndex) {
+      if (!trace || trace.length === 0) return;
+      if (stepIndex < 0) stepIndex = 0;
+      if (stepIndex >= trace.length) stepIndex = trace.length - 1;
+
+      currentStep = stepIndex;
+      const stepObj = trace[stepIndex];
+
+      // 1. Radar Cognitivo
+      const badgePhase = document.getElementById('badgeCurrentPhase');
+      if (badgePhase) badgePhase.textContent = stepObj.phase;
+
+      const radarOp = document.getElementById('radarOp');
+      if (radarOp) radarOp.textContent = stepObj.op;
+
+      const radarOpSub = document.getElementById('radarOpSub');
+      if (radarOpSub) radarOpSub.textContent = stepObj.opSub;
+
+      const radarCond = document.getElementById('radarCond');
+      if (radarCond) radarCond.textContent = stepObj.cond;
+
+      const radarCondExpl = document.getElementById('radarCondExpl');
+      if (radarCondExpl) radarCondExpl.textContent = stepObj.condExpl;
+
+      const radarNarrative = document.getElementById('radarNarrative');
+      if (radarNarrative) radarNarrative.textContent = stepObj.narrative;
+
+      // Registradores
+      if (stepObj.reg) {
+        const regN = document.getElementById('regN');
+        if (regN) regN.textContent = stepObj.reg.n;
+        const regA = document.getElementById('regA');
+        if (regA) regA.textContent = stepObj.reg.a;
+        const regB = document.getElementById('regB');
+        if (regB) regB.textContent = stepObj.reg.b;
+        const regRzA = document.getElementById('regRzA');
+        if (regRzA) regRzA.textContent = stepObj.reg.rzA;
+        const regRzB = document.getElementById('regRzB');
+        if (regRzB) regRzB.textContent = stepObj.reg.rzB;
+        const regFam = document.getElementById('regFam');
+        if (regFam) regFam.textContent = stepObj.reg.fam;
+      }
+
+      // 2. Grafo SVG
+      renderSvgGraph(stepObj);
+
+      // 3. Tabela de Memória pai[]
+      renderMemoryTable(stepObj);
+
+      // 4. Código C
+      highlightCodeLine(stepObj.line);
+
+      // 5. Terminal stdout
+      const terminalStdout = document.getElementById('terminalStdout');
+      if (terminalStdout && stepObj.stdout) {
+        terminalStdout.innerHTML = `
+          <span class="text-neutral-500 block text-[0.65rem]">$ gcc EX22.c -o ex22 && ./ex22</span>
+          ${stepObj.stdout.map(l => `<div class="text-emerald-400 font-mono">${l}</div>`).join('')}
+          <div class="mt-1"><span class="terminal-cursor"></span></div>
+        `;
+        terminalStdout.scrollTop = terminalStdout.scrollHeight;
+      }
+
+      // 6. Scrubber e Contadores
+      const lblCurrentStep = document.getElementById('lblCurrentStep');
+      if (lblCurrentStep) lblCurrentStep.textContent = `${stepIndex + 1} / ${trace.length}`;
+
+      const stepRange = document.getElementById('stepRange');
+      if (stepRange) {
+        stepRange.max = trace.length - 1;
+        stepRange.value = stepIndex;
+      }
+
+      const lblProgressPct = document.getElementById('lblProgressPct');
+      if (lblProgressPct) {
+        const pct = Math.round(((stepIndex + 1) / trace.length) * 100);
+        lblProgressPct.textContent = `${pct}%`;
+      }
+
+      const lblGraphStatus = document.getElementById('lblGraphStatus');
+      if (lblGraphStatus) {
+        lblGraphStatus.textContent = (stepIndex === trace.length - 1) ? 'Concluído' : `Passo ${stepIndex + 1}`;
+      }
+
+      const termStatus = document.getElementById('termStatus');
+      if (termStatus) {
+        termStatus.textContent = (stepIndex === trace.length - 1) ? 'Finalizado' : 'Executando';
+      }
+    }
+
+    /* =========================================================================
+       CONTROLES DE EXECUÇÃO & REPRODUÇÃO
+       ========================================================================= */
+    function togglePlay() {
+      if (isPlaying) {
+        pause();
+      } else {
+        play();
+      }
+    }
+
+    function play() {
+      if (currentStep >= trace.length - 1) {
+        currentStep = 0;
+      }
+      isPlaying = true;
+      updatePlayButtonUI();
+
+      clearInterval(timer);
+      const intervalMs = Math.max(250, 1000 / speed);
+      timer = setInterval(() => {
+        if (currentStep < trace.length - 1) {
+          stepForward();
+        } else {
+          pause();
+        }
+      }, intervalMs);
+    }
+
+    function pause() {
+      isPlaying = false;
+      clearInterval(timer);
+      updatePlayButtonUI();
+    }
+
+    function updatePlayButtonUI() {
+      const playIcon = document.getElementById('playIcon');
+      const playText = document.getElementById('playText');
+      const btnPlay = document.getElementById('btnPlay');
+      if (!btnPlay) return;
+
+      if (isPlaying) {
+        if (playIcon) playIcon.setAttribute('data-lucide', 'pause');
+        if (playText) playText.textContent = 'Pausar';
+        btnPlay.classList.remove('bg-sky-600', 'hover:bg-sky-500');
+        btnPlay.classList.add('bg-amber-600', 'hover:bg-amber-500');
+      } else {
+        if (playIcon) playIcon.setAttribute('data-lucide', 'play');
+        if (playText) playText.textContent = 'Executar';
+        btnPlay.classList.remove('bg-amber-600', 'hover:bg-amber-500');
+        btnPlay.classList.add('bg-sky-600', 'hover:bg-sky-500');
+      }
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function stepForward() {
+      if (currentStep < trace.length - 1) {
+        updateStepUI(currentStep + 1);
+      }
+    }
+
+    function stepBackward() {
+      pause();
+      if (currentStep > 0) {
+        updateStepUI(currentStep - 1);
+      }
+    }
+
+    function resetSim() {
+      pause();
+      updateStepUI(0);
+    }
+
+    function onScrub(val) {
+      pause();
+      updateStepUI(parseInt(val, 10));
+    }
+
+    function setSpeed(val) {
+      speed = val;
+      document.querySelectorAll('.speed-btn').forEach(b => {
+        if (parseFloat(b.getAttribute('data-speed')) === val) {
+          b.classList.remove('text-neutral-600', 'hover:bg-neutral-100');
+          b.classList.add('bg-neutral-950', 'text-white', 'shadow-sm');
+        } else {
+          b.classList.remove('bg-neutral-950', 'text-white', 'shadow-sm');
+          b.classList.add('text-neutral-600', 'hover:bg-neutral-100');
+        }
+      });
+      if (isPlaying) {
+        play(); // Reinicia com nova velocidade
+      }
+    }
+
+    /* =========================================================================
+       PRESETS & ENTRADAS CUSTOMIZADAS
+       ========================================================================= */
+    function adjustN(delta) {
+      const inpN = document.getElementById('inpN');
+      if (!inpN) return;
+      let val = parseInt(inpN.value, 10) + delta;
+      if (val < 2) val = 2;
+      if (val > 8) val = 8;
+      inpN.value = val;
+      applyCustomConfig();
+    }
+
+    function loadPreset(key) {
+      pause();
+      const inpN = document.getElementById('inpN');
+      const inpEdges = document.getElementById('inpEdges');
+
+      document.querySelectorAll('.preset-btn').forEach(btn => {
+        if (btn.getAttribute('data-preset') === key) {
+          btn.classList.add('bg-sky-100', 'border-sky-600', 'text-sky-900');
+          btn.classList.remove('bg-white');
+        } else {
+          btn.classList.remove('bg-sky-100', 'border-sky-600', 'text-sky-900');
+          btn.classList.add('bg-white');
+        }
+      });
+
+      if (key === 'padrao') {
+        currentN = 6;
+        currentEdges = [[1, 2], [2, 3], [4, 5], [5, 6]];
+        if (inpN) inpN.value = 6;
+        if (inpEdges) inpEdges.value = '1 2, 2 3, 4 5, 5 6';
+      } else if (key === 'compressao') {
+        currentN = 5;
+        currentEdges = [[1, 2], [2, 3], [3, 4], [4, 5]];
+        if (inpN) inpN.value = 5;
+        if (inpEdges) inpEdges.value = '1 2, 2 3, 3 4, 4 5';
+      } else if (key === 'ciclo') {
+        currentN = 4;
+        currentEdges = [[1, 2], [2, 3], [1, 3]];
+        if (inpN) inpN.value = 4;
+        if (inpEdges) inpEdges.value = '1 2, 2 3, 1 3';
+      } else if (key === 'isolados') {
+        currentN = 5;
+        currentEdges = [];
+        if (inpN) inpN.value = 5;
+        if (inpEdges) inpEdges.value = '';
+      } else if (key === 'unidos') {
+        currentN = 5;
+        currentEdges = [[1, 2], [2, 3], [3, 4], [4, 5]];
+        if (inpN) inpN.value = 5;
+        if (inpEdges) inpEdges.value = '1 2, 2 3, 3 4, 4 5';
+      }
+
+      initSimulation();
+    }
+
+    function applyCustomConfig() {
+      pause();
+      const inpN = document.getElementById('inpN');
+      const inpEdges = document.getElementById('inpEdges');
+      if (!inpN || !inpEdges) return;
+
+      currentN = Math.max(2, Math.min(8, parseInt(inpN.value, 10) || 6));
+      inpN.value = currentN;
+
+      const raw = inpEdges.value.trim();
+      currentEdges = [];
+      if (raw.length > 0) {
+        const parts = raw.split(/[,;\n]+/);
+        for (const p of parts) {
+          const nums = p.trim().split(/\s+/).map(Number).filter(x => !isNaN(x));
+          if (nums.length >= 2) {
+            const u = Math.max(1, Math.min(currentN, nums[0]));
+            const v = Math.max(1, Math.min(currentN, nums[1]));
+            currentEdges.push([u, v]);
+          }
+        }
+      }
+
+      initSimulation();
+    }
+
+    /* =========================================================================
+       TROCA DE ABAS DIDÁTICAS
+       ========================================================================= */
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        if (btn.getAttribute('data-tab') === tabId) {
+          btn.classList.add('bg-neutral-950', 'text-white');
+          btn.classList.remove('bg-neutral-100', 'text-neutral-700', 'hover:bg-neutral-200');
+        } else {
+          btn.classList.remove('bg-neutral-950', 'text-white');
+          btn.classList.add('bg-neutral-100', 'text-neutral-700', 'hover:bg-neutral-200');
+        }
+      });
+
+      document.querySelectorAll('.tab-content').forEach(content => {
+        if (content.id === `tab-${tabId}`) {
+          content.classList.remove('hidden');
+          content.classList.add('block');
+        } else {
+          content.classList.add('hidden');
+          content.classList.remove('block');
+        }
+      });
+    }
+
+    /* =========================================================================
+       INICIALIZAÇÃO DA APLICAÇÃO
+       ========================================================================= */
+    function initSimulation() {
+      trace = buildTrace(currentN, currentEdges);
+      currentStep = 0;
+      updateStepUI(0);
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      initCodeViewer();
+      initSimulation();
+
+      // Suporte a deep-linking via query parameters: ?preset=compressao&step=40
+      const urlParams = new URLSearchParams(window.location.search);
+      const paramPreset = urlParams.get('preset');
+      const paramStep = urlParams.get('step');
+
+      if (paramPreset) {
+        loadPreset(paramPreset);
+      }
+      if (paramStep !== null) {
+        const s = parseInt(paramStep, 10);
+        if (!isNaN(s) && s >= 0 && s < trace.length) {
+          updateStepUI(s);
+        }
+      }
+
+      if (window.lucide) {
+        lucide.createIcons();
+      }
+
+      // Atalhos de teclado
+      window.addEventListener('keydown', (e) => {
+        if (e.target.tagName === 'INPUT') return;
+        if (e.key === 'ArrowRight') {
+          stepForward();
+        } else if (e.key === 'ArrowLeft') {
+          stepBackward();
+        } else if (e.key === ' ') {
+          e.preventDefault();
+          togglePlay();
+        }
+      });
+    });
+  </script>
+</body>
+</html>

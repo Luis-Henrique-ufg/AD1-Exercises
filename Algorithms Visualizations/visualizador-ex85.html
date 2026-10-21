@@ -1,0 +1,1677 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>Visualizador do Exercício 85 — Vetor de Frequências &amp; Frequência Acumulada</title>
+
+  <!-- Assets Locais do Design System -->
+  <script src="Design System/assets/resource_3fa48481346f.js"></script>
+  <script src="Design System/assets/lucide_latest_2eebd0ebe8c2.js"></script>
+  <link href="Design System/assets/css2_e01beb4f8743.css" rel="stylesheet"/>
+  <link href="Design System/assets/css2_8e191ef32247.css" rel="stylesheet"/>
+  <link href="Design System/assets/css2_62759cd015bd.css" rel="stylesheet"/>
+
+  <!-- Google Fonts Fallback & Resiliência -->
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    .font-oswald { font-family: 'Oswald', sans-serif; }
+    .font-space { font-family: 'Space Grotesk', sans-serif; }
+    .font-inter { font-family: 'Inter', sans-serif; }
+    .font-mono { font-family: 'Geist Mono', 'Space Mono', monospace; }
+
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.18); border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(0, 0, 0, 0.35); }
+
+    /* Estilo de borda degradê compartilhada do Design System */
+    [style*="--border-gradient"]::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      padding: 1px;
+      border-radius: var(--border-radius-before, inherit);
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      background: var(--border-gradient);
+      pointer-events: none;
+    }
+
+    /* Slider de progresso customizado no estilo Future UI */
+    input[type=range] {
+      -webkit-appearance: none;
+      background: #cbd5e1;
+      border-radius: 9999px;
+      height: 6px;
+      outline: none;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #0a0a0a;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.35);
+      transition: transform 0.15s ease, background 0.15s ease;
+    }
+    input[type=range]::-webkit-slider-thumb:hover {
+      transform: scale(1.2);
+      background: #ea580c;
+    }
+    input[type=range]::-moz-range-thumb {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #0a0a0a;
+      cursor: pointer;
+      border: none;
+    }
+
+    /* Linhas de Código C */
+    .code-line {
+      display: flex;
+      align-items: baseline;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-family: 'Geist Mono', monospace;
+      font-size: 11.5px;
+      line-height: 18px;
+      transition: all 0.15s ease;
+      cursor: pointer;
+      user-select: none;
+    }
+    .code-line:hover {
+      background: rgba(255, 255, 255, 0.05);
+    }
+    .code-line.active-line {
+      background: rgba(16, 185, 129, 0.2) !important;
+      border-left: 3px solid #10b981;
+      font-weight: 600;
+    }
+    .code-line.active-line .line-num {
+      color: #34d399;
+      font-weight: bold;
+    }
+    .code-line.active-line .line-text {
+      color: #ffffff;
+    }
+
+    /* Destaque permanente na linha 22 */
+    .code-line.focus-line-22 {
+      background: rgba(245, 158, 11, 0.12);
+      border-right: 3px solid #f59e0b;
+    }
+    .code-line.focus-line-22.active-line {
+      background: rgba(245, 158, 11, 0.25) !important;
+      border-left: 3px solid #f59e0b;
+    }
+
+    /* Animação de pulso para incremento */
+    @keyframes pulse-increment {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.2); filter: drop-shadow(0 0 10px rgba(16, 185, 129, 0.8)); }
+      100% { transform: scale(1); }
+    }
+    .animate-increment {
+      animation: pulse-increment 0.4s ease-out;
+    }
+
+    @keyframes popCombo {
+      0% { transform: scale(0.92); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .anim-pop {
+      animation: popCombo 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased xl:items-center xl:justify-center xl:p-8 text-neutral-950 font-space bg-neutral-400 px-0 py-0">
+
+  <!-- Container Principal do Design System -->
+  <main class="xl:rounded-[3.5rem] xl:p-12 overflow-hidden flex flex-col xl:max-w-[96rem] xl:shadow-2xl bg-[#E6E6E6] w-full rounded-none pt-6 pr-6 pb-6 pl-6 relative shadow-none border border-neutral-300">
+    
+    <!-- Efeito de Luz Difusa de Fundo -->
+    <div class="pointer-events-none bg-gradient-to-br from-white/50 via-transparent to-neutral-400/20 w-full h-full absolute top-0 left-0"></div>
+
+    <!-- Barra de Navegação e Marca -->
+    <nav class="relative z-20 flex flex-wrap items-center justify-between gap-6 pb-6 border-b border-neutral-300 mb-8">
+      
+      <!-- Logo do Design System: 3 Barras Características -->
+      <div class="flex items-center gap-3 group cursor-default">
+        <div class="flex gap-1">
+          <div class="w-3 h-8 bg-neutral-950 rounded-full"></div>
+          <div class="w-3 h-8 bg-neutral-950 rounded-full group-hover:h-5 transition-all duration-300"></div>
+          <div class="w-3 h-8 bg-neutral-950 rounded-full"></div>
+        </div>
+        <div>
+          <span class="text-xs font-mono font-bold tracking-widest uppercase text-neutral-950 block">FUTURE UI // FREQ &amp; PREFIX SUM (EX85.C)</span>
+          <span class="text-[0.65rem] text-neutral-500 uppercase tracking-widest block font-medium">Vetor de Frequências · Indexação Indireta · Counting Sort Core</span>
+        </div>
+      </div>
+
+      <!-- Links e Badges de Estado -->
+      <div class="flex flex-wrap items-center gap-2 sm:gap-3">
+        <a href="visualizador-ex21.html" class="px-3.5 py-1.5 rounded-full border border-neutral-400 text-[0.65rem] font-bold uppercase tracking-widest hover:bg-neutral-300 transition-colors flex items-center gap-1.5 text-neutral-800" title="Ver visualizador de saque ATM">
+          <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i> Ex. 21 (ATM)
+        </a>
+        <a href="visualizador-ex23.html" class="px-3.5 py-1.5 rounded-full border border-neutral-400 text-[0.65rem] font-bold uppercase tracking-widest hover:bg-neutral-300 transition-colors flex items-center gap-1.5 text-neutral-800" title="Ver visualizador Torres de Hanói">
+          Ex. 23 (Hanói) <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+        </a>
+        <div class="bg-[#E6E6E6] border border-neutral-400 rounded-full px-3.5 py-1.5 shadow-sm items-center gap-2 hidden md:flex">
+          <div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+          <span class="text-[0.65rem] font-bold uppercase tracking-widest text-neutral-800">Simulador Ativo</span>
+        </div>
+        <div class="text-white bg-neutral-950 rounded-full px-4 py-1.5 shadow-md flex items-center gap-2">
+          <i data-lucide="bar-chart-2" class="w-3.5 h-3.5 text-amber-400"></i>
+          <span class="text-[0.65rem] font-bold uppercase tracking-widest font-mono">Linha 22 Foco</span>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Cabeçalho Monumental Hero -->
+    <header class="relative z-20 mb-8">
+      <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-8">
+        <div class="max-w-3xl">
+          <div class="flex items-center gap-3 text-xs font-semibold tracking-widest uppercase text-neutral-500 mb-3">
+            <span>Exercício 85 · Algoritmos &amp; Estruturas de Dados</span>
+            <span class="w-4 h-[1px] bg-neutral-400"></span>
+            <span class="text-neutral-800 font-bold">BOCA 2 · Vetor de Frequências</span>
+          </div>
+          <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-7xl uppercase font-medium text-neutral-950 tracking-tighter font-oswald leading-none mb-3">
+            Visualizador do <span class="text-neutral-600">Exercício 85</span>
+          </h1>
+          <p class="text-xs sm:text-sm text-neutral-700 leading-relaxed uppercase tracking-wide font-normal max-w-2xl">
+            Acompanhe passo a passo como o C lê o vetor <code class="bg-neutral-300/80 px-2 py-0.5 rounded font-mono text-neutral-900 font-bold">V[N]</code>, descobre o maior valor <code class="bg-neutral-300/80 px-2 py-0.5 rounded font-mono text-neutral-900 font-bold">M</code>, aloca o vetor de contadores <code class="bg-neutral-300/80 px-2 py-0.5 rounded font-mono text-neutral-900 font-bold">freq[M + 1]</code>, incrementa via indexação indireta <code class="bg-amber-300/90 text-amber-950 px-2 py-0.5 rounded font-mono font-bold">freq[V[i]]++</code> e gera a frequência acumulada <code class="bg-neutral-300/80 px-2 py-0.5 rounded font-mono text-neutral-900 font-bold">acc</code>.
+          </p>
+        </div>
+
+        <!-- Card de Dica de Ouro Didática (Orange/Amber Accent Card) -->
+        <div class="w-full lg:w-96 overflow-hidden bg-amber-400 border border-white/40 rounded-2xl p-5 shadow-lg shadow-amber-900/20 relative">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-[0.65rem] font-bold uppercase tracking-widest text-amber-950/80 flex items-center gap-1.5 font-mono">
+              <i data-lucide="zap" class="w-3.5 h-3.5 text-amber-950"></i> Pulo do Gato Didático
+            </span>
+            <span class="text-[0.65rem] font-mono font-bold bg-amber-950/15 px-2 py-0.5 rounded-full text-amber-950">LINHA 22</span>
+          </div>
+          <p class="text-xs text-amber-950 font-medium leading-relaxed">
+            Em <code class="font-mono font-bold bg-amber-950/20 px-1.5 py-0.5 rounded text-amber-950">freq[ V[i] ]++</code>, o valor dentro de <b>V[i] vira o próprio índice</b> de <b>freq</b>. Zero comparações entre elementos: complexidade estritamente linear <b>O(N + M)</b>!
+          </p>
+        </div>
+      </div>
+    </header>
+
+    <!-- Escaninho de Entrada: Presets e Vetor Customizável -->
+    <section class="relative z-20 mb-8 bg-neutral-200/50 border border-neutral-300 rounded-3xl p-6 shadow-sm">
+      <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-4 border-b border-neutral-300 mb-5">
+        <div class="flex items-center gap-2">
+          <i data-lucide="sliders" class="w-4 h-4 text-neutral-800"></i>
+          <h2 class="text-xs font-semibold uppercase tracking-widest text-neutral-900">Escaninho de Entrada (Casos de Teste &amp; Vetor V)</h2>
+        </div>
+        
+        <!-- Presets Didáticos -->
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="text-[0.65rem] font-mono uppercase text-neutral-500 font-bold">Presets:</span>
+          <button onclick="carregarPreset(1)" id="presetBtn1" class="px-3.5 py-1.5 rounded-full border border-neutral-950 bg-neutral-950 text-white text-[0.65rem] font-semibold uppercase tracking-widest transition-all shadow-sm">
+            Padrão BOCA [3, 1, 4, 1, 3, 3]
+          </button>
+          <button onclick="carregarPreset(2)" id="presetBtn2" class="px-3.5 py-1.5 rounded-full border border-neutral-400 text-[0.65rem] font-semibold uppercase tracking-widest hover:bg-neutral-300 transition-all text-neutral-800">
+            Repetidos [2, 2, 2, 2, 2]
+          </button>
+          <button onclick="carregarPreset(3)" id="presetBtn3" class="px-3.5 py-1.5 rounded-full border border-neutral-400 text-[0.65rem] font-semibold uppercase tracking-widest hover:bg-neutral-300 transition-all text-neutral-800">
+            Crescente [0, 1, 2, 3, 4]
+          </button>
+          <button onclick="carregarPreset(4)" id="presetBtn4" class="px-3.5 py-1.5 rounded-full border border-neutral-400 text-[0.65rem] font-semibold uppercase tracking-widest hover:bg-neutral-300 transition-all text-neutral-800">
+            Esparso [0, 5, 1, 5]
+          </button>
+          <button onclick="carregarPreset(5)" id="presetBtn5" class="px-3.5 py-1.5 rounded-full border border-neutral-400 text-[0.65rem] font-semibold uppercase tracking-widest hover:bg-neutral-300 transition-all text-neutral-800">
+            Curto [4, 0, 2]
+          </button>
+        </div>
+      </div>
+
+      <!-- Barra de Input Customizado Direto & Pré-Visualização -->
+      <div class="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4">
+        <div class="flex flex-1 items-center gap-2.5">
+          <span class="text-[0.68rem] font-bold uppercase tracking-widest text-neutral-600 shrink-0 font-mono">Digitar Vetor:</span>
+          <input type="text" id="inputCustomInline" value="3 1 4 1 3 3" placeholder="Ex: 3 1 4 1 3 3" class="flex-1 max-w-md h-10 px-4 font-mono font-bold text-sm bg-white border border-neutral-300 rounded-full text-neutral-900 focus:outline-none focus:border-neutral-950 shadow-inner"/>
+          <button onclick="aplicarCustomInline()" class="px-5 py-2.5 rounded-full border border-neutral-400 bg-neutral-950 text-white hover:bg-neutral-800 text-[0.68rem] font-bold uppercase tracking-wider transition-colors shadow-sm active:scale-95 flex items-center gap-1.5">
+            <i data-lucide="play" class="w-3.5 h-3.5 fill-white"></i> Carregar Vetor
+          </button>
+        </div>
+
+        <div class="flex items-center gap-4 text-xs font-mono text-neutral-600 bg-white/70 border border-neutral-300 px-4 py-2 rounded-2xl shadow-sm">
+          <span>Elementos: <b id="previewN" class="text-neutral-950 font-bold">N = 6</b></span>
+          <span class="w-[1px] h-4 bg-neutral-300"></span>
+          <span>Maior Valor: <b id="previewM" class="text-amber-600 font-bold">M = 4</b></span>
+          <span class="w-[1px] h-4 bg-neutral-300"></span>
+          <span>Tamanho freq: <b id="previewFreqTam" class="text-emerald-700 font-bold">M + 1 = 5</b></span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Barra de Controles de Reprodução e Scrubber -->
+    <section class="relative z-20 mb-8 bg-neutral-200/60 border border-neutral-300 rounded-3xl p-5 backdrop-blur-sm shadow-sm">
+      <div class="flex flex-wrap items-center justify-between gap-4 lg:gap-6">
+        
+        <!-- Botões de Execução -->
+        <div class="flex flex-wrap items-center gap-2.5">
+          
+          <!-- Passo Anterior -->
+          <button id="btnPrev" class="px-4 py-2.5 rounded-full border border-neutral-400 text-[0.7rem] font-semibold uppercase tracking-widest hover:bg-neutral-300 transition-colors disabled:opacity-35 disabled:cursor-not-allowed flex items-center gap-1 shadow-sm active:scale-95">
+            <i data-lucide="chevron-left" class="w-4 h-4"></i> Passo
+          </button>
+
+          <!-- Reproduzir / Pausar -->
+          <button id="btnPlay" class="group transition-all duration-300 overflow-hidden font-medium text-neutral-200 bg-gradient-to-r from-neutral-700 to-neutral-800 rounded-full pt-2.5 pr-6 pb-2.5 pl-6 relative active:scale-95 shadow-md" style="box-shadow: 0 15px 33px -12px rgba(38, 38, 38, 0.7), inset 0 4px 6.3px rgba(82, 82, 82, 0.5), inset 0 -5px 6.3px rgba(23, 23, 23, 0.8); border-radius: 9999px">
+            <div class="group-hover:translate-y-0 transition-transform duration-300 bg-white/10 absolute top-0 right-0 bottom-0 left-0 translate-y-full"></div>
+            <span class="relative flex items-center gap-2 text-xs font-semibold tracking-widest uppercase" id="playBtnLabel">
+              <i data-lucide="play" id="iconPlay" class="w-4 h-4 text-emerald-400"></i>
+              <span id="textPlay">Reproduzir</span>
+            </span>
+          </button>
+
+          <!-- Próximo Passo -->
+          <button id="btnNext" class="px-4 py-2.5 rounded-full border border-neutral-400 text-[0.7rem] font-semibold uppercase tracking-widest hover:bg-neutral-300 transition-colors disabled:opacity-35 disabled:cursor-not-allowed flex items-center gap-1 shadow-sm active:scale-95">
+            Passo <i data-lucide="chevron-right" class="w-4 h-4"></i>
+          </button>
+
+          <!-- Pular Direto para Próxima Linha 22 -->
+          <button id="btnNextL22" class="px-4 py-2.5 rounded-full border border-amber-600 bg-amber-400 text-amber-950 text-[0.7rem] font-bold uppercase tracking-wider hover:bg-amber-300 transition-colors shadow-sm active:scale-95 flex items-center gap-1.5" title="Avançar diretamente até a próxima execução da Linha 22 (freq[V[i]]++)">
+            <i data-lucide="zap" class="w-3.5 h-3.5 fill-amber-950"></i> Próx. Incremento (L22)
+          </button>
+
+          <!-- Reiniciar -->
+          <button id="btnReset" class="w-10 h-10 rounded-full border border-neutral-400 hover:bg-neutral-300 flex items-center justify-center transition-colors text-neutral-700 hover:text-neutral-950 shadow-sm active:scale-95" title="Reiniciar Simulação (R)">
+            <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+          </button>
+        </div>
+
+        <!-- Velocidade e Scrubber -->
+        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3 min-w-[260px] flex-1 lg:flex-initial">
+          <div class="flex items-center gap-1.5">
+            <span class="text-[0.62rem] font-bold uppercase tracking-widest text-neutral-500 font-mono">Velocidade:</span>
+            <select id="speedSelect" class="bg-white border border-neutral-400 rounded-full px-3 py-1 text-xs font-mono text-neutral-800 font-semibold focus:outline-none">
+              <option value="1400">0.5x</option>
+              <option value="800" selected>1.0x</option>
+              <option value="400">2.0x</option>
+              <option value="150">Turbo</option>
+            </select>
+          </div>
+
+          <div class="w-full flex-1 flex items-center gap-2.5">
+            <input type="range" id="scrubber" min="0" max="0" step="1" value="0" class="flex-1 cursor-pointer"/>
+            <span id="stepBadge" class="text-xs font-mono font-bold text-neutral-700 whitespace-nowrap bg-neutral-300/80 px-3 py-1 rounded-full border border-neutral-400/60 shadow-inner">
+              Passo 0 / 0
+            </span>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Faseômetro do Algoritmo EX85.c (4 Módulos Técnicos) -->
+    <section class="relative z-20 mb-8">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        
+        <!-- Fase 1: Leitura e Máximo M -->
+        <div id="phaseCard-1" class="phase-card bg-neutral-200/50 border border-neutral-300 rounded-2xl p-4 transition-all duration-300">
+          <div class="flex items-center justify-between mb-1.5">
+            <span class="text-[0.62rem] font-mono uppercase tracking-widest text-neutral-500 font-bold flex items-center gap-1">
+              <i data-lucide="eye" class="w-3 h-3"></i> 1. LEITURA &amp; MÁXIMO
+            </span>
+            <span class="text-[0.58rem] font-mono px-2 py-0.5 rounded-full bg-neutral-300 text-neutral-700 uppercase font-semibold">Linhas 11-16</span>
+          </div>
+          <h3 class="text-xs font-semibold uppercase tracking-wider text-neutral-900 mb-0.5">V[N] &amp; Maior Valor M</h3>
+          <p class="text-[0.68rem] text-neutral-600 leading-snug">Lê cada valor e descobre M para saber o tamanho exato de freq.</p>
+        </div>
+
+        <!-- Fase 2: Alocação e Memset -->
+        <div id="phaseCard-2" class="phase-card bg-neutral-200/50 border border-neutral-300 rounded-2xl p-4 transition-all duration-300">
+          <div class="flex items-center justify-between mb-1.5">
+            <span class="text-[0.62rem] font-mono uppercase tracking-widest text-neutral-500 font-bold flex items-center gap-1">
+              <i data-lucide="layers" class="w-3 h-3"></i> 2. ALOCAÇÃO &amp; ZERAMENTO
+            </span>
+            <span class="text-[0.58rem] font-mono px-2 py-0.5 rounded-full bg-neutral-300 text-neutral-700 uppercase font-semibold">Linhas 18-19</span>
+          </div>
+          <h3 class="text-xs font-semibold uppercase tracking-wider text-neutral-900 mb-0.5">freq[M + 1] &amp; memset</h3>
+          <p class="text-[0.68rem] text-neutral-600 leading-snug">Cria M + 1 posições (índices 0..M) e zera todos os contadores.</p>
+        </div>
+
+        <!-- Fase 3: Contagem de Frequências (Linha 22) -->
+        <div id="phaseCard-3" class="phase-card bg-neutral-200/50 border border-neutral-300 rounded-2xl p-4 transition-all duration-300">
+          <div class="flex items-center justify-between mb-1.5">
+            <span class="text-[0.62rem] font-mono uppercase tracking-widest text-neutral-500 font-bold flex items-center gap-1">
+              <i data-lucide="cpu" class="w-3 h-3 text-amber-600"></i> 3. CONTAGEM (L22)
+            </span>
+            <span class="text-[0.58rem] font-mono px-2 py-0.5 rounded-full bg-amber-200 text-amber-900 font-bold uppercase">freq[V[i]]++</span>
+          </div>
+          <h3 class="text-xs font-semibold uppercase tracking-wider text-neutral-900 mb-0.5">Indexação Indireta</h3>
+          <p class="text-[0.68rem] text-neutral-600 leading-snug">O valor de V[i] vira o índice da gaveta em freq, somando 1.</p>
+        </div>
+
+        <!-- Fase 4: Frequência Acumulada & Saída -->
+        <div id="phaseCard-4" class="phase-card bg-neutral-200/50 border border-neutral-300 rounded-2xl p-4 transition-all duration-300">
+          <div class="flex items-center justify-between mb-1.5">
+            <span class="text-[0.62rem] font-mono uppercase tracking-widest text-neutral-500 font-bold flex items-center gap-1">
+              <i data-lucide="terminal" class="w-3 h-3"></i> 4. ACUMULAÇÃO (PREFIX)
+            </span>
+            <span class="text-[0.58rem] font-mono px-2 py-0.5 rounded-full bg-neutral-300 text-neutral-700 uppercase font-semibold">Linhas 25-29</span>
+          </div>
+          <h3 class="text-xs font-semibold uppercase tracking-wider text-neutral-900 mb-0.5">acc += freq[i] &amp; printf</h3>
+          <p class="text-[0.68rem] text-neutral-600 leading-snug">Soma acumulada e imprime a contagem formatada para o BOCA.</p>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Radar Cognitivo // EX85.c -->
+    <section class="relative z-20 mb-8">
+      <div class="bg-neutral-950 text-white rounded-3xl p-6 md:p-8 border border-neutral-800 shadow-xl relative overflow-hidden">
+        <!-- Glow suave de fundo -->
+        <div class="absolute -right-12 -top-12 w-64 h-64 rounded-full bg-amber-500/15 blur-3xl pointer-events-none"></div>
+
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
+          <div class="flex-1">
+            <div class="flex items-center gap-2 mb-2">
+              <span class="inline-block w-2.5 h-2.5 rounded-full bg-amber-400 animate-ping"></span>
+              <span class="text-[0.65rem] font-mono font-bold tracking-widest uppercase text-amber-400">RADAR COGNITIVO // EX85.C</span>
+              <span id="radarLineBadge" class="text-[0.6rem] font-mono px-2 py-0.5 rounded-full bg-neutral-900 text-neutral-300 border border-neutral-700 ml-2">
+                Linha 7
+              </span>
+            </div>
+            
+            <h2 id="radarTitle" class="text-xl md:text-2xl font-medium font-oswald uppercase tracking-tight text-white mb-2">
+              Início da Simulação do Vetor de Frequências
+            </h2>
+
+            <div id="radarText" class="text-sm md:text-base text-neutral-300 leading-relaxed font-normal">
+              O algoritmo está pronto para executar. Pressione <b>Reproduzir</b> ou clique em <b>Passo</b> para acompanhar a leitura, alocação, contagem e acumulação.
+            </div>
+
+            <!-- Pílula de Ação em C -->
+            <div class="mt-3 inline-flex items-center gap-2 bg-neutral-900 border border-neutral-800 px-3 py-1 rounded-full text-xs font-mono">
+              <span class="text-neutral-500 uppercase text-[0.6rem] font-bold">Instrução C:</span>
+              <code id="radarCodeSnippet" class="text-amber-300 font-bold">while (scanf("%d", &amp;N) == 1 &amp;&amp; N != 0)</code>
+            </div>
+          </div>
+
+          <!-- Pílula de Modelo Mental -->
+          <div class="lg:w-80 bg-neutral-900/90 border border-neutral-800 rounded-2xl p-4 flex flex-col justify-between shadow-md">
+            <div class="text-[0.65rem] font-mono uppercase tracking-widest text-neutral-400 font-bold mb-1 flex items-center gap-1.5">
+              <i data-lucide="lightbulb" class="w-3.5 h-3.5 text-amber-400"></i> Modelo Mental
+            </div>
+            <p id="radarMentalModel" class="text-xs text-neutral-300 leading-relaxed m-0">
+              Imagine o vetor <code class="text-emerald-400 font-bold">freq</code> como uma estante com gavetas numeradas de <b>0</b> até <b>M</b>. Toda vez que um número aparece em <code class="text-cyan-400 font-bold">V</code>, jogamos uma bolinha na gaveta desse número!
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Grid Principal do Simulador (2 Colunas no Padrão Future UI) -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-8 relative z-20">
+      
+      <!-- COLUNA DA ESQUERDA: Arena Visual dos Vetores & Ponte L22 & Acumulador (7 colunas) -->
+      <div class="lg:col-span-7 flex flex-col gap-6">
+
+        <!-- Card 1: Vetor Original V[N] -->
+        <div class="bg-neutral-200/50 border border-neutral-300 rounded-3xl p-6 shadow-sm flex flex-col gap-4">
+          
+          <div class="flex items-center justify-between pb-3 border-b border-neutral-300">
+            <div class="flex items-center gap-2">
+              <div class="w-6 h-6 rounded-full bg-cyan-100 border border-cyan-400 flex items-center justify-center text-cyan-800 font-mono font-bold text-xs">V</div>
+              <div>
+                <h3 class="text-xs font-bold uppercase tracking-widest text-neutral-900">Vetor Original <code>int V[N]</code></h3>
+                <span class="text-[0.65rem] text-neutral-500 font-mono">Dados de entrada armazenados</span>
+              </div>
+            </div>
+            <div class="flex items-center gap-2 text-xs font-mono">
+              <span id="vStatusBadge" class="bg-white px-2.5 py-1 rounded-full border border-neutral-300 text-neutral-700 font-bold">
+                N = 6 elementos
+              </span>
+              <span id="vCursorBadge" class="bg-neutral-950 text-white px-2.5 py-1 rounded-full font-bold">
+                Cursor: aguardando
+              </span>
+            </div>
+          </div>
+
+          <!-- Células do Vetor V -->
+          <div id="vArrayContainer" class="flex items-center gap-2 overflow-x-auto py-2 pr-1 min-h-[72px]">
+            <!-- Preenchido dinamicamente via JS -->
+          </div>
+
+        </div>
+
+        <!-- Card 2: A GRANDE PONTE DA LINHA 22 (INDEXAÇÃO INDIRETA) -->
+        <div id="bridgeCard" class="bg-amber-100/60 border border-amber-300 rounded-3xl p-5 shadow-sm transition-all duration-300 flex flex-col gap-3">
+          
+          <div class="flex items-center justify-between pb-2 border-b border-amber-300/80">
+            <div class="flex items-center gap-2 font-mono font-bold text-xs text-amber-950">
+              <span class="px-2 py-0.5 rounded-full bg-amber-400 text-amber-950 text-[0.62rem] uppercase font-bold tracking-wider">
+                DESTAQUE CENTRAL
+              </span>
+              <span>A Ponte da Linha 22: <code>freq[ V[i] ]++</code></span>
+            </div>
+            <span id="bridgeStateLabel" class="text-[0.65rem] font-mono text-amber-900 font-bold uppercase">
+              Aguardando Fase 3
+            </span>
+          </div>
+
+          <!-- Conduíte de 4 Etapas com Flechas -->
+          <div class="grid grid-cols-1 sm:grid-cols-4 gap-2 font-mono text-xs">
+            
+            <!-- Etapa 1 -->
+            <div id="bridgeStep1Card" class="bg-white border border-neutral-300 rounded-2xl p-2.5 text-center flex flex-col justify-between shadow-xs">
+              <span class="text-[0.55rem] uppercase text-neutral-500 font-bold">1. Cursor do Loop</span>
+              <span id="bridgeStep1Val" class="text-sm font-bold text-neutral-800 my-0.5">i = —</span>
+              <span class="text-[0.55rem] text-neutral-400">Posição em V</span>
+            </div>
+
+            <!-- Etapa 2 -->
+            <div id="bridgeStep2Card" class="bg-white border border-neutral-300 rounded-2xl p-2.5 text-center flex flex-col justify-between shadow-xs">
+              <span class="text-[0.55rem] uppercase text-neutral-500 font-bold">2. Lê Valor de V[i]</span>
+              <span id="bridgeStep2Val" class="text-sm font-bold text-cyan-700 my-0.5">V[i] = —</span>
+              <span class="text-[0.55rem] text-neutral-400">Conteúdo interno</span>
+            </div>
+
+            <!-- Etapa 3 -->
+            <div id="bridgeStep3Card" class="bg-white border border-neutral-300 rounded-2xl p-2.5 text-center flex flex-col justify-between shadow-xs">
+              <span class="text-[0.55rem] uppercase text-neutral-500 font-bold">3. Vira Índice em freq</span>
+              <span id="bridgeStep3Val" class="text-sm font-bold text-amber-700 my-0.5">freq[ — ]</span>
+              <span class="text-[0.55rem] text-neutral-400">Gaveta escolhida</span>
+            </div>
+
+            <!-- Etapa 4 -->
+            <div id="bridgeStep4Card" class="bg-white border border-neutral-300 rounded-2xl p-2.5 text-center flex flex-col justify-between shadow-xs">
+              <span class="text-[0.55rem] uppercase text-neutral-500 font-bold">4. Incrementa Contador</span>
+              <span id="bridgeStep4Val" class="text-sm font-bold text-emerald-700 my-0.5">freq[...]++</span>
+              <span class="text-[0.55rem] text-neutral-400">Soma +1 na gaveta</span>
+            </div>
+
+          </div>
+
+        </div>
+
+        <!-- Card 3: Vetor de Frequências freq[M + 1] & Histograma -->
+        <div class="bg-neutral-200/50 border border-neutral-300 rounded-3xl p-6 shadow-sm flex flex-col gap-4">
+          
+          <div class="flex items-center justify-between pb-3 border-b border-neutral-300">
+            <div class="flex items-center gap-2">
+              <div class="w-6 h-6 rounded-full bg-emerald-100 border border-emerald-400 flex items-center justify-center text-emerald-800 font-mono font-bold text-xs">F</div>
+              <div>
+                <h3 class="text-xs font-bold uppercase tracking-widest text-neutral-900">Vetor de Frequências <code>int freq[M + 1]</code></h3>
+                <span class="text-[0.65rem] text-neutral-500 font-mono">Histograma de contagem por valor</span>
+              </div>
+            </div>
+            <div class="flex items-center gap-2 text-xs font-mono">
+              <span id="freqTamBadge" class="bg-white px-2.5 py-1 rounded-full border border-neutral-300 text-neutral-700 font-bold">
+                M = 4 ➔ Tamanho 5 (0 a 4)
+              </span>
+              <span class="bg-emerald-600 text-white px-2.5 py-1 rounded-full font-bold">
+                Contadores
+              </span>
+            </div>
+          </div>
+
+          <!-- Grade de Gavetas com Mini-Barras de Histograma -->
+          <div id="freqContainer" class="flex items-end gap-2.5 overflow-x-auto py-2 pr-1 min-h-[96px]">
+            <!-- Preenchido dinamicamente via JS -->
+          </div>
+
+        </div>
+
+        <!-- Card 4: Acumulador (Prefix Sum) & Console stdout -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          
+          <!-- Painel do Acumulador -->
+          <div class="bg-neutral-200/50 border border-neutral-300 rounded-3xl p-5 flex flex-col justify-between shadow-sm gap-3">
+            <div class="flex items-center justify-between border-b border-neutral-300 pb-2">
+              <span class="text-[0.65rem] font-bold uppercase tracking-widest text-neutral-800 flex items-center gap-1.5 font-mono">
+                <i data-lucide="trending-up" class="w-3.5 h-3.5 text-rose-600"></i> Frequência Acumulada (acc)
+              </span>
+              <span id="accNumberBadge" class="text-xs font-mono font-bold bg-white px-2.5 py-0.5 rounded-full border border-neutral-300 text-rose-700">
+                0 / 6
+              </span>
+            </div>
+
+            <div>
+              <div class="flex items-center justify-between text-xs font-mono text-neutral-600 mb-1.5">
+                <span id="accFormula">acc += freq[i]</span>
+                <span id="accPctLabel">0%</span>
+              </div>
+              <div class="w-full bg-neutral-300 rounded-full h-3 overflow-hidden shadow-inner border border-neutral-400">
+                <div id="accProgressBar" class="h-full bg-gradient-to-r from-amber-500 via-emerald-500 to-rose-500 rounded-full transition-all duration-300" style="width: 0%;"></div>
+              </div>
+            </div>
+
+            <p class="text-[0.62rem] text-neutral-500 m-0 leading-relaxed font-mono">
+              Indica quantos elementos no vetor original são menores ou iguais ao valor atual <code class="font-bold text-neutral-800">i</code>.
+            </p>
+          </div>
+
+          <!-- Console stdout BOCA (printf) -->
+          <div class="bg-neutral-950 text-white rounded-3xl p-5 border border-neutral-800 shadow-xl flex flex-col justify-between gap-2">
+            <div class="flex items-center justify-between border-b border-neutral-800 pb-2">
+              <span class="text-[0.65rem] font-bold uppercase tracking-widest text-emerald-400 flex items-center gap-1.5 font-mono">
+                <i data-lucide="terminal" class="w-3.5 h-3.5"></i> Saída printf (stdout)
+              </span>
+              <span class="text-[0.58rem] font-mono text-neutral-400 bg-neutral-900 px-2 py-0.5 rounded-full border border-neutral-800">
+                Formato BOCA "(%d) %d\n"
+              </span>
+            </div>
+
+            <div id="stdoutConsole" class="bg-black/80 border border-neutral-800 rounded-xl p-3 font-mono text-xs text-emerald-400 h-28 overflow-y-auto leading-relaxed shadow-inner">
+              <span class="text-neutral-500 italic">Aguardando printf...</span>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- COLUNA DA DIREITA: Código C EX85.c & Dashboard de Variáveis & Abas (5 colunas) -->
+      <div class="lg:col-span-5 flex flex-col gap-6">
+
+        <!-- Card A: Código Fonte C (EX85.c - 34 Linhas) -->
+        <div class="bg-neutral-950 text-white rounded-3xl p-6 border border-neutral-800 flex flex-col shadow-xl">
+          
+          <div class="flex items-center justify-between pb-3 border-b border-neutral-800 mb-3">
+            <div class="flex items-center gap-2">
+              <i data-lucide="code-2" class="w-4 h-4 text-emerald-400"></i>
+              <h2 class="text-xs font-semibold uppercase tracking-widest text-white">Código Fonte (EX85.c)</h2>
+            </div>
+            <span class="text-[0.65rem] font-mono text-amber-300 bg-amber-950/60 border border-amber-600/40 px-2.5 py-1 rounded-full font-bold">
+              Linha 22 destacada
+            </span>
+          </div>
+
+          <p class="text-[0.65rem] text-neutral-400 mb-2 leading-relaxed uppercase tracking-wider font-mono">
+            Acompanhe a linha de instrução executada em tempo real:
+          </p>
+
+          <!-- Lista com as 34 Linhas de Código C -->
+          <div id="codeContainer" class="h-[320px] overflow-y-auto bg-black/60 rounded-2xl p-2.5 border border-neutral-800 font-mono space-y-0.5">
+            <!-- Preenchido dinamicamente via JS -->
+          </div>
+
+          <!-- Card de Explicação da Linha Selecionada -->
+          <div class="mt-3 pt-3 border-t border-neutral-800 flex items-start gap-2">
+            <i data-lucide="info" class="w-4 h-4 text-emerald-400 shrink-0 mt-0.5"></i>
+            <div>
+              <span id="codeExplainTitle" class="text-xs font-bold font-mono text-emerald-400 block">
+                Linha 7 — while (scanf("%d", &amp;N) == 1 &amp;&amp; N != 0)
+              </span>
+              <p id="codeExplainDesc" class="text-[0.68rem] text-neutral-300 leading-snug m-0 mt-0.5 font-mono">
+                Loop principal de leitura de múltiplos casos de teste. Encerra quando N for 0.
+              </p>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Card B: Micro-Dashboard de Variáveis em C -->
+        <div class="bg-neutral-200/50 border border-neutral-300 rounded-3xl p-5 shadow-sm flex flex-col gap-3">
+          
+          <div class="flex items-center justify-between border-b border-neutral-300 pb-2">
+            <span class="text-[0.65rem] font-bold uppercase tracking-widest text-neutral-800 flex items-center gap-1.5 font-mono">
+              <i data-lucide="cpu" class="w-3.5 h-3.5 text-neutral-700"></i> Estado das Variáveis em C
+            </span>
+            <span id="varPhaseBadge" class="text-[0.58rem] font-mono font-bold uppercase px-2 py-0.5 rounded-full bg-neutral-300 text-neutral-800">
+              Início
+            </span>
+          </div>
+
+          <div class="grid grid-cols-3 sm:grid-cols-6 gap-2 font-mono">
+            
+            <div class="bg-white border border-neutral-300 rounded-xl p-2 text-center shadow-xs">
+              <span class="text-[0.55rem] uppercase text-neutral-500 font-bold block">N</span>
+              <span id="varN" class="text-base font-bold text-neutral-900 block my-0.5">6</span>
+              <span class="text-[0.48rem] text-neutral-400 uppercase">tam vetor</span>
+            </div>
+
+            <div class="bg-white border border-neutral-300 rounded-xl p-2 text-center shadow-xs">
+              <span class="text-[0.55rem] uppercase text-amber-600 font-bold block">M</span>
+              <span id="varM" class="text-base font-bold text-amber-700 block my-0.5">4</span>
+              <span class="text-[0.48rem] text-neutral-400 uppercase">máximo</span>
+            </div>
+
+            <div class="bg-white border border-neutral-300 rounded-xl p-2 text-center shadow-xs">
+              <span class="text-[0.55rem] uppercase text-emerald-600 font-bold block">M + 1</span>
+              <span id="varTamFreq" class="text-base font-bold text-emerald-700 block my-0.5">5</span>
+              <span class="text-[0.48rem] text-neutral-400 uppercase">tam freq</span>
+            </div>
+
+            <div class="bg-white border border-neutral-300 rounded-xl p-2 text-center shadow-xs">
+              <span class="text-[0.55rem] uppercase text-neutral-500 font-bold block">i</span>
+              <span id="varI" class="text-base font-bold text-neutral-900 block my-0.5">—</span>
+              <span class="text-[0.48rem] text-neutral-400 uppercase">índice</span>
+            </div>
+
+            <div class="bg-white border border-neutral-300 rounded-xl p-2 text-center shadow-xs">
+              <span class="text-[0.55rem] uppercase text-cyan-600 font-bold block">V[i]</span>
+              <span id="varVI" class="text-base font-bold text-cyan-700 block my-0.5">—</span>
+              <span class="text-[0.48rem] text-neutral-400 uppercase">valor lido</span>
+            </div>
+
+            <div class="bg-white border border-neutral-300 rounded-xl p-2 text-center shadow-xs">
+              <span class="text-[0.55rem] uppercase text-rose-600 font-bold block">acc</span>
+              <span id="varAcc" class="text-base font-bold text-rose-700 block my-0.5">0</span>
+              <span class="text-[0.48rem] text-neutral-400 uppercase">acumulado</span>
+            </div>
+
+          </div>
+
+        </div>
+
+        <!-- Card C: Abas Pedagógicas (Raio-X L22, Histograma, Rastreio, Teoria) -->
+        <div class="bg-neutral-200/50 border border-neutral-300 rounded-3xl p-5 shadow-sm flex flex-col gap-3">
+          
+          <!-- Botões das Abas -->
+          <div class="flex items-center gap-1.5 p-1 bg-neutral-300/60 rounded-2xl border border-neutral-300">
+            <button id="tabBtnL22" onclick="switchTechTab('l22')" class="flex-1 py-1.5 rounded-xl text-[0.65rem] font-bold uppercase tracking-wider font-mono transition-all bg-white text-neutral-900 shadow-sm">
+              Raio-X L22
+            </button>
+            <button id="tabBtnHist" onclick="switchTechTab('hist')" class="flex-1 py-1.5 rounded-xl text-[0.65rem] font-bold uppercase tracking-wider font-mono transition-all text-neutral-600 hover:text-neutral-900">
+              Tabela
+            </button>
+            <button id="tabBtnTrace" onclick="switchTechTab('trace')" class="flex-1 py-1.5 rounded-xl text-[0.65rem] font-bold uppercase tracking-wider font-mono transition-all text-neutral-600 hover:text-neutral-900">
+              Rastreio
+            </button>
+            <button id="tabBtnTheory" onclick="switchTechTab('theory')" class="flex-1 py-1.5 rounded-xl text-[0.65rem] font-bold uppercase tracking-wider font-mono transition-all text-neutral-600 hover:text-neutral-900">
+              Counting Sort
+            </button>
+          </div>
+
+          <!-- Conteúdo Aba 1: Raio-X L22 -->
+          <div id="techTabL22" class="space-y-2.5 text-xs font-mono text-neutral-800">
+            <div class="p-3 bg-white rounded-2xl border border-neutral-300 space-y-1.5 shadow-xs">
+              <span class="font-bold text-amber-700 block uppercase text-[0.65rem]">Decomposição em 3 Passos da Linha 22:</span>
+              <p class="m-0 leading-relaxed text-[0.68rem] text-neutral-600">
+                1. <b>Lê <code>i</code></b>: O loop aponta para a posição atual em <code>V</code>.<br/>
+                2. <b>Obtém <code>V[i]</code></b>: Extrai o valor ali guardado (ex: 3).<br/>
+                3. <b>Indexa e Soma</b>: Esse número 3 vira o índice de <code>freq</code>, executando <code>freq[3]++</code>!
+              </p>
+            </div>
+
+            <div class="p-3 bg-white rounded-2xl border border-neutral-300 space-y-1 shadow-xs">
+              <span class="font-bold text-neutral-900 block uppercase text-[0.65rem]">Dúvida Comum de Alunos:</span>
+              <p class="m-0 leading-relaxed text-[0.68rem] text-neutral-600">
+                <b>Por que não é <code>freq[i]++</code>?</b><br/>
+                Porque se fosse <code>freq[i]++</code> você contaria apenas o número de iterações do loop, e não os valores que estão salvos no vetor!
+              </p>
+            </div>
+          </div>
+
+          <!-- Conteúdo Aba 2: Tabela Histograma vs Frequência Acumulada -->
+          <div id="techTabHist" class="hidden text-xs font-mono">
+            <div class="bg-white rounded-2xl border border-neutral-300 overflow-hidden shadow-xs">
+              <table class="w-full text-left text-[0.65rem]">
+                <thead class="bg-neutral-100 text-neutral-600 border-b border-neutral-200">
+                  <tr>
+                    <th class="p-2">Valor (i)</th>
+                    <th class="p-2">freq[i] (Ocorrências)</th>
+                    <th class="p-2">acc (&le; i)</th>
+                    <th class="p-2">% do Vetor</th>
+                  </tr>
+                </thead>
+                <tbody id="histTableTbody" class="divide-y divide-neutral-200 text-neutral-800">
+                  <!-- Gerado via JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Conteúdo Aba 3: Rastreio de Passos -->
+          <div id="techTabTrace" class="hidden text-xs font-mono">
+            <div id="traceListContainer" class="h-44 overflow-y-auto space-y-1 bg-white p-2 rounded-2xl border border-neutral-300 shadow-xs">
+              <!-- Gerado via JS -->
+            </div>
+          </div>
+
+          <!-- Conteúdo Aba 4: Counting Sort Teoria -->
+          <div id="techTabTheory" class="hidden text-xs font-mono space-y-2 text-neutral-700">
+            <div class="p-3 bg-white rounded-2xl border border-neutral-300 shadow-xs space-y-1">
+              <b class="text-neutral-900 uppercase text-[0.65rem] block">A Alma do Counting Sort (Tempo Linear):</b>
+              <p class="m-0 text-[0.68rem] leading-relaxed text-neutral-600">
+                Ao contrário de QuickSort e MergeSort que levam $O(N \log N)$ fazendo comparações, este método é <b>$O(N + M)$</b>. Ele apenas conta as ocorrências e depois usa a frequência acumulada para saber exatamente onde cada elemento deve ficar no vetor ordenado final!
+              </p>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- Rodapé Minimalista Industrial -->
+    <footer class="relative z-20 flex flex-wrap items-center justify-between text-[0.65rem] font-mono text-neutral-600 pt-6 border-t border-neutral-300">
+      <div>
+        <span>FUTURE UI // INDUSTRIAL SPEC · ALGORITMO EX85.C (BOCA 2)</span>
+      </div>
+      <div class="flex items-center gap-3">
+        <span>Atalhos: <kbd class="px-1.5 py-0.5 rounded bg-neutral-300 text-neutral-900 border border-neutral-400 font-bold">Espaço</kbd> Play/Pause</span>
+        <span><kbd class="px-1.5 py-0.5 rounded bg-neutral-300 text-neutral-900 border border-neutral-400 font-bold">&larr;</kbd> / <kbd class="px-1.5 py-0.5 rounded bg-neutral-300 text-neutral-900 border border-neutral-400 font-bold">&rarr;</kbd> Passos</span>
+        <span><kbd class="px-1.5 py-0.5 rounded bg-neutral-300 text-neutral-900 border border-neutral-400 font-bold">R</kbd> Reiniciar</span>
+      </div>
+    </footer>
+
+  </main>
+
+  <!-- Script com Simulação 100% Determinística de EX85.c -->
+  <script>
+    // As 34 linhas exatas de EX85.c
+    const C_SOURCE_CODE = [
+      { line: 1, text: "#include <stdio.h>", explain: "Biblioteca padrão para entrada/saída (printf, scanf)." },
+      { line: 2, text: "#include <string.h>", explain: "Biblioteca para manipulação de blocos de memória (memset)." },
+      { line: 3, text: "", explain: "Linha em branco." },
+      { line: 4, text: "int main() {", explain: "Ponto de entrada do programa C." },
+      { line: 5, text: "    int N;", explain: "Declaração da variável N para o tamanho do vetor." },
+      { line: 6, text: "", explain: "Linha em branco." },
+      { line: 7, text: "    while (scanf(\"%d\", &N) == 1 && N != 0) {", explain: "Loop principal: lê N e continua executando enquanto N for diferente de 0." },
+      { line: 8, text: "        int V[N];", explain: "Alocação do vetor V de N inteiros (VLA - Variable Length Array)." },
+      { line: 9, text: "        int M = 0;", explain: "Inicialização de M = 0 para encontrar o maior valor presente no vetor." },
+      { line: 10, text: "", explain: "Linha em branco." },
+      { line: 11, text: "        for (int i = 0; i < N; i++) {", explain: "Loop para leitura dos N elementos do vetor V." },
+      { line: 12, text: "            scanf(\"%d\", &V[i]);", explain: "Leitura do i-ésimo elemento do vetor V." },
+      { line: 13, text: "            if (i == 0 || V[i] > M) {", explain: "Testa se é o primeiro elemento ou se o elemento atual supera M." },
+      { line: 14, text: "                M = V[i];", explain: "Atualiza M com o novo maior valor encontrado." },
+      { line: 15, text: "            }", explain: "Fim da condicional do maior elemento." },
+      { line: 16, text: "        }", explain: "Fim do loop de leitura." },
+      { line: 17, text: "", explain: "Linha em branco." },
+      { line: 18, text: "        int freq[M + 1];", explain: "Cria o vetor de frequências com tamanho M + 1 para suportar índices de 0 a M." },
+      { line: 19, text: "        memset(freq, 0, sizeof(freq));", explain: "Zera todos os bytes do vetor freq: contadores iniciam em 0." },
+      { line: 20, text: "", explain: "Linha em branco." },
+      { line: 21, text: "        for (int i = 0; i < N; i++) {", explain: "Loop para contabilizar as frequências de cada número em V." },
+      { line: 22, text: "            freq[V[i]]++;", explain: "⭐ LINHA CENTRAL: Indexação indireta! O valor V[i] vira o índice em freq, somando 1." },
+      { line: 23, text: "        }", explain: "Fim do loop de contagem." },
+      { line: 24, text: "", explain: "Linha em branco." },
+      { line: 25, text: "        int acc = 0;", explain: "Inicializa o acumulador acc = 0 para calcular as somas de prefixos." },
+      { line: 26, text: "        for (int i = 0; i <= M; i++) {", explain: "Loop de 0 até M para acumular as frequências e imprimir." },
+      { line: 27, text: "            acc += freq[i];", explain: "Adiciona a frequência do número i ao acumulador: acc = acc + freq[i]." },
+      { line: 28, text: "            printf(\"(%d) %d\\n\", i, acc);", explain: "Imprime no formato BOCA: (i) acc, indicando quantos elementos são <= i." },
+      { line: 29, text: "        }", explain: "Fim do loop de acumulação." },
+      { line: 30, text: "    }", explain: "Fim do loop principal while." },
+      { line: 31, text: "", explain: "Linha em branco." },
+      { line: 32, text: "    return 0;", explain: "Retorna código 0 indicando encerramento com sucesso." },
+      { line: 33, text: "}", explain: "Fim da função main." },
+      { line: 34, text: "", explain: "Fim do arquivo." }
+    ];
+
+    // Presets Didáticos
+    const PRESETS = {
+      1: { name: "Padrão BOCA", vector: [3, 1, 4, 1, 3, 3] },
+      2: { name: "Repetidos", vector: [2, 2, 2, 2, 2] },
+      3: { name: "Crescente", vector: [0, 1, 2, 3, 4] },
+      4: { name: "Esparso", vector: [0, 5, 1, 5] },
+      5: { name: "Curto", vector: [4, 0, 2] }
+    };
+
+    // Estado da Aplicação
+    let currentVector = [3, 1, 4, 1, 3, 3];
+    let states = [];
+    let currentStepIndex = 0;
+    let isPlaying = false;
+    let playTimer = null;
+
+    function init() {
+      renderCodeList();
+      gerarEstados();
+      renderHistogramTable();
+      renderTraceTable();
+      renderStep(0);
+      setupEventListeners();
+      if (window.lucide) lucide.createIcons();
+    }
+
+    // Renderiza o Código C
+    function renderCodeList() {
+      const container = document.getElementById("codeContainer");
+      container.innerHTML = "";
+      C_SOURCE_CODE.forEach(item => {
+        const lineDiv = document.createElement("div");
+        lineDiv.className = `code-line ${item.line === 22 ? 'focus-line-22' : ''}`;
+        lineDiv.id = `line-${item.line}`;
+        lineDiv.onclick = () => showLineExplanation(item.line);
+
+        const numSpan = document.createElement("span");
+        numSpan.className = `line-num w-6 shrink-0 select-none text-[0.65rem] ${item.line === 22 ? 'text-amber-400 font-bold' : 'text-neutral-500'}`;
+        numSpan.textContent = item.line.toString().padStart(2, ' ');
+
+        const textSpan = document.createElement("span");
+        textSpan.className = `line-text ${item.line === 22 ? 'text-amber-300 font-bold' : 'text-neutral-300'}`;
+        textSpan.textContent = item.text || " ";
+
+        lineDiv.appendChild(numSpan);
+        lineDiv.appendChild(textSpan);
+        container.appendChild(lineDiv);
+      });
+    }
+
+    function showLineExplanation(lineNum) {
+      const item = C_SOURCE_CODE.find(x => x.line === lineNum);
+      if (!item) return;
+      document.getElementById("codeExplainTitle").textContent = `Linha ${item.line} — ${item.text.trim() || 'Linha em branco'}`;
+      document.getElementById("codeExplainDesc").textContent = item.explain;
+    }
+
+    // Gerador de Estados Determinístico Fiel ao EX85.c
+    function gerarEstados() {
+      states = [];
+      const V = [...currentVector];
+      const N = V.length;
+      let M = 0;
+      let V_partial = [];
+      let output = [];
+
+      // Atualiza previews
+      document.getElementById("previewN").textContent = `N = ${N}`;
+      const calculatedMax = Math.max(...V);
+      document.getElementById("previewM").textContent = `M = ${calculatedMax}`;
+      document.getElementById("previewFreqTam").textContent = `M + 1 = ${calculatedMax + 1}`;
+
+      // Estado 0: Início do while (Linha 7)
+      states.push({
+        step: 0,
+        line: 7,
+        phase: 1,
+        N,
+        M: 0,
+        i: null,
+        val: null,
+        V: [],
+        freq: null,
+        acc: 0,
+        output: [],
+        activeVIndex: null,
+        activeFreqIndex: null,
+        title: "Início do Caso de Teste",
+        text: `A função scanf leu N = ${N}. O laço while inicia para processar os ${N} elementos do vetor V.`,
+        snippet: `while (scanf("%d", &N) == 1 && N != 0) // N = ${N}`,
+        mentalModel: `O programa verifica se N > 0. Se N for zero, o programa encerra. Como N = ${N}, continuamos!`
+      });
+
+      // Estado 1: Alocação de V e M = 0 (Linhas 8-9)
+      states.push({
+        step: states.length,
+        line: 9,
+        phase: 1,
+        N,
+        M: 0,
+        i: null,
+        val: null,
+        V: [],
+        freq: null,
+        acc: 0,
+        output: [],
+        activeVIndex: null,
+        activeFreqIndex: null,
+        title: "Alocação de V[N] & M = 0",
+        text: `O vetor V[${N}] é alocado na pilha. A variável M é inicializada com 0 para guardar o maior elemento lido.`,
+        snippet: `int V[${N}]; int M = 0;`,
+        mentalModel: `M começa em 0. À medida que lemos os números, M será atualizado sempre que um número maior for encontrado.`
+      });
+
+      // Fase 1: Leitura do vetor e cálculo de M (Linhas 11-16)
+      for (let i = 0; i < N; i++) {
+        const val = V[i];
+        const isNewMax = (i === 0 || val > M);
+        if (isNewMax) M = val;
+        V_partial.push(val);
+
+        states.push({
+          step: states.length,
+          line: 13,
+          phase: 1,
+          N,
+          M,
+          i,
+          val,
+          V: [...V_partial],
+          freq: null,
+          acc: 0,
+          output: [],
+          activeVIndex: i,
+          activeFreqIndex: null,
+          title: isNewMax ? `Novo Máximo Encontrado: M = ${M}` : `Lendo Elemento V[${i}] = ${val}`,
+          text: `Lendo elemento V[${i}] = ${val}. ${isNewMax ? `Como ${val} > M anterior, atualizamos M = ${M}!` : `Como ${val} <= ${M}, o maior valor M continua sendo ${M}.`}`,
+          snippet: `scanf("%d", &V[${i}]); // V[${i}] = ${val}, M = ${M}`,
+          mentalModel: `Conhecer o maior valor M é essencial: ele define quantas gavetas o vetor de frequências precisará ter!`
+        });
+      }
+
+      // Fase 2: Alocação de freq[M + 1] e memset (Linhas 18-19)
+      const tamFreq = M + 1;
+
+      // Linha 18: declaração
+      states.push({
+        step: states.length,
+        line: 18,
+        phase: 2,
+        N,
+        M,
+        i: null,
+        val: null,
+        V: [...V],
+        freq: new Array(tamFreq).fill(null),
+        acc: 0,
+        output: [],
+        activeVIndex: null,
+        activeFreqIndex: null,
+        title: `Alocação de freq[${tamFreq}]`,
+        text: `Como o maior valor encontrado em V é M = ${M}, alocamos o vetor freq com tamanho M + 1 = ${tamFreq}. Assim teremos índices de 0 até ${M}!`,
+        snippet: `int freq[M + 1]; // M = ${M}, tamanho = ${tamFreq}`,
+        mentalModel: `Atenção: em C, para acessar o índice M, o vetor deve ter tamanho M + 1. Se criássemos com tamanho M, acessar freq[M] causaria Buffer Overflow!`
+      });
+
+      // Linha 19: memset
+      let freq = new Array(tamFreq).fill(0);
+      states.push({
+        step: states.length,
+        line: 19,
+        phase: 2,
+        N,
+        M,
+        i: null,
+        val: null,
+        V: [...V],
+        freq: [...freq],
+        acc: 0,
+        output: [],
+        activeVIndex: null,
+        activeFreqIndex: null,
+        title: "Zeramento de freq com memset",
+        text: `A função memset preenche todas as posições de freq com 0. Todas as gavetas de 0 a ${M} começam zeradas.`,
+        snippet: `memset(freq, 0, sizeof(freq)); // todos os contadores = 0`,
+        mentalModel: `Em C, variáveis locais alocadas na pilha contêm lixo de memória. O memset garante que cada contador comece exatamente em 0.`
+      });
+
+      // Fase 3: Contagem de Frequências (Linhas 21-23) — DESTAQUE LINHA 22!
+      for (let i = 0; i < N; i++) {
+        const val = V[i];
+
+        // Passo A: Avaliação do loop for (Linha 21)
+        states.push({
+          step: states.length,
+          line: 21,
+          phase: 3,
+          N,
+          M,
+          i,
+          val,
+          V: [...V],
+          freq: [...freq],
+          acc: 0,
+          output: [],
+          activeVIndex: i,
+          activeFreqIndex: null,
+          title: `Loop de Contagem: i = ${i}`,
+          text: `Avaliando elemento no índice i = ${i}. O valor guardado é V[${i}] = ${val}.`,
+          snippet: `for (int i = ${i}; i < ${N}; i++)`,
+          mentalModel: `O cursor i caminha pelas posições de V. O conteúdo de V[${i}] será usado imediatamente para escolher a gaveta em freq!`
+        });
+
+        // Passo B: LINHA 22 EXECUTADA (freq[V[i]]++)
+        const prevCount = freq[val];
+        freq[val]++;
+        const newCount = freq[val];
+
+        states.push({
+          step: states.length,
+          line: 22,
+          phase: 3,
+          N,
+          M,
+          i,
+          val,
+          V: [...V],
+          freq: [...freq],
+          acc: 0,
+          output: [],
+          activeVIndex: i,
+          activeFreqIndex: val,
+          prevCount,
+          newCount,
+          title: `⭐ LINHA 22: freq[${val}]++ (${prevCount} ➔ ${newCount})`,
+          text: `Indexação Indireta: lemos V[${i}] = ${val}. Esse número ${val} vira o índice de freq! A posição freq[${val}] é incrementada de ${prevCount} para ${newCount}.`,
+          snippet: `freq[V[${i}]]++; // freq[${val}] era ${prevCount}, agora é ${newCount}`,
+          mentalModel: `Veja o pulo do gato: não comparamos números entre si. O número ${val} escolhe sozinho a gaveta freq[${val}] e soma +1!`
+        });
+      }
+
+      // Fase 4: Frequência Acumulada / Prefix Sum (Linhas 25-29)
+      let acc = 0;
+
+      // Linha 25: int acc = 0;
+      states.push({
+        step: states.length,
+        line: 25,
+        phase: 4,
+        N,
+        M,
+        i: null,
+        val: null,
+        V: [...V],
+        freq: [...freq],
+        acc: 0,
+        output: [],
+        activeVIndex: null,
+        activeFreqIndex: null,
+        title: "Inicialização do Acumulador (acc = 0)",
+        text: `Inicia a fase de cálculo de frequência acumulada (soma de prefixos). A variável acc começa com 0.`,
+        snippet: `int acc = 0;`,
+        mentalModel: `A frequência acumulada soma quantos números são menores ou iguais a cada valor i, de 0 até M.`
+      });
+
+      for (let i = 0; i <= M; i++) {
+        const count = freq[i];
+        const oldAcc = acc;
+        acc += count;
+
+        // Linha 27: acc += freq[i];
+        states.push({
+          step: states.length,
+          line: 27,
+          phase: 4,
+          N,
+          M,
+          i,
+          val: null,
+          V: [...V],
+          freq: [...freq],
+          acc,
+          output: [...output],
+          activeVIndex: null,
+          activeFreqIndex: i,
+          title: `Acumulando Valor i = ${i} (+${count})`,
+          text: `acc += freq[${i}]: Existem ${count} ocorrências do número ${i}. Somamos ao acumulador: ${oldAcc} + ${count} = ${acc}.`,
+          snippet: `acc += freq[${i}]; // acc = ${acc}`,
+          mentalModel: `O valor acc agora indica exatamente quantos elementos do vetor original são <= ${i}.`
+        });
+
+        // Linha 28: printf("(%d) %d\n", i, acc);
+        output.push(`(${i}) ${acc}`);
+
+        states.push({
+          step: states.length,
+          line: 28,
+          phase: 4,
+          N,
+          M,
+          i,
+          val: null,
+          V: [...V],
+          freq: [...freq],
+          acc,
+          output: [...output],
+          activeVIndex: null,
+          activeFreqIndex: i,
+          title: `Saída BOCA: (${i}) ${acc}`,
+          text: `printf("(${i}) %d\\n", ${acc}): O programa imprime no padrão do BOCA que existem ${acc} elementos no vetor <= ${i}.`,
+          snippet: `printf("(%d) %d\\n", ${i}, ${acc});`,
+          mentalModel: `No formato exigido pelo exercício: (valor) quantidade_acumulada.`
+        });
+      }
+
+      // Estado Final: Concluído (Linha 32)
+      states.push({
+        step: states.length,
+        line: 32,
+        phase: 4,
+        N,
+        M,
+        i: null,
+        val: null,
+        V: [...V],
+        freq: [...freq],
+        acc,
+        output: [...output],
+        activeVIndex: null,
+        activeFreqIndex: null,
+        title: "Caso de Teste Concluído!",
+        text: `O caso de teste foi finalizado com sucesso! Foram impressas todas as ${M + 1} linhas de frequência acumulada.`,
+        snippet: `return 0; // Finalizado`,
+        mentalModel: `Observe que no final acc é exatamente igual a N (${acc} == ${N}), pois 100% dos elementos foram computados!`
+      });
+
+      const scrubber = document.getElementById("scrubber");
+      scrubber.max = states.length - 1;
+      scrubber.value = currentStepIndex;
+    }
+
+    // Renderiza um Estado Específico
+    function renderStep(index) {
+      if (index < 0 || index >= states.length) return;
+      currentStepIndex = index;
+      const state = states[index];
+
+      // 1. Radar Cognitivo
+      document.getElementById("radarLineBadge").textContent = `Linha ${state.line}`;
+      document.getElementById("radarTitle").textContent = state.title;
+      document.getElementById("radarText").innerHTML = state.text;
+      document.getElementById("radarCodeSnippet").textContent = state.snippet;
+      document.getElementById("radarMentalModel").innerHTML = state.mentalModel;
+
+      // 2. Faseômetro (Destacar card ativo)
+      for (let p = 1; p <= 4; p++) {
+        const card = document.getElementById(`phaseCard-${p}`);
+        if (!card) continue;
+        if (state.phase === p) {
+          card.className = "phase-card bg-neutral-950 text-white border-2 border-neutral-900 rounded-2xl p-4 shadow-xl transition-all duration-300 scale-[1.02]";
+          const h3 = card.querySelector("h3");
+          if (h3) h3.className = "text-xs font-semibold uppercase tracking-wider text-white mb-0.5";
+          const pEl = card.querySelector("p");
+          if (pEl) pEl.className = "text-[0.68rem] text-neutral-300 leading-snug";
+        } else {
+          card.className = "phase-card bg-neutral-200/50 border border-neutral-300 rounded-2xl p-4 transition-all duration-300 opacity-75";
+          const h3 = card.querySelector("h3");
+          if (h3) h3.className = "text-xs font-semibold uppercase tracking-wider text-neutral-900 mb-0.5";
+          const pEl = card.querySelector("p");
+          if (pEl) pEl.className = "text-[0.68rem] text-neutral-600 leading-snug";
+        }
+      }
+
+      // 3. Micro-Dashboard de Variáveis
+      document.getElementById("varN").textContent = state.N;
+      document.getElementById("varM").textContent = state.M;
+      document.getElementById("varTamFreq").textContent = state.M + 1;
+      document.getElementById("varI").textContent = (state.i !== null) ? state.i : "—";
+      document.getElementById("varVI").textContent = (state.activeVIndex !== null && state.V[state.activeVIndex] !== undefined) ? state.V[state.activeVIndex] : "—";
+      document.getElementById("varAcc").textContent = state.acc;
+      document.getElementById("varPhaseBadge").textContent = `Fase ${state.phase}`;
+
+      // 4. Renderizar Vetor Original V[N]
+      renderVArray(state);
+
+      // 5. Renderizar a Ponte da Linha 22
+      renderBridge(state);
+
+      // 6. Renderizar Vetor de Frequências freq[M + 1]
+      renderFreqArray(state);
+
+      // 7. Renderizar Barra de Acumulação acc
+      renderAccBar(state);
+
+      // 8. Renderizar Saída stdout
+      renderStdout(state.output);
+
+      // 9. Scrubber e Badge
+      document.getElementById("scrubber").value = index;
+      document.getElementById("stepBadge").textContent = `Passo ${index} / ${states.length - 1}`;
+
+      // 10. Destacar Linha no Código C
+      highlightCode(state.line);
+
+      // 11. Destacar Rastreio
+      highlightTraceRow(index);
+    }
+
+    // Renderizar Vetor V
+    function renderVArray(state) {
+      const container = document.getElementById("vArrayContainer");
+      container.innerHTML = "";
+      document.getElementById("vStatusBadge").textContent = `N = ${state.N} elementos`;
+
+      if (state.activeVIndex !== null) {
+        document.getElementById("vCursorBadge").textContent = `Cursor i = ${state.activeVIndex} ➔ V[${state.activeVIndex}] = ${state.V[state.activeVIndex]}`;
+      } else {
+        document.getElementById("vCursorBadge").textContent = `N = ${state.N}`;
+      }
+
+      for (let idx = 0; idx < state.N; idx++) {
+        const hasVal = idx < state.V.length;
+        const val = hasVal ? state.V[idx] : "—";
+        const isActive = (state.activeVIndex === idx);
+
+        const cell = document.createElement("div");
+        cell.className = `flex flex-col items-center justify-between p-2 rounded-2xl border min-w-[54px] h-16 text-center transition-all duration-200 ${
+          isActive
+            ? 'bg-amber-400 border-amber-600 ring-4 ring-amber-400/40 shadow-lg scale-105 text-amber-950 font-bold'
+            : hasVal
+              ? 'bg-white border-neutral-300 text-neutral-900 shadow-xs'
+              : 'bg-neutral-100 border-dashed border-neutral-300 text-neutral-400'
+        }`;
+
+        cell.innerHTML = `
+          <span class="text-[0.55rem] font-mono ${isActive ? 'text-amber-950 font-bold' : 'text-neutral-500'}">[${idx}]</span>
+          <span class="text-base font-mono font-bold ${isActive ? 'text-amber-950 scale-110' : hasVal ? 'text-neutral-900' : 'text-neutral-400'}">${val}</span>
+          <span class="text-[0.5rem] font-mono font-bold ${isActive ? 'text-amber-950' : 'opacity-0'}">▲ i</span>
+        `;
+        container.appendChild(cell);
+      }
+    }
+
+    // Renderizar a Ponte da Linha 22
+    function renderBridge(state) {
+      const card = document.getElementById("bridgeCard");
+      const label = document.getElementById("bridgeStateLabel");
+      const s1 = document.getElementById("bridgeStep1Val");
+      const s2 = document.getElementById("bridgeStep2Val");
+      const s3 = document.getElementById("bridgeStep3Val");
+      const s4 = document.getElementById("bridgeStep4Val");
+
+      const s1Card = document.getElementById("bridgeStep1Card");
+      const s2Card = document.getElementById("bridgeStep2Card");
+      const s3Card = document.getElementById("bridgeStep3Card");
+      const s4Card = document.getElementById("bridgeStep4Card");
+
+      // Reset styles
+      [s1Card, s2Card, s3Card, s4Card].forEach(c => c.className = "bg-white border border-neutral-300 rounded-2xl p-2.5 text-center flex flex-col justify-between shadow-xs");
+
+      if (state.line === 22) {
+        card.className = "bg-amber-200/90 border-2 border-amber-500 rounded-3xl p-5 shadow-lg shadow-amber-900/10 transition-all duration-300 flex flex-col gap-3 scale-[1.01]";
+        label.textContent = "⚡ EXECUÇÃO ATIVA AGORA";
+        label.className = "text-[0.65rem] font-mono text-amber-950 font-bold uppercase bg-amber-300 px-2.5 py-0.5 rounded-full border border-amber-500";
+
+        s1.textContent = `i = ${state.i}`;
+        s1Card.className = "bg-neutral-950 text-white border border-neutral-800 rounded-2xl p-2.5 text-center flex flex-col justify-between shadow-md";
+        s1.className = "text-sm font-bold text-amber-300 my-0.5";
+
+        const val = state.val !== null && state.val !== undefined ? state.val : state.V[state.i];
+        s2.textContent = `V[${state.i}] = ${val}`;
+        s2Card.className = "bg-cyan-50 border border-cyan-300 rounded-2xl p-2.5 text-center flex flex-col justify-between shadow-md";
+        s2.className = "text-sm font-bold text-cyan-800 my-0.5";
+
+        s3.textContent = `freq[ ${val} ]`;
+        s3Card.className = "bg-amber-50 border border-amber-400 rounded-2xl p-2.5 text-center flex flex-col justify-between shadow-md";
+        s3.className = "text-sm font-bold text-amber-900 my-0.5";
+
+        s4.textContent = `${state.prevCount} ➔ ${state.newCount}!`;
+        s4Card.className = "bg-emerald-50 border border-emerald-400 rounded-2xl p-2.5 text-center flex flex-col justify-between shadow-md ring-2 ring-emerald-500/50";
+        s4.className = "text-sm font-bold text-emerald-800 my-0.5 animate-increment";
+      } else if (state.line === 21) {
+        card.className = "bg-amber-100/60 border border-amber-300 rounded-3xl p-5 shadow-sm transition-all duration-300 flex flex-col gap-3";
+        label.textContent = "Preparando Próximo Elemento";
+        label.className = "text-[0.65rem] font-mono text-amber-900 font-bold uppercase";
+
+        s1.textContent = `i = ${state.i}`;
+        s1Card.className = "bg-neutral-100 border border-neutral-400 rounded-2xl p-2.5 text-center flex flex-col justify-between shadow-xs";
+        
+        const val = state.val !== null && state.val !== undefined ? state.val : state.V[state.i];
+        s2.textContent = `V[${state.i}] = ${val}`;
+        s3.textContent = `freq[ ${val} ]`;
+        s4.textContent = `Aguardando ++`;
+      } else {
+        card.className = "bg-neutral-200/40 border border-neutral-300 rounded-3xl p-5 shadow-sm transition-all duration-300 flex flex-col gap-3 opacity-90";
+        label.textContent = state.phase === 4 ? "Fase 3 Concluída" : "Aguardando Fase 3";
+        label.className = "text-[0.65rem] font-mono text-neutral-500 font-bold uppercase";
+
+        s1.textContent = "i = —";
+        s2.textContent = "V[i] = —";
+        s3.textContent = "freq[ — ]";
+        s4.textContent = "freq[...]++";
+      }
+    }
+
+    // Renderizar Vetor de Frequências
+    function renderFreqArray(state) {
+      const container = document.getElementById("freqContainer");
+      container.innerHTML = "";
+      const tamFreq = state.M + 1;
+      document.getElementById("freqTamBadge").textContent = `M = ${state.M} ➔ Tamanho ${tamFreq} (índices 0 a ${state.M})`;
+
+      if (!state.freq) {
+        container.innerHTML = `<span class="text-neutral-500 italic text-xs p-3">Vetor freq ainda não alocado (aguardando Linha 18)...</span>`;
+        return;
+      }
+
+      const maxFreq = Math.max(1, ...state.freq.filter(x => typeof x === 'number'));
+
+      for (let k = 0; k < tamFreq; k++) {
+        const val = state.freq[k];
+        const isAllocated = (val !== null);
+        const isActive = (state.activeFreqIndex === k);
+        const heightPct = isAllocated ? Math.max(16, Math.round((val / maxFreq) * 100)) : 10;
+
+        const col = document.createElement("div");
+        col.className = `flex flex-col items-center justify-end min-w-[50px] h-24 relative`;
+
+        col.innerHTML = `
+          <!-- Mini-Barra do Histograma -->
+          <div class="w-full flex items-end justify-center h-14 mb-1">
+            <div class="w-7 rounded-xl transition-all duration-300 flex items-center justify-center ${
+              isActive 
+                ? 'bg-emerald-500 border-2 border-emerald-700 ring-4 ring-emerald-400/40 animate-increment shadow-md' 
+                : isAllocated && val > 0 
+                  ? 'bg-neutral-900 border border-neutral-700 text-white' 
+                  : 'bg-neutral-300 border border-neutral-400 text-neutral-600'
+            }" style="height: ${heightPct}%;">
+              <span class="text-[0.65rem] font-mono font-bold ${isActive ? 'text-white' : isAllocated && val > 0 ? 'text-emerald-400' : 'text-neutral-600'}">
+                ${isAllocated ? val : '?'}
+              </span>
+            </div>
+          </div>
+
+          <!-- Caixa do Índice (k) -->
+          <div class="w-full py-1 rounded-xl border text-center transition-all ${
+            isActive
+              ? 'bg-emerald-100 border-emerald-500 text-emerald-950 font-bold ring-2 ring-emerald-400/50'
+              : 'bg-white border-neutral-300 text-neutral-800 shadow-2xs'
+          }">
+            <span class="text-xs font-mono font-bold">(${k})</span>
+          </div>
+        `;
+
+        container.appendChild(col);
+      }
+    }
+
+    // Renderizar Barra de Acumulação
+    function renderAccBar(state) {
+      const numberBadge = document.getElementById("accNumberBadge");
+      const bar = document.getElementById("accProgressBar");
+      const formula = document.getElementById("accFormula");
+      const pctLabel = document.getElementById("accPctLabel");
+
+      numberBadge.textContent = `${state.acc} / ${state.N}`;
+      const pct = state.N > 0 ? Math.min(100, Math.round((state.acc / state.N) * 100)) : 0;
+      bar.style.width = `${pct}%`;
+      pctLabel.textContent = `${pct}%`;
+
+      if (state.line === 27 || state.line === 28) {
+        formula.innerHTML = `<b class="text-rose-600">acc += freq[${state.i}]</b> (+${state.freq[state.i]}) ➔ <b>${state.acc}</b>`;
+      } else if (state.line === 32) {
+        formula.innerHTML = `<span class="text-emerald-700 font-bold">Total acumulado: ${state.acc} de ${state.N} elementos (100%)</span>`;
+      } else {
+        formula.textContent = "Aguardando Fase 4 (Linhas 25-29)...";
+      }
+    }
+
+    // Renderizar Saída stdout
+    function renderStdout(output) {
+      const consoleEl = document.getElementById("stdoutConsole");
+      if (output.length === 0) {
+        consoleEl.innerHTML = `<span class="text-neutral-500 italic">Aguardando printf...</span>`;
+        return;
+      }
+
+      consoleEl.innerHTML = output.map((line, idx) => {
+        const isLatest = (idx === output.length - 1);
+        return `<div class="${isLatest ? 'text-white font-bold bg-emerald-500/20 px-1.5 py-0.5 rounded' : 'text-emerald-400'}">${line}</div>`;
+      }).join("");
+
+      consoleEl.scrollTop = consoleEl.scrollHeight;
+    }
+
+    // Destaca Linha no Código C
+    function highlightCode(lineNum) {
+      document.querySelectorAll(".code-line").forEach(el => el.classList.remove("active-line"));
+      const target = document.getElementById(`line-${lineNum}`);
+      if (target) {
+        target.classList.add("active-line");
+        showLineExplanation(lineNum);
+        const container = document.getElementById("codeContainer");
+        const offset = target.offsetTop - container.offsetTop;
+        const targetScroll = offset < 60 ? 0 : Math.max(0, offset - 40);
+        container.scrollTo({ top: targetScroll, behavior: 'smooth' });
+      }
+    }
+
+    // Rastreamento Linha a Linha
+    function renderTraceTable() {
+      const container = document.getElementById("traceListContainer");
+      if (!container) return;
+      container.innerHTML = "";
+
+      states.forEach((s, idx) => {
+        const row = document.createElement("div");
+        row.id = `trace-item-${idx}`;
+        const isL22 = (s.line === 22);
+        row.className = `trace-item p-1.5 rounded-xl border ${isL22 ? 'border-amber-400 bg-amber-50 font-bold' : 'border-neutral-200 bg-neutral-50'} hover:bg-neutral-100 cursor-pointer transition-all flex items-center justify-between text-[0.62rem]`;
+        row.onclick = () => {
+          pause();
+          renderStep(idx);
+        };
+
+        row.innerHTML = `
+          <div class="flex items-center gap-2">
+            <span class="font-bold ${isL22 ? 'text-amber-800' : 'text-neutral-600'}">#${idx} L${s.line}</span>
+            <span class="text-neutral-800 truncate max-w-[160px] sm:max-w-[220px]">${s.title}</span>
+          </div>
+          <span class="text-neutral-500 font-bold">acc=${s.acc}</span>
+        `;
+        container.appendChild(row);
+      });
+    }
+
+    function highlightTraceRow(idx) {
+      document.querySelectorAll(".trace-item").forEach(el => {
+        el.classList.remove("ring-2", "ring-neutral-950", "bg-neutral-200");
+      });
+      const activeRow = document.getElementById(`trace-item-${idx}`);
+      if (activeRow) {
+        activeRow.classList.add("ring-2", "ring-neutral-950", "bg-neutral-200");
+        activeRow.scrollIntoView({ block: "nearest", behavior: "smooth" });
+      }
+    }
+
+    // Tabela da Aba Histograma
+    function renderHistogramTable() {
+      const tbody = document.getElementById("histTableTbody");
+      if (!tbody) return;
+      tbody.innerHTML = "";
+
+      const N = currentVector.length;
+      let M = Math.max(...currentVector);
+      let freq = new Array(M + 1).fill(0);
+      currentVector.forEach(v => freq[v]++);
+
+      let acc = 0;
+      for (let i = 0; i <= M; i++) {
+        acc += freq[i];
+        const pct = N > 0 ? Math.round((acc / N) * 100) : 0;
+        const tr = document.createElement("tr");
+        tr.className = "hover:bg-neutral-50 transition-colors";
+        tr.innerHTML = `
+          <td class="p-2 font-bold text-neutral-900">(${i})</td>
+          <td class="p-2 text-emerald-700 font-bold">${freq[i]} ${freq[i] === 1 ? 'vez' : 'vezes'}</td>
+          <td class="p-2 font-bold text-neutral-900">${acc}</td>
+          <td class="p-2 text-neutral-600">${pct}%</td>
+        `;
+        tbody.appendChild(tr);
+      }
+    }
+
+    // Alternar Abas Técnicas
+    function switchTechTab(tabId) {
+      const tL22 = document.getElementById("techTabL22");
+      const tHist = document.getElementById("techTabHist");
+      const tTrace = document.getElementById("techTabTrace");
+      const tTheory = document.getElementById("techTabTheory");
+
+      const bL22 = document.getElementById("tabBtnL22");
+      const bHist = document.getElementById("tabBtnHist");
+      const bTrace = document.getElementById("tabBtnTrace");
+      const bTheory = document.getElementById("tabBtnTheory");
+
+      [tL22, tHist, tTrace, tTheory].forEach(el => el.classList.add("hidden"));
+      [bL22, bHist, bTrace, bTheory].forEach(btn => {
+        btn.className = "flex-1 py-1.5 rounded-xl text-[0.65rem] font-bold uppercase tracking-wider font-mono transition-all text-neutral-600 hover:text-neutral-900";
+      });
+
+      if (tabId === 'l22') {
+        tL22.classList.remove("hidden");
+        bL22.className = "flex-1 py-1.5 rounded-xl text-[0.65rem] font-bold uppercase tracking-wider font-mono transition-all bg-white text-neutral-900 shadow-sm";
+      } else if (tabId === 'hist') {
+        tHist.classList.remove("hidden");
+        bHist.className = "flex-1 py-1.5 rounded-xl text-[0.65rem] font-bold uppercase tracking-wider font-mono transition-all bg-white text-neutral-900 shadow-sm";
+        renderHistogramTable();
+      } else if (tabId === 'trace') {
+        tTrace.classList.remove("hidden");
+        bTrace.className = "flex-1 py-1.5 rounded-xl text-[0.65rem] font-bold uppercase tracking-wider font-mono transition-all bg-white text-neutral-900 shadow-sm";
+        renderTraceTable();
+        highlightTraceRow(currentStepIndex);
+      } else if (tabId === 'theory') {
+        tTheory.classList.remove("hidden");
+        bTheory.className = "flex-1 py-1.5 rounded-xl text-[0.65rem] font-bold uppercase tracking-wider font-mono transition-all bg-white text-neutral-900 shadow-sm";
+      }
+    }
+
+    // Carregar Preset
+    function carregarPreset(id) {
+      pause();
+      if (PRESETS[id]) {
+        currentVector = [...PRESETS[id].vector];
+        document.getElementById("inputCustomInline").value = currentVector.join(" ");
+      }
+      gerarEstados();
+      renderHistogramTable();
+      renderTraceTable();
+      renderStep(0);
+
+      // Atualiza botões
+      for (let i = 1; i <= 5; i++) {
+        const btn = document.getElementById(`presetBtn${i}`);
+        if (btn) {
+          if (i === id) {
+            btn.className = "px-3.5 py-1.5 rounded-full border border-neutral-950 bg-neutral-950 text-white text-[0.65rem] font-semibold uppercase tracking-widest transition-all shadow-sm";
+          } else {
+            btn.className = "px-3.5 py-1.5 rounded-full border border-neutral-400 text-[0.65rem] font-semibold uppercase tracking-widest hover:bg-neutral-300 transition-all text-neutral-800";
+          }
+        }
+      }
+    }
+
+    // Aplicar Vetor Customizado Inline
+    function aplicarCustomInline() {
+      const raw = document.getElementById("inputCustomInline").value;
+      const parsed = raw.split(/[\s,]+/).map(x => parseInt(x.trim(), 10)).filter(x => !isNaN(x) && x >= 0);
+      if (parsed.length === 0) {
+        alert("Por favor, digite pelo menos 1 número inteiro não-negativo (>= 0).");
+        return;
+      }
+      if (parsed.length > 12) {
+        alert("Para melhor visualização na tela sem rolagem excessiva, use no máximo 12 números.");
+        return;
+      }
+      const maxVal = Math.max(...parsed);
+      if (maxVal > 15) {
+        alert("O maior número deve ser no máximo 15 para caber confortavelmente nas colunas de freq.");
+        return;
+      }
+
+      currentVector = parsed;
+      gerarEstados();
+      renderHistogramTable();
+      renderTraceTable();
+      renderStep(0);
+    }
+
+    // Playback
+    function togglePlay() {
+      if (isPlaying) {
+        pause();
+      } else {
+        play();
+      }
+    }
+
+    function play() {
+      if (currentStepIndex >= states.length - 1) {
+        currentStepIndex = 0;
+      }
+      isPlaying = true;
+      document.getElementById("textPlay").textContent = "Pausar";
+      document.getElementById("iconPlay").setAttribute("data-lucide", "pause");
+      if (window.lucide) lucide.createIcons();
+
+      const speed = parseInt(document.getElementById("speedSelect").value, 10) || 800;
+      playTimer = setInterval(() => {
+        if (currentStepIndex < states.length - 1) {
+          renderStep(currentStepIndex + 1);
+        } else {
+          pause();
+        }
+      }, speed);
+    }
+
+    function pause() {
+      isPlaying = false;
+      if (playTimer) clearInterval(playTimer);
+      document.getElementById("textPlay").textContent = "Reproduzir";
+      document.getElementById("iconPlay").setAttribute("data-lucide", "play");
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function nextStep() {
+      pause();
+      if (currentStepIndex < states.length - 1) {
+        renderStep(currentStepIndex + 1);
+      }
+    }
+
+    function prevStep() {
+      pause();
+      if (currentStepIndex > 0) {
+        renderStep(currentStepIndex - 1);
+      }
+    }
+
+    function nextL22() {
+      pause();
+      for (let s = currentStepIndex + 1; s < states.length; s++) {
+        if (states[s].line === 22) {
+          renderStep(s);
+          return;
+        }
+      }
+      // Se já passou de todas, vai para o final
+      renderStep(states.length - 1);
+    }
+
+    function resetSimulation() {
+      pause();
+      renderStep(0);
+    }
+
+    // Configurar Eventos
+    function setupEventListeners() {
+      document.getElementById("btnPlay").onclick = togglePlay;
+      document.getElementById("btnNext").onclick = nextStep;
+      document.getElementById("btnPrev").onclick = prevStep;
+      document.getElementById("btnNextL22").onclick = nextL22;
+      document.getElementById("btnReset").onclick = resetSimulation;
+
+      document.getElementById("scrubber").oninput = (e) => {
+        pause();
+        renderStep(parseInt(e.target.value, 10));
+      };
+
+      document.getElementById("speedSelect").onchange = () => {
+        if (isPlaying) {
+          pause();
+          play();
+        }
+      };
+
+      // Atalhos de Teclado
+      window.addEventListener("keydown", (e) => {
+        if (e.target.tagName === "INPUT" || e.target.tagName === "SELECT") return;
+        if (e.code === "Space") {
+          e.preventDefault();
+          togglePlay();
+        } else if (e.code === "ArrowRight") {
+          e.preventDefault();
+          nextStep();
+        } else if (e.code === "ArrowLeft") {
+          e.preventDefault();
+          prevStep();
+        } else if (e.code === "KeyR") {
+          e.preventDefault();
+          resetSimulation();
+        }
+      });
+    }
+
+    window.onload = init;
+  </script>
+</body>
+</html>

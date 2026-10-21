@@ -1,0 +1,1410 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>Visualizador do Exercício 34 — Detetives e Ladrões (Emparelhamento Guloso em Matriz 2D)</title>
+
+  <!-- Assets Locais do Design System -->
+  <script src="Design System/assets/resource_3fa48481346f.js"></script>
+  <script src="Design System/assets/lucide_latest_2eebd0ebe8c2.js"></script>
+  <link href="Design System/assets/css2_e01beb4f8743.css" rel="stylesheet"/>
+  <link href="Design System/assets/css2_8e191ef32247.css" rel="stylesheet"/>
+  <link href="Design System/assets/css2_62759cd015bd.css" rel="stylesheet"/>
+
+  <!-- Google Fonts Fallback & Resiliência -->
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    .font-oswald { font-family: 'Oswald', sans-serif; }
+    .font-space { font-family: 'Space Grotesk', sans-serif; }
+    .font-inter { font-family: 'Inter', sans-serif; }
+    .font-mono { font-family: 'Geist Mono', 'Space Mono', monospace; }
+
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.18); border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(0, 0, 0, 0.35); }
+
+    /* Estilo de borda degradê compartilhada do Design System */
+    [style*="--border-gradient"]::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      padding: 1px;
+      border-radius: var(--border-radius-before, inherit);
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      background: var(--border-gradient);
+      pointer-events: none;
+    }
+
+    /* Slider de progresso customizado no estilo Future UI */
+    input[type=range] {
+      -webkit-appearance: none;
+      background: #cbd5e1;
+      border-radius: 9999px;
+      height: 6px;
+      outline: none;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #0a0a0a;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.35);
+      transition: transform 0.15s ease, background 0.15s ease;
+    }
+    input[type=range]::-webkit-slider-thumb:hover {
+      transform: scale(1.2);
+      background: #ea580c;
+    }
+    input[type=range]::-moz-range-thumb {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #0a0a0a;
+      cursor: pointer;
+      border: none;
+    }
+
+    /* Linhas de Código C */
+    .code-line {
+      display: flex;
+      align-items: baseline;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-family: 'Geist Mono', monospace;
+      font-size: 11.5px;
+      line-height: 18px;
+      transition: all 0.15s ease;
+      cursor: pointer;
+      user-select: none;
+    }
+    .code-line:hover {
+      background: rgba(255, 255, 255, 0.05);
+    }
+    .code-line.active-line {
+      background: rgba(16, 185, 129, 0.2) !important;
+      border-left: 3px solid #10b981;
+      font-weight: 600;
+    }
+    .code-line.active-line .line-num {
+      color: #34d399;
+      font-weight: bold;
+    }
+    .code-line.active-line .line-text {
+      color: #ffffff;
+    }
+
+    .code-line.focus-match {
+      background: rgba(245, 158, 11, 0.2) !important;
+      border-left: 3px solid #f59e0b;
+      font-weight: 600;
+    }
+    .code-line.focus-match .line-num {
+      color: #fbbf24;
+    }
+
+    /* Células da Matriz 2D */
+    .matrix-cell {
+      transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
+      user-select: none;
+    }
+    .matrix-cell:hover {
+      transform: translateY(-2px);
+    }
+    .matrix-cell.cell-scan-source {
+      box-shadow: 0 0 0 3px #f59e0b, 0 8px 18px rgba(245, 158, 11, 0.35);
+      transform: scale(1.04);
+      z-index: 10;
+    }
+    .matrix-cell.cell-scan-target {
+      box-shadow: 0 0 0 3px #06b6d4, 0 8px 18px rgba(6, 182, 212, 0.35);
+      transform: scale(1.04);
+      z-index: 10;
+    }
+    .matrix-cell.cell-just-arrested {
+      animation: cellArrestAnim 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    @keyframes cellArrestAnim {
+      0% { transform: scale(0.92); }
+      50% { transform: scale(1.1); filter: drop-shadow(0 0 12px rgba(16, 185, 129, 0.6)); }
+      100% { transform: scale(1); }
+    }
+
+    /* Pulso do Odômetro */
+    @keyframes pulseCounter {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.18); filter: drop-shadow(0 0 12px rgba(234, 88, 12, 0.8)); }
+      100% { transform: scale(1); }
+    }
+    .counter-pulse {
+      animation: pulseCounter 0.35s ease-out;
+    }
+
+    /* Raio laser de busca SVG */
+    .scan-beam {
+      stroke-dasharray: 6 4;
+      animation: beamFlow 0.8s linear infinite;
+    }
+    @keyframes beamFlow {
+      from { stroke-dashoffset: 20; }
+      to { stroke-dashoffset: 0; }
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased xl:items-center xl:justify-center xl:p-8 text-neutral-950 font-space bg-neutral-400 px-0 py-0">
+
+  <!-- Container Principal do Design System -->
+  <main class="xl:rounded-[3.5rem] xl:p-12 overflow-hidden flex flex-col xl:max-w-[96rem] xl:shadow-2xl bg-[#E6E6E6] w-full rounded-none pt-6 pr-6 pb-6 pl-6 relative shadow-none border border-neutral-300">
+    
+    <!-- Efeito de Luz Difusa de Fundo -->
+    <div class="pointer-events-none bg-gradient-to-br from-white/50 via-transparent to-neutral-400/20 w-full h-full absolute top-0 left-0"></div>
+
+    <!-- Barra de Navegação e Marca -->
+    <nav class="relative z-20 flex flex-wrap items-center justify-between gap-6 pb-6 border-b border-neutral-300 mb-8">
+      
+      <!-- Logo do Design System: 3 Barras Características -->
+      <div class="flex items-center gap-3 group cursor-default">
+        <div class="flex gap-1">
+          <div class="w-3 h-8 bg-neutral-950 rounded-full"></div>
+          <div class="w-3 h-8 bg-neutral-950 rounded-full group-hover:h-5 transition-all duration-300"></div>
+          <div class="w-3 h-8 bg-neutral-950 rounded-full"></div>
+        </div>
+        <div>
+          <span class="text-xs font-mono font-bold tracking-widest uppercase text-neutral-950 block">FUTURE UI // POLICE &amp; THIEVES LAB (EX34.C)</span>
+          <span class="text-[0.65rem] text-neutral-500 uppercase tracking-widest block font-medium">Matriz 2D · Emparelhamento Guloso em Duas Fases · Alcance Manhattan K</span>
+        </div>
+      </div>
+
+      <!-- Links e Badges de Estado -->
+      <div class="flex flex-wrap items-center gap-2 sm:gap-3">
+        <a href="EX35.html" class="px-3.5 py-1.5 rounded-full border border-neutral-400 text-[0.65rem] font-bold uppercase tracking-widest hover:bg-neutral-300 transition-colors flex items-center gap-1.5 text-neutral-800" title="Ver visualizador do Monge e Polinômio">
+          <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i> Ex. 35 (Polinômio)
+        </a>
+        <a href="EX40.html" class="px-3.5 py-1.5 rounded-full border border-neutral-400 text-[0.65rem] font-bold uppercase tracking-widest hover:bg-neutral-300 transition-colors flex items-center gap-1.5 text-neutral-800" title="Ver visualizador de troca de trens">
+          Ex. 40 (Trens) <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+        </a>
+        <div class="bg-[#E6E6E6] border border-neutral-400 rounded-full px-3.5 py-1.5 shadow-sm items-center gap-2 hidden md:flex">
+          <div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+          <span class="text-[0.65rem] font-bold uppercase tracking-widest text-neutral-800">Simulador Ativo</span>
+        </div>
+        <div class="text-white bg-neutral-950 rounded-full px-4 py-1.5 shadow-md flex items-center gap-2">
+          <i data-lucide="shield-alert" class="w-3.5 h-3.5 text-orange-400"></i>
+          <span class="text-[0.65rem] font-bold uppercase tracking-widest font-mono">BOCA · EX34</span>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Cabeçalho Monumental Hero -->
+    <header class="relative z-20 mb-8">
+      <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-8">
+        <div class="max-w-3xl">
+          <div class="flex items-center gap-3 text-xs font-semibold tracking-widest uppercase text-neutral-500 mb-3">
+            <span>Exercício 34 · Matrizes &amp; Estratégia Gulosa</span>
+            <span class="w-4 h-[1px] bg-neutral-400"></span>
+            <span class="text-neutral-800 font-bold">Rondas de Detetives &amp; Prisão de Ladrões</span>
+          </div>
+          <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-7xl uppercase font-medium text-neutral-950 tracking-tighter font-oswald leading-none mb-3">
+            Visualizador do <span class="text-neutral-600">Exercício 34</span>
+          </h1>
+          <p class="text-xs sm:text-sm text-neutral-700 leading-relaxed uppercase tracking-wide font-normal max-w-2xl">
+            Acompanhe a varredura gulosa em duas etapas de <code class="bg-neutral-300/80 px-2 py-0.5 rounded font-mono text-neutral-900 font-bold">matriz[N][N]</code>: primeiro horizontalmente na mesma linha, depois verticalmente na mesma coluna. Cada Detetive <span class="bg-neutral-900 text-white font-mono px-1.5 py-0.5 rounded font-bold text-[0.7rem]">D</span> prende no máximo um Ladrão <span class="bg-rose-600 text-white font-mono px-1.5 py-0.5 rounded font-bold text-[0.7rem]">L</span> dentro da distância limite <code class="bg-amber-300/90 text-amber-950 px-2 py-0.5 rounded font-mono font-bold">d &le; k</code>.
+          </p>
+        </div>
+
+        <!-- Card de Dica de Ouro Didática (Orange/Amber Accent Card) -->
+        <div class="w-full lg:w-96 overflow-hidden bg-amber-400 border border-white/40 rounded-2xl p-5 shadow-lg shadow-amber-900/20 relative">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-[0.65rem] font-bold uppercase tracking-widest text-amber-950/80 flex items-center gap-1.5 font-mono">
+              <i data-lucide="zap" class="w-3.5 h-3.5 text-amber-950"></i> A Ordem do Guloso
+            </span>
+            <span class="text-[0.65rem] font-mono font-bold bg-amber-950/15 px-2 py-0.5 rounded-full text-amber-950">GREEDY 2-PHASE</span>
+          </div>
+          <p class="text-xs text-amber-950 font-medium leading-relaxed">
+            O algoritmo bloqueia os participantes com <code class="bg-amber-950/20 px-1 py-0.5 rounded font-mono font-bold">preso = true</code> assim que encontra o primeiro par válido a até $k$ passos. As prisões horizontais ocorrem primeiro; os que sobrarem livres podem ser capturados na rodada vertical!
+          </p>
+        </div>
+      </div>
+    </header>
+
+    <!-- Escaninho de Presets e Configuração da Grade -->
+    <section class="relative z-20 mb-8 bg-neutral-200/50 border border-neutral-300 rounded-3xl p-6 shadow-sm">
+      <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-4 border-b border-neutral-300 mb-5">
+        <div class="flex items-center gap-2">
+          <i data-lucide="sliders" class="w-4 h-4 text-neutral-800"></i>
+          <h2 class="text-xs font-semibold uppercase tracking-widest text-neutral-900">Escaninho de Cenários e Presets Oficiais</h2>
+        </div>
+        
+        <!-- Presets Oficiais -->
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="text-[0.65rem] font-mono uppercase text-neutral-500 font-bold">Presets:</span>
+          <button onclick="carregarPreset(1)" id="presetBtn1" class="px-3.5 py-1.5 rounded-full border border-neutral-950 bg-neutral-950 text-white text-[0.65rem] font-semibold uppercase tracking-widest transition-all shadow-sm">
+            Exemplo 1: 3x3 (k=1) · 4 Prisões
+          </button>
+          <button onclick="carregarPreset(2)" id="presetBtn2" class="px-3.5 py-1.5 rounded-full border border-neutral-400 text-[0.65rem] font-semibold uppercase tracking-widest hover:bg-neutral-300 transition-all text-neutral-800">
+            Exemplo 2: 5x5 (k=1) · 7 Prisões
+          </button>
+          <button onclick="carregarPreset(3)" id="presetBtn3" class="px-3.5 py-1.5 rounded-full border border-neutral-400 text-[0.65rem] font-semibold uppercase tracking-widest hover:bg-neutral-300 transition-all text-neutral-800">
+            Exemplo 3: 7x7 (k=2) · 8 Prisões
+          </button>
+          <button onclick="carregarPreset(4)" id="presetBtn4" class="px-3.5 py-1.5 rounded-full border border-neutral-400 text-[0.65rem] font-semibold uppercase tracking-widest hover:bg-neutral-300 transition-all text-neutral-800">
+            Vertical Crucial: 4x4 (k=2)
+          </button>
+        </div>
+      </div>
+
+      <!-- Configuração Rápida de Parâmetros -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+        <div>
+          <label class="block text-[0.65rem] font-mono uppercase text-neutral-600 font-bold mb-1.5 flex items-center justify-between">
+            <span>Dimensão N (Linhas × Colunas)</span>
+            <span id="badgeN" class="font-bold text-neutral-900 bg-neutral-300/80 px-2 py-0.5 rounded">3</span>
+          </label>
+          <select id="selectN" onchange="alterarDimensaoN(this.value)" class="w-full bg-neutral-100 border border-neutral-300 rounded-xl px-3 py-2 text-xs font-mono font-bold text-neutral-900 focus:outline-none focus:border-neutral-950">
+            <option value="3" selected>3 × 3 (9 células)</option>
+            <option value="4">4 × 4 (16 células)</option>
+            <option value="5">5 × 5 (25 células)</option>
+            <option value="6">6 × 6 (36 células)</option>
+            <option value="7">7 × 7 (49 células)</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-[0.65rem] font-mono uppercase text-neutral-600 font-bold mb-1.5 flex items-center justify-between">
+            <span>Alcance Máximo de Visão (k)</span>
+            <span id="badgeK" class="font-bold text-neutral-900 bg-neutral-300/80 px-2 py-0.5 rounded">k = 1</span>
+          </label>
+          <input type="range" id="inputK" min="1" max="5" value="1" oninput="alterarAlcanceK(this.value)" class="w-full mt-2"/>
+        </div>
+
+        <div>
+          <label class="block text-[0.65rem] font-mono uppercase text-neutral-600 font-bold mb-1.5">
+            Editar Células Interativamente
+          </label>
+          <p class="text-[0.65rem] text-neutral-600 leading-tight">
+            Clique diretamente em qualquer célula do tabuleiro para alternar entre <b>Detetive (D)</b> e <b>Ladrão (L)</b>.
+          </p>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button onclick="inverterTudo()" class="flex-1 px-3 py-2 bg-neutral-300/80 hover:bg-neutral-300 text-neutral-800 text-xs font-semibold uppercase tracking-wider rounded-xl border border-neutral-400 transition-colors flex items-center justify-center gap-1.5">
+            <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Inverter D &harr; L
+          </button>
+          <button onclick="aleatorizarMatriz()" class="flex-1 px-3 py-2 bg-neutral-950 hover:bg-neutral-800 text-white text-xs font-semibold uppercase tracking-wider rounded-xl transition-colors flex items-center justify-center gap-1.5 shadow-sm">
+            <i data-lucide="shuffle" class="w-3.5 h-3.5"></i> Aleatório
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Centro de Comando e Telemetria em Tempo Real -->
+    <section class="relative z-20 mb-8 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+      <!-- Total de Prisões -->
+      <div class="col-span-2 bg-neutral-950 text-white rounded-2xl p-4 shadow-md flex items-center justify-between border border-neutral-800">
+        <div>
+          <span class="text-[0.65rem] font-mono font-bold tracking-widest uppercase text-neutral-400 block mb-1">
+            Total de Prisões (total)
+          </span>
+          <div class="flex items-baseline gap-2">
+            <span id="teleTotal" class="text-4xl sm:text-5xl font-mono font-bold text-emerald-400 leading-none">0</span>
+            <span class="text-xs text-neutral-400 font-mono">capturas</span>
+          </div>
+        </div>
+        <div class="w-12 h-12 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400">
+          <i data-lucide="lock" class="w-6 h-6"></i>
+        </div>
+      </div>
+
+      <!-- Fase Atual da Varredura -->
+      <div class="col-span-2 bg-white/70 border border-neutral-300 rounded-2xl p-4 shadow-sm flex flex-col justify-between">
+        <span class="text-[0.65rem] font-mono font-bold tracking-widest uppercase text-neutral-500 block">
+          Fase Atual da Varredura
+        </span>
+        <div class="flex items-center gap-2 mt-1">
+          <span id="telePhaseBadge" class="px-2.5 py-1 rounded-full text-[0.7rem] font-mono font-bold uppercase bg-amber-100 text-amber-900 border border-amber-300 flex items-center gap-1.5">
+            <i data-lucide="arrow-right" class="w-3.5 h-3.5 text-amber-700"></i> Fase 1: Horizontal
+          </span>
+          <span id="teleStepNum" class="text-xs font-mono text-neutral-600 font-semibold">Passo 0/0</span>
+        </div>
+      </div>
+
+      <!-- Detetives Livres vs Presos -->
+      <div class="bg-white/70 border border-neutral-300 rounded-2xl p-4 shadow-sm flex flex-col justify-between">
+        <span class="text-[0.65rem] font-mono font-bold tracking-widest uppercase text-neutral-500 block">
+          Detetives (D)
+        </span>
+        <div class="flex items-baseline justify-between mt-1">
+          <span id="teleDetetivesPresos" class="text-xl font-mono font-bold text-neutral-900">0</span>
+          <span id="teleDetetivesTotal" class="text-xs font-mono text-neutral-500">/ 0 ocupados</span>
+        </div>
+      </div>
+
+      <!-- Ladrões Livres vs Presos -->
+      <div class="bg-white/70 border border-neutral-300 rounded-2xl p-4 shadow-sm flex flex-col justify-between">
+        <span class="text-[0.65rem] font-mono font-bold tracking-widest uppercase text-neutral-500 block">
+          Ladrões (L)
+        </span>
+        <div class="flex items-baseline justify-between mt-1">
+          <span id="teleLadraosPresos" class="text-xl font-mono font-bold text-rose-600">0</span>
+          <span id="teleLadraosTotal" class="text-xs font-mono text-neutral-500">/ 0 presos</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Layout Principal: Tabuleiro 2D + Código C Sincronizado -->
+    <div class="relative z-20 grid grid-cols-1 lg:grid-cols-12 gap-8 mb-8 items-start">
+      
+      <!-- Coluna da Esquerda: Matriz 2D Interativa com Camada SVG de Conexões (7 Colunas) -->
+      <div class="lg:col-span-7 flex flex-col gap-6">
+        
+        <!-- Cartão da Matriz 2D -->
+        <div class="bg-neutral-100/90 border border-neutral-300 rounded-3xl p-6 shadow-md relative">
+          
+          <div class="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-neutral-300 mb-6">
+            <div>
+              <h3 class="text-sm font-semibold uppercase tracking-widest text-neutral-900 flex items-center gap-2">
+                <i data-lucide="grid" class="w-4 h-4 text-neutral-800"></i>
+                Grade 2D de Vigilância (<span id="matrixSizeLabel">3 &times; 3</span>)
+              </h3>
+              <p class="text-[0.65rem] text-neutral-500 uppercase tracking-widest mt-0.5">
+                Células com Detetives (D) e Ladrões (L) · Raio de Ação k = <span id="currentKLabel">1</span>
+              </p>
+            </div>
+
+            <!-- Legenda das Células -->
+            <div class="flex flex-wrap items-center gap-2.5 text-[0.65rem] font-mono">
+              <span class="inline-flex items-center gap-1 bg-neutral-900 text-white px-2 py-0.5 rounded-md font-bold">
+                <span class="w-2 h-2 rounded-full bg-sky-400"></span> D = Detetive
+              </span>
+              <span class="inline-flex items-center gap-1 bg-rose-600 text-white px-2 py-0.5 rounded-md font-bold">
+                <span class="w-2 h-2 rounded-full bg-amber-300"></span> L = Ladrão
+              </span>
+              <span class="inline-flex items-center gap-1 bg-neutral-300 text-neutral-800 px-2 py-0.5 rounded-md font-bold">
+                <i data-lucide="lock" class="w-2.5 h-2.5"></i> Preso
+              </span>
+            </div>
+          </div>
+
+          <!-- Tabuleiro Gráfico Central com Camada SVG -->
+          <div class="relative flex items-center justify-center p-2 sm:p-4 bg-neutral-200/40 rounded-2xl border border-neutral-300 overflow-hidden min-h-[380px]">
+            
+            <!-- SVG de Feixes e Conexões de Prisão -->
+            <svg id="connectionsSvg" class="absolute inset-0 w-full h-full pointer-events-none z-10" viewBox="0 0 100 100" preserveAspectRatio="none">
+              <!-- Definição de Marcadores e Filtros -->
+              <defs>
+                <filter id="glowHorizontal" x="-20%" y="-20%" width="140%" height="140%">
+                  <feGaussianBlur stdDeviation="1.5" result="blur" />
+                  <feMerge>
+                    <feMergeNode in="blur" />
+                    <feMergeNode in="SourceGraphic" />
+                  </feMerge>
+                </filter>
+                <filter id="glowVertical" x="-20%" y="-20%" width="140%" height="140%">
+                  <feGaussianBlur stdDeviation="1.5" result="blur" />
+                  <feMerge>
+                    <feMergeNode in="blur" />
+                    <feMergeNode in="SourceGraphic" />
+                  </feMerge>
+                </filter>
+              </defs>
+
+              <!-- Grupo de Conexões Definitivas de Prisão -->
+              <g id="svgArrestsGroup"></g>
+
+              <!-- Feixe Ativo de Sondagem Atual -->
+              <g id="svgActiveBeamGroup"></g>
+            </svg>
+
+            <!-- Container da Grade de Células HTML -->
+            <div id="gridContainer" class="grid gap-2.5 sm:gap-3.5 relative z-0 w-full max-w-[480px] aspect-square transition-all duration-300">
+              <!-- Células geradas dinamicamente via JS -->
+            </div>
+
+          </div>
+
+          <!-- Banner Informativo da Ação Atual -->
+          <div id="actionBanner" class="mt-4 p-4 rounded-2xl bg-white border border-neutral-300 shadow-sm flex items-start gap-3">
+            <div id="actionIconBox" class="w-8 h-8 rounded-xl bg-neutral-900 text-white flex items-center justify-center shrink-0 mt-0.5">
+              <i data-lucide="play" class="w-4 h-4"></i>
+            </div>
+            <div class="flex-1">
+              <div class="flex items-center justify-between">
+                <span id="actionTitle" class="text-xs font-mono font-bold uppercase text-neutral-900 tracking-wider">Pronto para Iniciar</span>
+                <span id="actionCoord" class="text-[0.65rem] font-mono bg-neutral-200 px-2 py-0.5 rounded text-neutral-700">l: - | c: - | d: -</span>
+              </div>
+              <p id="actionDesc" class="text-xs text-neutral-600 mt-1 leading-relaxed">
+                Clique em <b>Próximo Passo</b> ou <b>Play</b> para iniciar a varredura horizontal do algoritmo.
+              </p>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Painel de Controles de Reprodução e Barra de Scrubbing -->
+        <div class="bg-neutral-100/90 border border-neutral-300 rounded-3xl p-6 shadow-md flex flex-col gap-4">
+          <div class="flex items-center justify-between text-xs font-mono font-bold uppercase tracking-wider text-neutral-700">
+            <span class="flex items-center gap-1.5"><i data-lucide="sliders-horizontal" class="w-4 h-4"></i> Linha do Tempo da Simulação</span>
+            <span id="sliderStepText">Passo 0 de 0</span>
+          </div>
+
+          <!-- Slider de Passos -->
+          <input type="range" id="simSlider" min="0" max="0" value="0" oninput="irParaPasso(parseInt(this.value))" class="w-full cursor-pointer"/>
+
+          <!-- Botões de Ação Rápida -->
+          <div class="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-neutral-200">
+            <div class="flex items-center gap-1.5 sm:gap-2">
+              <button onclick="reiniciarSimulacao()" class="p-2 sm:px-3 sm:py-2 rounded-xl bg-white hover:bg-neutral-200 border border-neutral-300 text-neutral-800 text-xs font-bold uppercase transition-all shadow-sm flex items-center gap-1" title="Reiniciar do Início">
+                <i data-lucide="rotate-ccw" class="w-4 h-4"></i> <span class="hidden sm:inline">Reiniciar</span>
+              </button>
+              <button onclick="passoAnterior()" class="p-2 sm:px-3 sm:py-2 rounded-xl bg-white hover:bg-neutral-200 border border-neutral-300 text-neutral-800 text-xs font-bold uppercase transition-all shadow-sm flex items-center gap-1" title="Passo Anterior">
+                <i data-lucide="skip-back" class="w-4 h-4"></i> <span class="hidden sm:inline">Voltar</span>
+              </button>
+              <button id="playPauseBtn" onclick="togglePlayPause()" class="px-4 py-2 rounded-xl bg-neutral-950 hover:bg-neutral-800 text-white text-xs font-bold uppercase transition-all shadow-sm flex items-center gap-1.5">
+                <i data-lucide="play" class="w-4 h-4 text-emerald-400"></i> <span id="playBtnText">Play</span>
+              </button>
+              <button onclick="proximoPasso()" class="p-2 sm:px-3 sm:py-2 rounded-xl bg-white hover:bg-neutral-200 border border-neutral-300 text-neutral-800 text-xs font-bold uppercase transition-all shadow-sm flex items-center gap-1" title="Próximo Passo">
+                <span class="hidden sm:inline">Avançar</span> <i data-lucide="skip-forward" class="w-4 h-4"></i>
+              </button>
+            </div>
+
+            <!-- Botões de Salto Estratégico -->
+            <div class="flex items-center gap-2">
+              <button onclick="pularParaProximaPrisao()" class="px-3 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-amber-950 border border-amber-500 text-xs font-bold uppercase tracking-wider transition-all shadow-sm flex items-center gap-1.5" title="Avançar diretamente para a próxima prisão realizada">
+                <i data-lucide="zap" class="w-3.5 h-3.5"></i> <span>Próx. Prisão</span>
+              </button>
+              <button onclick="pularParaFaseVertical()" class="px-3 py-2 rounded-xl bg-neutral-200 hover:bg-neutral-300 text-neutral-800 border border-neutral-400 text-xs font-bold uppercase tracking-wider transition-all shadow-sm flex items-center gap-1.5" title="Ir para início da fase vertical">
+                <i data-lucide="corner-down-right" class="w-3.5 h-3.5"></i> <span class="hidden md:inline">Fase Vertical</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Controle de Velocidade -->
+          <div class="flex items-center justify-between text-[0.65rem] font-mono text-neutral-500 pt-1">
+            <span>Velocidade de Reprodução</span>
+            <div class="flex items-center gap-2">
+              <button onclick="ajustarVelocidade(1200)" class="speed-btn px-2 py-0.5 rounded border border-neutral-300 hover:bg-neutral-200">0.5x</button>
+              <button onclick="ajustarVelocidade(600)" class="speed-btn px-2 py-0.5 rounded border border-neutral-950 bg-neutral-950 text-white font-bold">1x</button>
+              <button onclick="ajustarVelocidade(250)" class="speed-btn px-2 py-0.5 rounded border border-neutral-300 hover:bg-neutral-200">2x</button>
+              <button onclick="ajustarVelocidade(80)" class="speed-btn px-2 py-0.5 rounded border border-neutral-300 hover:bg-neutral-200">Turbo</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Coluna da Direita: Código C Sincronizado + Terminal BOCA + Ficha (5 Colunas) -->
+      <div class="lg:col-span-5 flex flex-col gap-6">
+
+        <!-- Caixa de Código C Sincronizado com Destaque de Linha -->
+        <div class="bg-neutral-950 text-white rounded-3xl p-5 shadow-xl border border-neutral-800 flex flex-col">
+          <div class="flex items-center justify-between pb-3 border-b border-neutral-800 mb-3">
+            <div class="flex items-center gap-2">
+              <i data-lucide="code" class="w-4 h-4 text-emerald-400"></i>
+              <span class="text-xs font-mono font-bold uppercase tracking-wider text-neutral-300">Código C Original · EX34.c</span>
+            </div>
+            <span class="text-[0.65rem] font-mono bg-neutral-800 text-neutral-400 px-2 py-0.5 rounded">
+              Lógicas Gulosa 1D
+            </span>
+          </div>
+
+          <!-- Bloco com Rolagem e Numeração de Linhas -->
+          <div class="overflow-x-auto max-h-[420px] rounded-xl bg-neutral-900/80 p-2 border border-neutral-800/80" id="codeContainer">
+            <div class="code-line" id="line-35"><span class="line-num w-7 text-neutral-600 font-mono text-right pr-2">35</span><span class="line-text text-neutral-500">// verificar horizontal</span></div>
+            <div class="code-line" id="line-36"><span class="line-num w-7 text-neutral-600 font-mono text-right pr-2">36</span><span class="line-text text-neutral-300">for (int l = 0; l &lt; n; l++) {</span></div>
+            <div class="code-line" id="line-37"><span class="line-num w-7 text-neutral-600 font-mono text-right pr-2">37</span><span class="line-text text-neutral-300 pl-3">for (int c = 0; c &lt; n; c++) {</span></div>
+            <div class="code-line" id="line-38"><span class="line-num w-7 text-neutral-600 font-mono text-right pr-2">38</span><span class="line-text text-neutral-300 pl-6">for (int d = 1; d &lt;= k &amp;&amp; c + d &lt; n; d++) {</span></div>
+            <div class="code-line" id="line-39"><span class="line-num w-7 text-neutral-600 font-mono text-right pr-2">39</span><span class="line-text text-neutral-300 pl-9">char A = matriz[l][c];</span></div>
+            <div class="code-line" id="line-40"><span class="line-num w-7 text-neutral-600 font-mono text-right pr-2">40</span><span class="line-text text-neutral-300 pl-9">char B = matriz[l][c + d];</span></div>
+            <div class="code-line" id="line-41"><span class="line-num w-7 text-neutral-600 font-mono text-right pr-2">41</span><span class="line-text text-neutral-300 pl-9">if ((A == 'D' &amp;&amp; B == 'L') || (A == 'L' &amp;&amp; B == 'D')) {</span></div>
+            <div class="code-line" id="line-42"><span class="line-num w-7 text-neutral-600 font-mono text-right pr-2">42</span><span class="line-text text-neutral-300 pl-12">if (!preso[l][c] &amp;&amp; !preso[l][c + d]) {</span></div>
+            <div class="code-line" id="line-43"><span class="line-num w-7 text-neutral-600 font-mono text-right pr-2">43</span><span class="line-text text-emerald-400 font-bold pl-16">preso[l][c] = true;</span></div>
+            <div class="code-line" id="line-44"><span class="line-num w-7 text-neutral-600 font-mono text-right pr-2">44</span><span class="line-text text-emerald-400 font-bold pl-16">preso[l][c + d] = true;</span></div>
+            <div class="code-line" id="line-45"><span class="line-num w-7 text-neutral-600 font-mono text-right pr-2">45</span><span class="line-text text-amber-400 font-bold pl-16">total++;</span></div>
+            <div class="code-line" id="line-46"><span class="line-num w-7 text-neutral-600 font-mono text-right pr-2">46</span><span class="line-text text-neutral-300 pl-12">}</span></div>
+            <div class="code-line" id="line-47"><span class="line-num w-7 text-neutral-600 font-mono text-right pr-2">47</span><span class="line-text text-neutral-300 pl-9">}</span></div>
+            <div class="code-line" id="line-48"><span class="line-num w-7 text-neutral-600 font-mono text-right pr-2">48</span><span class="line-text text-neutral-300 pl-6">}</span></div>
+            <div class="code-line" id="line-49"><span class="line-num w-7 text-neutral-600 font-mono text-right pr-2">49</span><span class="line-text text-neutral-300 pl-3">}</span></div>
+            <div class="code-line" id="line-50"><span class="line-num w-7 text-neutral-600 font-mono text-right pr-2">50</span><span class="line-text text-neutral-300">}</span></div>
+            <div class="code-line" id="line-51"><span class="line-num w-7 text-neutral-600 font-mono text-right pr-2">51</span><span class="line-text text-neutral-500">// verificar vertical</span></div>
+            <div class="code-line" id="line-52"><span class="line-num w-7 text-neutral-600 font-mono text-right pr-2">52</span><span class="line-text text-neutral-300">for (int l = 0; l &lt; n; l++) {</span></div>
+            <div class="code-line" id="line-53"><span class="line-num w-7 text-neutral-600 font-mono text-right pr-2">53</span><span class="line-text text-neutral-300 pl-3">for (int c = 0; c &lt; n; c++) {</span></div>
+            <div class="code-line" id="line-54"><span class="line-num w-7 text-neutral-600 font-mono text-right pr-2">54</span><span class="line-text text-neutral-300 pl-6">for (int d = 1; d &lt;= k &amp;&amp; l + d &lt; n; d++) {</span></div>
+            <div class="code-line" id="line-55"><span class="line-num w-7 text-neutral-600 font-mono text-right pr-2">55</span><span class="line-text text-neutral-300 pl-9">char A = matriz[l][c];</span></div>
+            <div class="code-line" id="line-56"><span class="line-num w-7 text-neutral-600 font-mono text-right pr-2">56</span><span class="line-text text-neutral-300 pl-9">char B = matriz[l + d][c];</span></div>
+            <div class="code-line" id="line-57"><span class="line-num w-7 text-neutral-600 font-mono text-right pr-2">57</span><span class="line-text text-neutral-300 pl-9">if ((A == 'D' &amp;&amp; B == 'L') || (A == 'L' &amp;&amp; B == 'D')) {</span></div>
+            <div class="code-line" id="line-58"><span class="line-num w-7 text-neutral-600 font-mono text-right pr-2">58</span><span class="line-text text-neutral-300 pl-12">if (!preso[l][c] &amp;&amp; !preso[l + d][c]) {</span></div>
+            <div class="code-line" id="line-59"><span class="line-num w-7 text-neutral-600 font-mono text-right pr-2">59</span><span class="line-text text-emerald-400 font-bold pl-16">preso[l][c] = true;</span></div>
+            <div class="code-line" id="line-60"><span class="line-num w-7 text-neutral-600 font-mono text-right pr-2">60</span><span class="line-text text-emerald-400 font-bold pl-16">preso[l + d][c] = true;</span></div>
+            <div class="code-line" id="line-61"><span class="line-num w-7 text-neutral-600 font-mono text-right pr-2">61</span><span class="line-text text-amber-400 font-bold pl-16">total++;</span></div>
+            <div class="code-line" id="line-62"><span class="line-num w-7 text-neutral-600 font-mono text-right pr-2">62</span><span class="line-text text-neutral-300 pl-12">}</span></div>
+            <div class="code-line" id="line-63"><span class="line-num w-7 text-neutral-600 font-mono text-right pr-2">63</span><span class="line-text text-neutral-300 pl-9">}</span></div>
+            <div class="code-line" id="line-64"><span class="line-num w-7 text-neutral-600 font-mono text-right pr-2">64</span><span class="line-text text-neutral-300 pl-6">}</span></div>
+            <div class="code-line" id="line-65"><span class="line-num w-7 text-neutral-600 font-mono text-right pr-2">65</span><span class="line-text text-neutral-300 pl-3">}</span></div>
+            <div class="code-line" id="line-66"><span class="line-num w-7 text-neutral-600 font-mono text-right pr-2">66</span><span class="line-text text-neutral-300">}</span></div>
+            <div class="code-line" id="line-67"><span class="line-num w-7 text-neutral-600 font-mono text-right pr-2">67</span><span class="line-text text-emerald-400 pl-0">printf("%d\n", total);</span></div>
+          </div>
+        </div>
+
+        <!-- Terminal BOCA stdout Console -->
+        <div class="bg-neutral-950 text-white rounded-3xl p-5 shadow-xl border border-neutral-800 flex flex-col font-mono">
+          <div class="flex items-center justify-between pb-3 border-b border-neutral-800 mb-3">
+            <div class="flex items-center gap-2">
+              <i data-lucide="terminal" class="w-4 h-4 text-amber-400"></i>
+              <span class="text-xs font-bold uppercase tracking-wider text-neutral-300">Terminal stdout (BOCA)</span>
+            </div>
+            <span class="text-[0.65rem] text-emerald-400 flex items-center gap-1 font-semibold">
+              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> ONLINE
+            </span>
+          </div>
+
+          <div class="bg-black/80 rounded-xl p-3 border border-neutral-800/80 text-xs text-neutral-300 space-y-1 min-h-[90px]">
+            <div class="text-neutral-500">// Entrada Atual:</div>
+            <div class="text-amber-300" id="terminalStdin">1<br/>3 1<br/>D L D<br/>L D L<br/>L L D</div>
+            <div class="text-neutral-500 pt-2">// Saída formatada BOCA:</div>
+            <div class="text-emerald-400 font-bold text-sm" id="terminalStdout">4</div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- Seção de Abas Pedagógicas e Análise Teórica -->
+    <section class="relative z-20 mt-4 bg-neutral-100/90 border border-neutral-300 rounded-3xl p-6 shadow-md">
+      <div class="flex flex-wrap items-center gap-2 border-b border-neutral-300 pb-4 mb-6">
+        <button onclick="mudarAba('guloso')" id="tabBtn-guloso" class="px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wider bg-neutral-950 text-white shadow-sm transition-all">
+          1. O Algoritmo Guloso &amp; Fases
+        </button>
+        <button onclick="mudarAba('complexidade')" id="tabBtn-complexidade" class="px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wider bg-neutral-200 text-neutral-700 hover:bg-neutral-300 transition-all">
+          2. Análise de Complexidade
+        </button>
+        <button onclick="mudarAba('casos')" id="tabBtn-casos" class="px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wider bg-neutral-200 text-neutral-700 hover:bg-neutral-300 transition-all">
+          3. Casos Limite &amp; Decisões
+        </button>
+      </div>
+
+      <!-- Conteúdo da Aba 1 -->
+      <div id="tabContent-guloso" class="space-y-4 text-xs text-neutral-700 leading-relaxed">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="bg-white p-5 rounded-2xl border border-neutral-200 shadow-sm">
+            <h4 class="font-bold text-sm text-neutral-900 mb-2 uppercase tracking-wide flex items-center gap-2">
+              <i data-lucide="check-circle" class="w-4 h-4 text-emerald-600"></i> Por que o algoritmo divide em 2 Fases?
+            </h4>
+            <p>
+              O problema propõe que um policial capture um ladrão na mesma linha ou na mesma coluna dentro de distância linear $k$. O código em C simplifica o emparelhamento dividindo o grafo em duas rodadas unidimensionais sequenciais:
+            </p>
+            <ul class="list-disc list-inside mt-2 space-y-1 font-mono text-[0.7rem] text-neutral-800">
+              <li><b>Fase 1 (Horizontal):</b> Varre cada linha da esquerda para a direita, emparelhando o primeiro par válido encontrado à distância $1 \dots k$.</li>
+              <li><b>Fase 2 (Vertical):</b> Varre as colunas de cima para baixo buscando participantes que <i>não</i> foram presos na primeira fase.</li>
+            </ul>
+          </div>
+          <div class="bg-white p-5 rounded-2xl border border-neutral-200 shadow-sm">
+            <h4 class="font-bold text-sm text-neutral-900 mb-2 uppercase tracking-wide flex items-center gap-2">
+              <i data-lucide="alert-triangle" class="w-4 h-4 text-amber-600"></i> O Vetor Booleano <code class="font-mono text-xs">preso[N][N]</code>
+            </h4>
+            <p>
+              A matriz <code class="font-mono font-bold text-neutral-900">preso[n][n]</code> é zerada com <code class="font-mono font-bold text-neutral-900">memset</code> no início de cada caso de teste. Assim que um detetive e um ladrão são conectados:
+            </p>
+            <p class="mt-2 text-neutral-800">
+              Ambos recebem <code class="bg-neutral-200 px-1.5 py-0.5 rounded font-mono font-bold">preso = true</code>. Nenhum dos dois pode prender ou ser preso novamente, garantindo que o emparelhamento seja estritamente 1 para 1.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Conteúdo da Aba 2 -->
+      <div id="tabContent-complexidade" class="hidden space-y-4 text-xs text-neutral-700 leading-relaxed">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div class="bg-white p-5 rounded-2xl border border-neutral-200 shadow-sm">
+            <h4 class="font-bold text-sm text-neutral-900 mb-2 uppercase tracking-wide">Complexidade Temporal</h4>
+            <div class="text-2xl font-mono font-bold text-neutral-950 mb-2">O(N² &middot; K)</div>
+            <p>
+              Para cada célula $(l, c)$ na matriz $N \times N$, o laço mais interno percorre até $k$ posições para frente. Como $N \le 1000$ e $K \le 10^6$ (limitado por $N$), o número de iterações em cada fase é no máximo $N^2 \cdot \min(K, N)$.
+            </p>
+          </div>
+          <div class="bg-white p-5 rounded-2xl border border-neutral-200 shadow-sm">
+            <h4 class="font-bold text-sm text-neutral-900 mb-2 uppercase tracking-wide">Complexidade Espacial</h4>
+            <div class="text-2xl font-mono font-bold text-neutral-950 mb-2">O(N²)</div>
+            <p>
+              São alocadas a matriz de caracteres <code class="font-mono font-bold">matriz[N][N]</code> e a matriz booleana <code class="font-mono font-bold">preso[N][N]</code>. Para $N = 1000$, consomem cerca de 1 MB cada, bem dentro do limite de memória do BOCA.
+            </p>
+          </div>
+          <div class="bg-white p-5 rounded-2xl border border-neutral-200 shadow-sm">
+            <h4 class="font-bold text-sm text-neutral-900 mb-2 uppercase tracking-wide">Desempenho no BOCA</h4>
+            <div class="text-2xl font-mono font-bold text-emerald-600 mb-2">&lt; 0.05s</div>
+            <p>
+              Para as instâncias usuais de prova de Algoritmos, a execução completa de múltiplos casos de teste ocorre em poucos milissegundos devido à simplicidade das operações em memória sequencial.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Conteúdo da Aba 3 -->
+      <div id="tabContent-casos" class="hidden space-y-4 text-xs text-neutral-700 leading-relaxed">
+        <div class="bg-white p-5 rounded-2xl border border-neutral-200 shadow-sm">
+          <h4 class="font-bold text-sm text-neutral-900 mb-2 uppercase tracking-wide">Casos Limite Notáveis</h4>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+            <div class="p-3 bg-neutral-50 rounded-xl border border-neutral-200">
+              <span class="font-bold font-mono text-neutral-900 block mb-1">Alcance k &ge; N</span>
+              <p class="text-neutral-600">
+                Se $k$ for maior ou igual a $n$, o alcance estende-se até o final da linha ou da coluna (<code class="font-mono">c + d &lt; n</code> limita o acesso à memória, prevenindo buffer overflow).
+              </p>
+            </div>
+            <div class="p-3 bg-neutral-50 rounded-xl border border-neutral-200">
+              <span class="font-bold font-mono text-neutral-900 block mb-1">Apenas Detetives ou Apenas Ladrões</span>
+              <p class="text-neutral-600">
+                Se a matriz contiver apenas 'D' ou apenas 'L', nenhuma condição <code class="font-mono">(A=='D' &amp;&amp; B=='L')</code> é satisfeita, resultando em 0 prisões como esperado.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Rodapé Minimalista -->
+    <footer class="relative z-20 mt-8 pt-4 border-t border-neutral-300 flex flex-wrap items-center justify-between text-[0.65rem] font-mono text-neutral-500 uppercase tracking-widest">
+      <span>Future UI Industrial Standard · BOCA EX34.c</span>
+      <span>Algoritmos e Estruturas de Dados · Emparelhamento em Matriz 2D</span>
+    </footer>
+
+  </main>
+
+  <script>
+    // --- ESTADO GLOBAL DA SIMULAÇÃO ---
+    let currentN = 3;
+    let currentK = 1;
+    let currentMatrix = [
+      ['D', 'L', 'D'],
+      ['L', 'D', 'L'],
+      ['L', 'L', 'D']
+    ];
+
+    let simulationSteps = [];
+    let currentStepIdx = 0;
+    let isPlaying = false;
+    let playInterval = null;
+    let playSpeed = 600; // ms por passo
+
+    // Presets Oficiais
+    const PRESETS = {
+      1: {
+        n: 3,
+        k: 1,
+        matrix: [
+          ['D', 'L', 'D'],
+          ['L', 'D', 'L'],
+          ['L', 'L', 'D']
+        ]
+      },
+      2: {
+        n: 5,
+        k: 1,
+        matrix: [
+          ['L', 'D', 'L', 'L', 'D'],
+          ['L', 'D', 'L', 'L', 'L'],
+          ['L', 'L', 'L', 'D', 'L'],
+          ['L', 'D', 'L', 'L', 'L'],
+          ['D', 'L', 'L', 'L', 'D']
+        ]
+      },
+      3: {
+        n: 7,
+        k: 2,
+        matrix: [
+          ['L', 'L', 'L', 'L', 'L', 'L', 'D'],
+          ['L', 'L', 'L', 'L', 'L', 'L', 'L'],
+          ['L', 'D', 'L', 'L', 'L', 'D', 'L'],
+          ['L', 'L', 'L', 'L', 'L', 'L', 'L'],
+          ['L', 'L', 'L', 'D', 'L', 'L', 'L'],
+          ['L', 'L', 'L', 'L', 'L', 'D', 'L'],
+          ['D', 'D', 'D', 'L', 'L', 'L', 'L']
+        ]
+      },
+      4: {
+        n: 4,
+        k: 2,
+        matrix: [
+          ['D', 'D', 'L', 'L'],
+          ['L', 'L', 'D', 'D'],
+          ['D', 'L', 'D', 'L'],
+          ['L', 'D', 'L', 'D']
+        ]
+      }
+    };
+
+    // --- GERADOR EXATO DE PASSOS DE EX34.C ---
+    function gerarPassosSimulacao(n, k, matrizOrig) {
+      const steps = [];
+      const preso = Array.from({ length: n }, () => Array(n).fill(false));
+      const arrests = []; // Lista de conexões realizadas: { l1, c1, l2, c2, phase, arrestNum }
+      let total = 0;
+
+      // Estado Inicial (Step 0)
+      steps.push({
+        phase: 'INIT',
+        l: -1,
+        c: -1,
+        d: -1,
+        total: 0,
+        preso: preso.map(row => [...row]),
+        arrests: [],
+        activeScan: null,
+        activeLines: [36],
+        title: 'Inicialização da Matriz',
+        desc: `Matriz ${n}x${n} carregada com alcance k=${k}. Matriz preso zerada via memset.`
+      });
+
+      // FASE 1: HORIZONTAL
+      for (let l = 0; l < n; l++) {
+        for (let c = 0; c < n; c++) {
+          for (let d = 1; d <= k && c + d < n; d++) {
+            const A = matrizOrig[l][c];
+            const B = matrizOrig[l][c + d];
+            const isMatchOpposite = (A === 'D' && B === 'L') || (A === 'L' && B === 'D');
+            const canArrest = isMatchOpposite && (!preso[l][c] && !preso[l][c + d]);
+
+            // Passo de Verificação / Sondagem
+            steps.push({
+              phase: 'HORIZONTAL',
+              l: l,
+              c: c,
+              d: d,
+              total: total,
+              preso: preso.map(row => [...row]),
+              arrests: arrests.map(a => ({ ...a })),
+              activeScan: { l1: l, c1: c, l2: l, c2: c + d, isMatchOpposite, canArrest },
+              activeLines: [38, 39, 40, 41],
+              title: `Varredura Horizontal [Linha ${l}]`,
+              desc: `Comparando (${l}, ${c}) [${A}] com (${l}, ${c + d}) [${B}] à distância d=${d}. ` +
+                (isMatchOpposite ? (canArrest ? 'Par D &harr; L encontrado e ambos livres!' : 'Par D &harr; L encontrado, mas um ou ambos já estão presos!') : 'Não é um par de Detetive e Ladrão.')
+            });
+
+            // Se for prisão válida:
+            if (canArrest) {
+              preso[l][c] = true;
+              preso[l][c + d] = true;
+              total++;
+              arrests.push({
+                l1: l, c1: c,
+                l2: l, c2: c + d,
+                phase: 'HORIZONTAL',
+                arrestNum: total,
+                detCoords: A === 'D' ? { l, c } : { l, c: c + d },
+                ladCoords: A === 'L' ? { l, c } : { l, c: c + d }
+              });
+
+              steps.push({
+                phase: 'HORIZONTAL',
+                l: l,
+                c: c,
+                d: d,
+                total: total,
+                preso: preso.map(row => [...row]),
+                arrests: arrests.map(a => ({ ...a })),
+                activeScan: { l1: l, c1: c, l2: l, c2: c + d, isMatchOpposite: true, canArrest: true, justArrested: true },
+                activeLines: [43, 44, 45],
+                title: `Prisão Realizada! (Total = ${total})`,
+                desc: `Detetive e Ladrão marcados como preso[${l}][${c}] = true e preso[${l}][${c + d}] = true. total incrementado para ${total}.`
+              });
+            }
+          }
+        }
+      }
+
+      // Transição para FASE 2
+      steps.push({
+        phase: 'TRANSITION',
+        l: -1, c: -1, d: -1,
+        total: total,
+        preso: preso.map(row => [...row]),
+        arrests: arrests.map(a => ({ ...a })),
+        activeScan: null,
+        activeLines: [51, 52],
+        title: 'Iniciando Fase 2: Varredura Vertical',
+        desc: `Concluída a rodada horizontal (${total} prisões). Agora o algoritmo busca conexões verticais na mesma coluna para os elementos ainda livres.`
+      });
+
+      // FASE 2: VERTICAL
+      for (let l = 0; l < n; l++) {
+        for (let c = 0; c < n; c++) {
+          for (let d = 1; d <= k && l + d < n; d++) {
+            const A = matrizOrig[l][c];
+            const B = matrizOrig[l + d][c];
+            const isMatchOpposite = (A === 'D' && B === 'L') || (A === 'L' && B === 'D');
+            const canArrest = isMatchOpposite && (!preso[l][c] && !preso[l + d][c]);
+
+            steps.push({
+              phase: 'VERTICAL',
+              l: l,
+              c: c,
+              d: d,
+              total: total,
+              preso: preso.map(row => [...row]),
+              arrests: arrests.map(a => ({ ...a })),
+              activeScan: { l1: l, c1: c, l2: l + d, c2: c, isMatchOpposite, canArrest },
+              activeLines: [54, 55, 56, 57],
+              title: `Varredura Vertical [Coluna ${c}]`,
+              desc: `Comparando (${l}, ${c}) [${A}] com (${l + d}, ${c}) [${B}] verticalmente à distância d=${d}. ` +
+                (isMatchOpposite ? (canArrest ? 'Par D &harr; L vertical encontrado e ambos livres!' : 'Par encontrado, mas ao menos um já foi preso na fase horizontal!') : 'Não é um par de Detetive e Ladrão.')
+            });
+
+            if (canArrest) {
+              preso[l][c] = true;
+              preso[l + d][c] = true;
+              total++;
+              arrests.push({
+                l1: l, c1: c,
+                l2: l + d, c2: c,
+                phase: 'VERTICAL',
+                arrestNum: total,
+                detCoords: A === 'D' ? { l, c } : { l: l + d, c },
+                ladCoords: A === 'L' ? { l, c } : { l: l + d, c }
+              });
+
+              steps.push({
+                phase: 'VERTICAL',
+                l: l,
+                c: c,
+                d: d,
+                total: total,
+                preso: preso.map(row => [...row]),
+                arrests: arrests.map(a => ({ ...a })),
+                activeScan: { l1: l, c1: c, l2: l + d, c2: c, isMatchOpposite: true, canArrest: true, justArrested: true },
+                activeLines: [59, 60, 61],
+                title: `Prisão Vertical Realizada! (Total = ${total})`,
+                desc: `Detetive e Ladrão marcados como preso. total incrementado para ${total}.`
+              });
+            }
+          }
+        }
+      }
+
+      // FIM
+      steps.push({
+        phase: 'FINISHED',
+        l: -1, c: -1, d: -1,
+        total: total,
+        preso: preso.map(row => [...row]),
+        arrests: arrests.map(a => ({ ...a })),
+        activeScan: null,
+        activeLines: [67],
+        title: 'Algoritmo Concluído!',
+        desc: `Execução finalizada com sucesso. Saída padrão: printf("%d\\n", ${total}) = ${total}.`
+      });
+
+      return steps;
+    }
+
+    // --- RENDERIZAÇÃO DA GRADE 2D ---
+    function montarEstruturaGrade(n) {
+      const container = document.getElementById('gridContainer');
+      container.innerHTML = '';
+      container.style.gridTemplateColumns = `repeat(${n}, minmax(0, 1fr))`;
+      container.style.gridTemplateRows = `repeat(${n}, minmax(0, 1fr))`;
+
+      for (let r = 0; r < n; r++) {
+        for (let c = 0; c < n; c++) {
+          const val = currentMatrix[r][c];
+          const cell = document.createElement('div');
+          cell.id = `cell-${r}-${c}`;
+          cell.className = `matrix-cell relative flex flex-col items-center justify-between p-1.5 sm:p-2 rounded-xl sm:rounded-2xl border cursor-pointer select-none`;
+          cell.onclick = () => alternarValorCelula(r, c);
+          cell.title = `Célula (${r}, ${c}) - Clique para alternar D / L`;
+
+          cell.innerHTML = `
+            <div class="w-full flex items-center justify-between text-[0.6rem] font-mono text-neutral-400">
+              <span class="cell-coords font-bold">${r},${c}</span>
+              <span id="badge-preso-${r}-${c}" class="hidden text-[0.55rem] font-bold px-1 rounded bg-neutral-800 text-neutral-300">PRESO</span>
+            </div>
+            <div id="icon-val-${r}-${c}" class="text-xl sm:text-2xl font-oswald font-bold leading-none my-0.5">
+              ${val}
+            </div>
+            <div id="subtext-${r}-${c}" class="text-[0.55rem] font-mono uppercase tracking-wider text-neutral-500 font-semibold truncate max-w-full">
+              ${val === 'D' ? 'DETETIVE' : 'LADRÃO'}
+            </div>
+          `;
+          container.appendChild(cell);
+        }
+      }
+      atualizarRotulosDimensoes();
+    }
+
+    function atualizarRotulosDimensoes() {
+      document.getElementById('matrixSizeLabel').textContent = `${currentN} × ${currentN}`;
+      document.getElementById('currentKLabel').textContent = currentK;
+      document.getElementById('badgeN').textContent = `${currentN}`;
+      document.getElementById('badgeK').textContent = `k = ${currentK}`;
+      document.getElementById('selectN').value = currentN;
+      document.getElementById('inputK').value = currentK;
+    }
+
+    // --- DESENHO DAS CONEXÕES SVG ---
+    function desenharConexoesSvg(arrests, activeScan, n) {
+      const arrestsGroup = document.getElementById('svgArrestsGroup');
+      const activeBeamGroup = document.getElementById('svgActiveBeamGroup');
+      arrestsGroup.innerHTML = '';
+      activeBeamGroup.innerHTML = '';
+
+      // Coordenadas percentuais do centro de cada célula
+      function getCoordPercent(row, col) {
+        const x = ((col + 0.5) / n) * 100;
+        const y = ((row + 0.5) / n) * 100;
+        return { x, y };
+      }
+
+      // 1. Desenhar conexões definitivas de prisões realizadas
+      arrests.forEach(arr => {
+        const p1 = getCoordPercent(arr.l1, arr.c1);
+        const p2 = getCoordPercent(arr.l2, arr.c2);
+        const isHoriz = arr.phase === 'HORIZONTAL';
+        const strokeColor = isHoriz ? '#059669' : '#7c3aed'; // Esmeralda p/ horiz, Violeta p/ vert
+
+        // Linha com espessura visível
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('x1', p1.x);
+        line.setAttribute('y1', p1.y);
+        line.setAttribute('x2', p2.x);
+        line.setAttribute('y2', p2.y);
+        line.setAttribute('stroke', strokeColor);
+        line.setAttribute('stroke-width', '2.8');
+        line.setAttribute('stroke-linecap', 'round');
+        line.setAttribute('stroke-opacity', '0.85');
+        arrestsGroup.appendChild(line);
+
+        // Ponto de amarração central com número da prisão
+        const midX = (p1.x + p2.x) / 2;
+        const midY = (p1.y + p2.y) / 2;
+
+        const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        circle.setAttribute('cx', midX);
+        circle.setAttribute('cy', midY);
+        circle.setAttribute('r', '2.2');
+        circle.setAttribute('fill', '#0a0a0a');
+        circle.setAttribute('stroke', strokeColor);
+        circle.setAttribute('stroke-width', '0.8');
+        arrestsGroup.appendChild(circle);
+      });
+
+      // 2. Desenhar feixe de busca ativo
+      if (activeScan) {
+        const p1 = getCoordPercent(activeScan.l1, activeScan.c1);
+        const p2 = getCoordPercent(activeScan.l2, activeScan.c2);
+        const isSuccess = activeScan.canArrest;
+
+        const beam = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        beam.setAttribute('x1', p1.x);
+        beam.setAttribute('y1', p1.y);
+        beam.setAttribute('x2', p2.x);
+        beam.setAttribute('y2', p2.y);
+        beam.setAttribute('stroke', isSuccess ? '#10b981' : '#f59e0b');
+        beam.setAttribute('stroke-width', isSuccess ? '3.5' : '2');
+        beam.setAttribute('stroke-linecap', 'round');
+        beam.setAttribute('class', 'scan-beam');
+        activeBeamGroup.appendChild(beam);
+      }
+    }
+
+    // --- ATUALIZAÇÃO DA TELA PARA UM DETERMINADO PASSO ---
+    function renderizarPasso(idx) {
+      if (!simulationSteps || simulationSteps.length === 0) return;
+      if (idx < 0) idx = 0;
+      if (idx >= simulationSteps.length) idx = simulationSteps.length - 1;
+      currentStepIdx = idx;
+
+      const step = simulationSteps[idx];
+
+      // 1. Atualizar Badges de Telemetria
+      const teleTotal = document.getElementById('teleTotal');
+      const prevTotal = parseInt(teleTotal.textContent) || 0;
+      teleTotal.textContent = step.total;
+      if (step.total > prevTotal) {
+        teleTotal.classList.remove('counter-pulse');
+        void teleTotal.offsetWidth;
+        teleTotal.classList.add('counter-pulse');
+      }
+
+      document.getElementById('teleStepNum').textContent = `Passo ${idx + 1}/${simulationSteps.length}`;
+      document.getElementById('sliderStepText').textContent = `Passo ${idx + 1} de ${simulationSteps.length}`;
+      document.getElementById('simSlider').value = idx;
+
+      // Fase Atual
+      const phaseBadge = document.getElementById('telePhaseBadge');
+      if (step.phase === 'HORIZONTAL') {
+        phaseBadge.className = 'px-2.5 py-1 rounded-full text-[0.7rem] font-mono font-bold uppercase bg-emerald-100 text-emerald-900 border border-emerald-300 flex items-center gap-1.5';
+        phaseBadge.innerHTML = `<i data-lucide="arrow-right" class="w-3.5 h-3.5 text-emerald-700"></i> Fase 1: Horizontal`;
+      } else if (step.phase === 'VERTICAL') {
+        phaseBadge.className = 'px-2.5 py-1 rounded-full text-[0.7rem] font-mono font-bold uppercase bg-purple-100 text-purple-900 border border-purple-300 flex items-center gap-1.5';
+        phaseBadge.innerHTML = `<i data-lucide="arrow-down" class="w-3.5 h-3.5 text-purple-700"></i> Fase 2: Vertical`;
+      } else if (step.phase === 'FINISHED') {
+        phaseBadge.className = 'px-2.5 py-1 rounded-full text-[0.7rem] font-mono font-bold uppercase bg-neutral-900 text-emerald-400 border border-neutral-700 flex items-center gap-1.5';
+        phaseBadge.innerHTML = `<i data-lucide="check" class="w-3.5 h-3.5"></i> Concluído`;
+      } else {
+        phaseBadge.className = 'px-2.5 py-1 rounded-full text-[0.7rem] font-mono font-bold uppercase bg-neutral-200 text-neutral-800 border border-neutral-300 flex items-center gap-1.5';
+        phaseBadge.innerHTML = `<i data-lucide="pause" class="w-3.5 h-3.5"></i> Início`;
+      }
+
+      // Detetives e Ladrões Contagem
+      let detTotal = 0, detPresos = 0;
+      let ladTotal = 0, ladPresos = 0;
+      for (let r = 0; r < currentN; r++) {
+        for (let c = 0; c < currentN; c++) {
+          const val = currentMatrix[r][c];
+          const isPreso = step.preso[r][c];
+          if (val === 'D') {
+            detTotal++;
+            if (isPreso) detPresos++;
+          } else if (val === 'L') {
+            ladTotal++;
+            if (isPreso) ladPresos++;
+          }
+        }
+      }
+      document.getElementById('teleDetetivesPresos').textContent = detPresos;
+      document.getElementById('teleDetetivesTotal').textContent = `/ ${detTotal} ocupados`;
+      document.getElementById('teleLadraosPresos').textContent = ladPresos;
+      document.getElementById('teleLadraosTotal').textContent = `/ ${ladTotal} presos`;
+
+      // 2. Atualizar Banner Informativo
+      document.getElementById('actionTitle').textContent = step.title;
+      document.getElementById('actionDesc').innerHTML = step.desc;
+      if (step.l >= 0 && step.c >= 0) {
+        document.getElementById('actionCoord').textContent = `Linha l=${step.l} | Coluna c=${step.c} | Alcance d=${step.d}`;
+      } else {
+        document.getElementById('actionCoord').textContent = `l: - | c: - | d: -`;
+      }
+
+      // Ícone do Banner
+      const iconBox = document.getElementById('actionIconBox');
+      if (step.activeScan && step.activeScan.justArrested) {
+        iconBox.className = 'w-8 h-8 rounded-xl bg-emerald-500 text-white flex items-center justify-center shrink-0 mt-0.5 animate-pulse';
+        iconBox.innerHTML = '<i data-lucide="lock" class="w-4 h-4"></i>';
+      } else if (step.phase === 'VERTICAL') {
+        iconBox.className = 'w-8 h-8 rounded-xl bg-purple-600 text-white flex items-center justify-center shrink-0 mt-0.5';
+        iconBox.innerHTML = '<i data-lucide="arrow-down" class="w-4 h-4"></i>';
+      } else {
+        iconBox.className = 'w-8 h-8 rounded-xl bg-neutral-900 text-white flex items-center justify-center shrink-0 mt-0.5';
+        iconBox.innerHTML = '<i data-lucide="scan" class="w-4 h-4"></i>';
+      }
+
+      // 3. Atualizar Células da Grade
+      for (let r = 0; r < currentN; r++) {
+        for (let c = 0; c < currentN; c++) {
+          const cellEl = document.getElementById(`cell-${r}-${c}`);
+          if (!cellEl) continue;
+
+          const val = currentMatrix[r][c];
+          const isPreso = step.preso[r][c];
+          const badgePreso = document.getElementById(`badge-preso-${r}-${c}`);
+          const iconVal = document.getElementById(`icon-val-${r}-${c}`);
+          const subtext = document.getElementById(`subtext-${r}-${c}`);
+
+          // Reset de classes de destaque
+          cellEl.className = 'matrix-cell relative flex flex-col items-center justify-between p-1.5 sm:p-2 rounded-xl sm:rounded-2xl border cursor-pointer select-none';
+
+          if (isPreso) {
+            badgePreso.classList.remove('hidden');
+            cellEl.classList.add('bg-neutral-300/80', 'border-neutral-400', 'text-neutral-600');
+            iconVal.className = 'text-xl sm:text-2xl font-oswald font-bold leading-none my-0.5 text-neutral-600 opacity-60';
+            subtext.textContent = 'OCUPADO';
+          } else {
+            badgePreso.classList.add('hidden');
+            if (val === 'D') {
+              cellEl.classList.add('bg-neutral-900', 'border-neutral-800', 'text-white', 'shadow-sm');
+              iconVal.className = 'text-xl sm:text-2xl font-oswald font-bold leading-none my-0.5 text-sky-400';
+              subtext.textContent = 'DETETIVE';
+            } else {
+              cellEl.classList.add('bg-rose-50', 'border-rose-300', 'text-rose-950', 'shadow-sm');
+              iconVal.className = 'text-xl sm:text-2xl font-oswald font-bold leading-none my-0.5 text-rose-600';
+              subtext.textContent = 'LADRÃO';
+            }
+          }
+
+          // Se for a célula ativa de origem da busca
+          if (step.activeScan && step.activeScan.l1 === r && step.activeScan.c1 === c) {
+            cellEl.classList.add('cell-scan-source');
+          }
+          // Se for o alvo examinado
+          if (step.activeScan && step.activeScan.l2 === r && step.activeScan.c2 === c) {
+            cellEl.classList.add('cell-scan-target');
+            if (step.activeScan.justArrested) {
+              cellEl.classList.add('cell-just-arrested');
+            }
+          }
+        }
+      }
+
+      // 4. Desenhar Conexões SVG
+      desenharConexoesSvg(step.arrests, step.activeScan, currentN);
+
+      // 5. Atualizar Linhas Ativas do Código C
+      atualizarLinhasCodigo(step.activeLines, step.activeScan && step.activeScan.justArrested);
+
+      // 6. Atualizar Terminal stdout
+      document.getElementById('terminalStdout').textContent = step.total;
+
+      // Recarregar ícones Lucide
+      if (window.lucide) {
+        lucide.createIcons();
+      }
+    }
+
+    // --- DESTAQUE DE CÓDIGO C ---
+    function atualizarLinhasCodigo(activeLineNumbers, isMatch) {
+      const lines = document.querySelectorAll('.code-line');
+      lines.forEach(l => {
+        l.classList.remove('active-line', 'focus-match');
+      });
+
+      if (!activeLineNumbers || activeLineNumbers.length === 0) return;
+
+      activeLineNumbers.forEach(num => {
+        const el = document.getElementById(`line-${num}`);
+        if (el) {
+          el.classList.add('active-line');
+          if (isMatch) {
+            el.classList.add('focus-match');
+          }
+        }
+      });
+
+      // Rolagem suave até a primeira linha destacada
+      const firstActive = document.getElementById(`line-${activeLineNumbers[0]}`);
+      if (firstActive) {
+        const container = document.getElementById('codeContainer');
+        const offset = firstActive.offsetTop - container.offsetTop;
+        if (offset < container.scrollTop || offset > container.scrollTop + container.clientHeight - 60) {
+          container.scrollTo({ top: Math.max(0, offset - 40), behavior: 'smooth' });
+        }
+      }
+    }
+
+    // --- CONTROLES DE REPRODUÇÃO ---
+    function proximoPasso() {
+      if (currentStepIdx < simulationSteps.length - 1) {
+        renderizarPasso(currentStepIdx + 1);
+      } else {
+        pausar();
+      }
+    }
+
+    function passoAnterior() {
+      if (currentStepIdx > 0) {
+        renderizarPasso(currentStepIdx - 1);
+      }
+    }
+
+    function irParaPasso(idx) {
+      renderizarPasso(idx);
+    }
+
+    function reiniciarSimulacao() {
+      pausar();
+      renderizarPasso(0);
+    }
+
+    function togglePlayPause() {
+      if (isPlaying) {
+        pausar();
+      } else {
+        iniciarPlay();
+      }
+    }
+
+    function iniciarPlay() {
+      if (currentStepIdx >= simulationSteps.length - 1) {
+        currentStepIdx = 0;
+      }
+      isPlaying = true;
+      document.getElementById('playBtnText').textContent = 'Pausar';
+      const playIcon = document.querySelector('#playPauseBtn i');
+      if (playIcon) playIcon.setAttribute('data-lucide', 'pause');
+
+      if (playInterval) clearInterval(playInterval);
+      playInterval = setInterval(() => {
+        if (currentStepIdx < simulationSteps.length - 1) {
+          proximoPasso();
+        } else {
+          pausar();
+        }
+      }, playSpeed);
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function pausar() {
+      isPlaying = false;
+      if (playInterval) {
+        clearInterval(playInterval);
+        playInterval = null;
+      }
+      document.getElementById('playBtnText').textContent = 'Play';
+      const playIcon = document.querySelector('#playPauseBtn i');
+      if (playIcon) playIcon.setAttribute('data-lucide', 'play');
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function ajustarVelocidade(speedMs) {
+      playSpeed = speedMs;
+      document.querySelectorAll('.speed-btn').forEach(btn => {
+        btn.className = 'speed-btn px-2 py-0.5 rounded border border-neutral-300 hover:bg-neutral-200';
+      });
+      event.target.className = 'speed-btn px-2 py-0.5 rounded border border-neutral-950 bg-neutral-950 text-white font-bold';
+      if (isPlaying) {
+        iniciarPlay();
+      }
+    }
+
+    // --- SALTO INTELIGENTE ---
+    function pularParaProximaPrisao() {
+      pausar();
+      for (let i = currentStepIdx + 1; i < simulationSteps.length; i++) {
+        if (simulationSteps[i].activeScan && simulationSteps[i].activeScan.justArrested) {
+          renderizarPasso(i);
+          return;
+        }
+      }
+      // Se não houver mais prisões, vai até o fim
+      renderizarPasso(simulationSteps.length - 1);
+    }
+
+    function pularParaFaseVertical() {
+      pausar();
+      for (let i = 0; i < simulationSteps.length; i++) {
+        if (simulationSteps[i].phase === 'VERTICAL') {
+          renderizarPasso(i);
+          return;
+        }
+      }
+    }
+
+    // --- EDIÇÃO INTERATIVA DA GRADE ---
+    function alternarValorCelula(r, c) {
+      pausar();
+      const atual = currentMatrix[r][c];
+      currentMatrix[r][c] = (atual === 'D') ? 'L' : 'D';
+      recompilarSimulacao();
+    }
+
+    function alterarDimensaoN(novoN) {
+      pausar();
+      novoN = parseInt(novoN);
+      if (novoN < 2) novoN = 2;
+      if (novoN > 8) novoN = 8;
+      currentN = novoN;
+
+      // Redimensionar matriz mantendo o que for possível
+      const novaMatriz = [];
+      for (let r = 0; r < novoN; r++) {
+        const row = [];
+        for (let c = 0; c < novoN; c++) {
+          if (r < currentMatrix.length && c < currentMatrix[r].length) {
+            row.push(currentMatrix[r][c]);
+          } else {
+            row.push((r + c) % 2 === 0 ? 'D' : 'L');
+          }
+        }
+        novaMatriz.push(row);
+      }
+      currentMatrix = novaMatriz;
+      recompilarSimulacao();
+    }
+
+    function alterarAlcanceK(novoK) {
+      pausar();
+      currentK = parseInt(novoK);
+      recompilarSimulacao();
+    }
+
+    function inverterTudo() {
+      pausar();
+      for (let r = 0; r < currentN; r++) {
+        for (let c = 0; c < currentN; c++) {
+          currentMatrix[r][c] = (currentMatrix[r][c] === 'D') ? 'L' : 'D';
+        }
+      }
+      recompilarSimulacao();
+    }
+
+    function aleatorizarMatriz() {
+      pausar();
+      for (let r = 0; r < currentN; r++) {
+        for (let c = 0; c < currentN; c++) {
+          currentMatrix[r][c] = Math.random() < 0.5 ? 'D' : 'L';
+        }
+      }
+      recompilarSimulacao();
+    }
+
+    // --- PRESETS ---
+    function carregarPreset(presetId) {
+      pausar();
+      const p = PRESETS[presetId];
+      if (!p) return;
+
+      currentN = p.n;
+      currentK = p.k;
+      currentMatrix = p.matrix.map(row => [...row]);
+
+      // Estilo dos botões de preset
+      for (let i = 1; i <= 4; i++) {
+        const btn = document.getElementById(`presetBtn${i}`);
+        if (btn) {
+          if (i === presetId) {
+            btn.className = 'px-3.5 py-1.5 rounded-full border border-neutral-950 bg-neutral-950 text-white text-[0.65rem] font-semibold uppercase tracking-widest transition-all shadow-sm';
+          } else {
+            btn.className = 'px-3.5 py-1.5 rounded-full border border-neutral-400 text-[0.65rem] font-semibold uppercase tracking-widest hover:bg-neutral-300 transition-all text-neutral-800';
+          }
+        }
+      }
+
+      recompilarSimulacao();
+    }
+
+    // --- RECOMPILAÇÃO E ATUALIZAÇÃO ---
+    function recompilarSimulacao() {
+      montarEstruturaGrade(currentN);
+      simulationSteps = gerarPassosSimulacao(currentN, currentK, currentMatrix);
+      document.getElementById('simSlider').max = simulationSteps.length - 1;
+
+      // Atualizar Stdin no console do BOCA
+      let stdinText = `1\n${currentN} ${currentK}\n`;
+      for (let r = 0; r < currentN; r++) {
+        stdinText += currentMatrix[r].join(' ') + '\n';
+      }
+      document.getElementById('terminalStdin').innerHTML = stdinText.replace(/\n/g, '<br/>');
+
+      renderizarPasso(0);
+    }
+
+    // --- ABAS DIDÁTICAS ---
+    function mudarAba(abaId) {
+      const abas = ['guloso', 'complexidade', 'casos'];
+      abas.forEach(a => {
+        const btn = document.getElementById(`tabBtn-${a}`);
+        const content = document.getElementById(`tabContent-${a}`);
+        if (a === abaId) {
+          btn.className = 'px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wider bg-neutral-950 text-white shadow-sm transition-all';
+          content.classList.remove('hidden');
+        } else {
+          btn.className = 'px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wider bg-neutral-200 text-neutral-700 hover:bg-neutral-300 transition-all';
+          content.classList.add('hidden');
+        }
+      });
+      if (window.lucide) lucide.createIcons();
+    }
+
+    // --- INICIALIZAÇÃO NO CARREGAMENTO DA PÁGINA ---
+    window.addEventListener('DOMContentLoaded', () => {
+      carregarPreset(1);
+    });
+  </script>
+</body>
+</html>

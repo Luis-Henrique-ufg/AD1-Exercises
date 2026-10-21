@@ -1,0 +1,60 @@
+# ==========================================
+# Compilação C / Binários
+# ==========================================
+*.exe
+*.o
+*.obj
+*.out
+_build/
+build/
+bin/
+tempCodeRunnerFile.*
+
+# ==========================================
+# VS Code e Editores
+# ==========================================
+.vscode/
+*.swp
+*.swo
+*~
+
+# ==========================================
+# Obsidian (Estado local e Conflitos de Sync)
+# ==========================================
+.obsidian/workspace.json
+.obsidian/workspace-mobile.json
+*.sync-conflict*
+
+# ==========================================
+# Python (scripts e ferramentas da wiki)
+# ==========================================
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# ==========================================
+# Sistema Operacional
+# ==========================================
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# ==========================================
+# Arquivos de áudio / temporários soltos
+# ==========================================
+*.mp3
+*.wav
+
+# ==========================================
+# Pastas de ferramentas e agentes locais
+# ==========================================
+.claudian/
+.claude/
+.smart-connections/
+.stfolder/
+.trash/
+.tools/
+scratch/
+PowerShell/
+

@@ -1,0 +1,1327 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>Visualizador do Exercício 17 — Inversão de Dígitos &amp; Recursão com Acumulador</title>
+  
+  <!-- Assets Locais do Design System -->
+  <script src="Design System/assets/resource_3fa48481346f.js"></script>
+  <script src="Design System/assets/lucide_latest_2eebd0ebe8c2.js"></script>
+  <link href="Design System/assets/css2_e01beb4f8743.css" rel="stylesheet"/>
+  <link href="Design System/assets/css2_8e191ef32247.css" rel="stylesheet"/>
+  <link href="Design System/assets/css2_62759cd015bd.css" rel="stylesheet"/>
+  
+  <!-- Google Fonts Fallback & Resiliência -->
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+
+  <style>
+    .font-oswald { font-family: 'Oswald', sans-serif; }
+    .font-space { font-family: 'Space Grotesk', sans-serif; }
+    .font-inter { font-family: 'Inter', sans-serif; }
+    .font-mono { font-family: 'Geist Mono', 'Space Mono', monospace; }
+
+    ::-webkit-scrollbar { display: none; }
+    body { -ms-overflow-style: none; scrollbar-width: none; }
+    html { scroll-behavior: smooth; }
+
+    /* Estilo de borda degradê compartilhada do Design System */
+    [style*="--border-gradient"]::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      padding: 1px;
+      border-radius: var(--border-radius-before, inherit);
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      background: var(--border-gradient);
+      pointer-events: none;
+    }
+
+    /* Slider de progresso customizado no estilo Future UI */
+    input[type=range] {
+      -webkit-appearance: none;
+      background: #cbd5e1;
+      border-radius: 9999px;
+      height: 6px;
+      outline: none;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #0a0a0a;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.35);
+      transition: transform 0.15s ease, background 0.15s ease;
+    }
+    input[type=range]::-webkit-slider-thumb:hover {
+      transform: scale(1.2);
+      background: #ea580c;
+    }
+
+    /* Animações táteis */
+    @keyframes frameEnter {
+      from { opacity: 0; transform: translateY(8px) scale(0.98); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .stack-frame-anim {
+      animation: frameEnter 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    @keyframes pulseDigit {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.08); box-shadow: 0 0 15px rgba(249, 115, 22, 0.5); }
+    }
+    .digit-pulse {
+      animation: pulseDigit 1.2s infinite ease-in-out;
+    }
+
+    @keyframes glowSuccess {
+      0%, 100% { box-shadow: 0 0 10px rgba(16, 185, 129, 0.2); }
+      50% { box-shadow: 0 0 25px rgba(16, 185, 129, 0.6); }
+    }
+    .glow-success {
+      animation: glowSuccess 1.5s infinite ease-in-out;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased xl:items-center xl:justify-center xl:p-8 text-neutral-950 font-space bg-neutral-400 px-0 py-0">
+
+  <!-- Container Principal do Design System -->
+  <main class="xl:rounded-[3.5rem] xl:p-12 overflow-hidden flex flex-col xl:max-w-[96rem] xl:shadow-2xl bg-[#E6E6E6] w-full rounded-none pt-6 pr-6 pb-6 pl-6 relative shadow-none border border-neutral-300">
+    
+    <!-- Efeito de Luz Difusa de Fundo -->
+    <div class="pointer-events-none bg-gradient-to-br from-white/50 via-transparent to-neutral-400/20 w-full h-full absolute top-0 left-0"></div>
+
+    <!-- Barra de Navegação e Marca -->
+    <nav class="relative z-20 flex flex-wrap items-center justify-between gap-6 pb-6 border-b border-neutral-300 mb-8">
+      <!-- Logo do Design System: 3 Barras Características -->
+      <div class="flex items-center gap-3 group cursor-default">
+        <div class="flex gap-1">
+          <div class="w-3 h-8 bg-neutral-950 rounded-full"></div>
+          <div class="w-3 h-8 bg-neutral-950 rounded-full group-hover:h-5 transition-all duration-300"></div>
+          <div class="w-3 h-8 bg-neutral-950 rounded-full"></div>
+        </div>
+        <div>
+          <span class="text-xs font-mono font-bold tracking-widest uppercase text-neutral-950 block">FUTURE UI // MATH &amp; TAIL RECURSION (EX17.C)</span>
+          <span class="text-[0.65rem] text-neutral-500 uppercase tracking-widest block font-medium">Inversão de Inteiros · Matemática da Base 10 &amp; Acumulador</span>
+        </div>
+      </div>
+
+      <!-- Links e Badges de Navegação -->
+      <div class="flex flex-wrap items-center gap-2 sm:gap-3">
+        <a href="visualizador-recursao.html" class="px-3.5 py-1.5 rounded-full border border-neutral-400 text-[0.65rem] font-bold uppercase tracking-widest hover:bg-neutral-300 transition-colors flex items-center gap-1.5 text-neutral-700" title="Ver visualizador básico de recursão">
+          <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i> Ex. 1 (Soma)
+        </a>
+        <a href="visualizador-ex21.html" class="px-3.5 py-1.5 rounded-full border border-neutral-400 text-[0.65rem] font-bold uppercase tracking-widest hover:bg-neutral-300 transition-colors flex items-center gap-1.5 text-neutral-700" title="Ver visualizador de saque ATM com memoização">
+          Ex. 21 (ATM) <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+        </a>
+        <div class="bg-[#E6E6E6] border border-neutral-400 rounded-full px-3.5 py-1.5 shadow-sm items-center gap-2 hidden md:flex">
+          <div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+          <span class="text-[0.65rem] font-bold uppercase tracking-widest text-neutral-800">Simulador Ativo</span>
+        </div>
+        <div class="text-white bg-neutral-950 rounded-full px-4 py-1.5 shadow-md flex items-center gap-2">
+          <i data-lucide="repeat" class="w-3.5 h-3.5 text-orange-400"></i>
+          <span class="text-[0.65rem] font-bold uppercase tracking-widest">Tail Recursion</span>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Cabeçalho Monumental Hero -->
+    <header class="relative z-20 mb-8">
+      <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-8">
+        <div class="max-w-3xl">
+          <div class="flex items-center gap-3 text-xs font-semibold tracking-widest uppercase text-neutral-500 mb-3">
+            <span>Exercício 17 · Lógica &amp; Estruturação Mental</span>
+            <span class="w-4 h-[1px] bg-neutral-400"></span>
+            <span class="text-neutral-800 font-bold">Inversor Decimal com Acumulador</span>
+          </div>
+          <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-7xl uppercase font-medium text-neutral-950 tracking-tighter font-oswald leading-none mb-3">
+            Visualizador do <span class="text-neutral-600">Exercício 17</span>
+          </h1>
+          <p class="text-xs sm:text-sm text-neutral-700 leading-relaxed uppercase tracking-wide font-normal max-w-2xl">
+            Como inverter qualquer número inteiro sem converter para string ou vetor. Compreenda a <b>mecânica matemática da Base 10</b> (<code class="bg-neutral-300/80 px-1.5 py-0.5 rounded font-mono text-neutral-900 font-bold">% 10</code> e <code class="bg-neutral-300/80 px-1.5 py-0.5 rounded font-mono text-neutral-900 font-bold">/ 10</code>) e a construção mental do <b>pseudocódigo com acumulador</b>.
+          </p>
+        </div>
+
+        <!-- Card de Dica de Ouro Didática (Orange Accent Card) -->
+        <div class="w-full lg:w-96 overflow-hidden bg-orange-400 border border-white/30 rounded-2xl p-5 shadow-lg shadow-orange-900/20 relative">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-[0.65rem] font-bold uppercase tracking-widest text-orange-950/80 flex items-center gap-1.5">
+              <i data-lucide="sparkles" class="w-3.5 h-3.5"></i> A Fórmula Mágica da Base 10
+            </span>
+            <span class="text-[0.65rem] font-mono font-bold bg-orange-950/15 px-2 py-0.5 rounded-full text-orange-950">REGRAS DE OURO</span>
+          </div>
+          <p class="text-xs text-orange-950 font-medium leading-relaxed mb-3">
+            <b>1. Arrancar último dígito:</b> <code class="bg-white/40 px-1 rounded font-bold font-mono">d = n % 10</code><br/>
+            <b>2. Encolher o número:</b> <code class="bg-white/40 px-1 rounded font-bold font-mono">n = n / 10</code><br/>
+            <b>3. Colar dígito no final:</b> <code class="bg-white/40 px-1 rounded font-bold font-mono">acum * 10 + d</code>
+          </p>
+          <div class="pt-2 border-t border-orange-950/20 flex items-center justify-between text-[0.65rem] text-orange-950/90 font-mono">
+            <span>Recursão de Cauda</span>
+            <span class="font-bold">Conta feita na IDA!</span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Módulo Pedagógico: "Do Problema ao Código — Método Mental & Pseudocódigo" -->
+    <section class="relative z-20 mb-8 bg-neutral-200/90 border border-neutral-300 rounded-3xl p-6 shadow-sm">
+      <div class="flex flex-wrap items-center justify-between gap-4 mb-4 pb-3 border-b border-neutral-300">
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 rounded-xl bg-neutral-950 text-orange-400 flex items-center justify-center font-bold font-mono text-sm shadow">
+            <i data-lucide="brain" class="w-4 h-4"></i>
+          </div>
+          <div>
+            <h2 class="text-base font-bold uppercase tracking-tight text-neutral-900 font-oswald">
+              Laboratório Mental: Como Pensar a Matemática &amp; Estruturar o Pseudocódigo
+            </h2>
+            <p class="text-[0.7rem] text-neutral-600 uppercase tracking-widest font-mono">
+              O método infalível para resolver antes de digitar qualquer código em C
+            </p>
+          </div>
+        </div>
+
+        <!-- Abas de Navegação Didática -->
+        <div class="flex items-center gap-1.5 bg-neutral-300/80 p-1 rounded-full border border-neutral-400/60" id="didactic-tabs">
+          <button onclick="switchDidacticTab('math')" id="tab-btn-math" class="px-3.5 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all bg-neutral-950 text-white shadow-sm flex items-center gap-1.5">
+            <i data-lucide="binary" class="w-3.5 h-3.5"></i> 1. A Matemática Decimal
+          </button>
+          <button onclick="switchDidacticTab('pseudo')" id="tab-btn-pseudo" class="px-3.5 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all text-neutral-700 hover:text-neutral-950 flex items-center gap-1.5">
+            <i data-lucide="file-code" class="w-3.5 h-3.5"></i> 2. Estrutura do Pseudocódigo
+          </button>
+          <button onclick="switchDidacticTab('tail')" id="tab-btn-tail" class="px-3.5 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all text-neutral-700 hover:text-neutral-950 flex items-center gap-1.5">
+            <i data-lucide="git-commit" class="w-3.5 h-3.5"></i> 3. Por Que Tail Recursion?
+          </button>
+        </div>
+      </div>
+
+      <!-- Conteúdo da Aba 1: A Matemática Decimal -->
+      <div id="tab-content-math" class="block">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <!-- Bloco A: Pinça de Dígito -->
+          <div class="bg-white rounded-2xl p-4 border border-neutral-300 shadow-sm flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-xs font-bold font-mono uppercase text-orange-600 bg-orange-50 px-2 py-0.5 rounded-md border border-orange-200">
+                  PASSO 1 · A "PINÇA"
+                </span>
+                <span class="text-xs font-mono font-bold text-neutral-400">% 10</span>
+              </div>
+              <h3 class="text-sm font-bold uppercase font-oswald text-neutral-900 mb-1">Como extrair o último dígito?</h3>
+              <p class="text-xs text-neutral-600 leading-relaxed">
+                Qualquer número dividido por 10 deixa como <b>resto</b> a sua casa das unidades.
+              </p>
+            </div>
+            <div class="mt-3 bg-neutral-900 text-neutral-100 rounded-xl p-3 font-mono text-xs">
+              <div class="text-neutral-400 text-[0.65rem] uppercase mb-1">Exemplo com 1234:</div>
+              <div class="text-orange-400 font-bold">1234 % 10 = 4</div>
+              <div class="text-neutral-400 text-[0.65rem] mt-1">O 4 foi capturado isoladamente!</div>
+            </div>
+          </div>
+
+          <!-- Bloco B: Tesoura -->
+          <div class="bg-white rounded-2xl p-4 border border-neutral-300 shadow-sm flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-xs font-bold font-mono uppercase text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-200">
+                  PASSO 2 · A "TESOURA"
+                </span>
+                <span class="text-xs font-mono font-bold text-neutral-400">/ 10</span>
+              </div>
+              <h3 class="text-sm font-bold uppercase font-oswald text-neutral-900 mb-1">Como descartar o dígito lido?</h3>
+              <p class="text-xs text-neutral-600 leading-relaxed">
+                A divisão inteira em C descarta a fração decimal, "encolhendo" o número em 1 casa.
+              </p>
+            </div>
+            <div class="mt-3 bg-neutral-900 text-neutral-100 rounded-xl p-3 font-mono text-xs">
+              <div class="text-neutral-400 text-[0.65rem] uppercase mb-1">Exemplo com 1234:</div>
+              <div class="text-blue-400 font-bold">1234 / 10 = 123</div>
+              <div class="text-neutral-400 text-[0.65rem] mt-1">O 4 sumiu, restou apenas 123!</div>
+            </div>
+          </div>
+
+          <!-- Bloco C: A Esteira Decimal -->
+          <div class="bg-white rounded-2xl p-4 border border-neutral-300 shadow-sm flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-xs font-bold font-mono uppercase text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                  PASSO 3 · A "ESTEIRA"
+                </span>
+                <span class="text-xs font-mono font-bold text-neutral-400">* 10 + d</span>
+              </div>
+              <h3 class="text-sm font-bold uppercase font-oswald text-neutral-900 mb-1">Como anexar o dígito no final?</h3>
+              <p class="text-xs text-neutral-600 leading-relaxed">
+                Multiplicar o acumulador por 10 empurra seus dígitos para a esquerda, abrindo a vaga na unidade para somar o dígito novo.
+              </p>
+            </div>
+            <div class="mt-3 bg-neutral-900 text-neutral-100 rounded-xl p-3 font-mono text-xs">
+              <div class="text-neutral-400 text-[0.65rem] uppercase mb-1">Tinha 4, chegou o 3:</div>
+              <div class="text-emerald-400 font-bold">(4 * 10) + 3 = 43</div>
+              <div class="text-neutral-400 text-[0.65rem] mt-1">O 4 virou dezena e o 3 virou unidade!</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Conteúdo da Aba 2: Estrutura do Pseudocódigo -->
+      <div id="tab-content-pseudo" class="hidden">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <!-- Coluna 1: Como Pensar (Raciocínio Natural) -->
+          <div class="bg-white rounded-2xl p-4 border border-neutral-300 shadow-sm">
+            <div class="flex items-center gap-2 mb-2 text-neutral-800">
+              <i data-lucide="message-square" class="w-4 h-4 text-orange-500"></i>
+              <h3 class="text-xs font-bold font-mono uppercase tracking-wider">1. Raciocínio Mental Humano</h3>
+            </div>
+            <div class="space-y-2.5 text-xs text-neutral-700 leading-relaxed">
+              <p class="bg-neutral-100 p-2.5 rounded-xl border border-neutral-200">
+                <b class="text-neutral-950">Pergunta 1:</b> Quando eu sei que acabei?<br/>
+                <span class="text-emerald-700 font-medium">→ Quando o número original não tiver mais nenhum dígito (n virou 0). Aí devolvo o número que montei.</span>
+              </p>
+              <p class="bg-neutral-100 p-2.5 rounded-xl border border-neutral-200">
+                <b class="text-neutral-950">Pergunta 2:</b> Se ainda tem dígitos, o que faço?<br/>
+                <span class="text-blue-700 font-medium">→ Pego a última carta da pilha original (n % 10) e coloco na mesa à direita do que já estava lá (acum * 10 + resto).</span>
+              </p>
+              <p class="bg-neutral-100 p-2.5 rounded-xl border border-neutral-200">
+                <b class="text-neutral-950">Pergunta 3:</b> E o resto?<br/>
+                <span class="text-purple-700 font-medium">→ Passo o restante do número (n / 10) e a nova mesa para o próximo passo.</span>
+              </p>
+            </div>
+          </div>
+
+          <!-- Coluna 2: Pseudocódigo Estruturado -->
+          <div class="bg-neutral-900 text-neutral-100 rounded-2xl p-4 border border-neutral-800 shadow-sm font-mono text-xs">
+            <div class="flex items-center justify-between mb-2 text-neutral-300 border-b border-neutral-800 pb-2">
+              <div class="flex items-center gap-2">
+                <i data-lucide="terminal" class="w-4 h-4 text-yellow-400"></i>
+                <span class="font-bold uppercase text-[0.7rem] tracking-wider">2. Pseudocódigo Universal</span>
+              </div>
+              <span class="text-[0.65rem] text-neutral-400">Antes do C</span>
+            </div>
+            <div class="space-y-1 text-[0.72rem] leading-snug">
+              <div class="text-purple-400 font-bold">função Inverter(n, acum):</div>
+              <div class="text-neutral-400 pl-4">// 1. CASO BASE (Parada)</div>
+              <div class="pl-4"><span class="text-orange-400 font-bold">se</span> n == 0 <span class="text-orange-400 font-bold">então</span></div>
+              <div class="pl-8 text-emerald-400 font-bold">retorne acum</div>
+              <div class="text-neutral-400 pl-4 mt-1">// 2. PASSO RECURSIVO</div>
+              <div class="pl-4"><span class="text-orange-400 font-bold">senão</span></div>
+              <div class="pl-8 text-blue-300">digito ← n % 10</div>
+              <div class="pl-8 text-blue-300">novo_acum ← (acum * 10) + digito</div>
+              <div class="pl-8 text-blue-300">novo_n ← n / 10</div>
+              <div class="pl-8 text-yellow-300 font-bold">retorne Inverter(novo_n, novo_acum)</div>
+              <div class="text-purple-400 font-bold">fim_função</div>
+            </div>
+          </div>
+
+          <!-- Coluna 3: Código C do Ex17.c -->
+          <div class="bg-neutral-950 text-neutral-100 rounded-2xl p-4 border border-neutral-800 shadow-sm font-mono text-xs">
+            <div class="flex items-center justify-between mb-2 text-neutral-300 border-b border-neutral-800 pb-2">
+              <div class="flex items-center gap-2">
+                <i data-lucide="code-2" class="w-4 h-4 text-emerald-400"></i>
+                <span class="font-bold uppercase text-[0.7rem] tracking-wider">3. Código C (Ex17.c)</span>
+              </div>
+              <span class="text-[0.65rem] text-neutral-400">Linha a Linha</span>
+            </div>
+            <div class="space-y-1 text-[0.72rem] leading-snug">
+              <div class="text-blue-400">int inverter(int n, int acum) {</div>
+              <div class="pl-4 text-orange-400 font-semibold">if (n == 0) {</div>
+              <div class="pl-8 text-emerald-400 font-bold">return acum;</div>
+              <div class="pl-4 text-orange-400 font-semibold">} else {</div>
+              <div class="pl-8 text-yellow-300 font-bold">return inverter(</div>
+              <div class="pl-12 text-blue-300">n / 10,</div>
+              <div class="pl-12 text-emerald-300">acum * 10 + (n % 10)</div>
+              <div class="pl-8 text-yellow-300 font-bold">);</div>
+              <div class="pl-4 text-neutral-400">}</div>
+              <div class="text-blue-400">}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Conteúdo da Aba 3: Por Que Tail Recursion? -->
+      <div id="tab-content-tail" class="hidden">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="bg-white rounded-2xl p-4 border border-neutral-300 shadow-sm">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-bold font-mono uppercase text-red-600 bg-red-50 px-2 py-0.5 rounded-md border border-red-200">
+                Recursão Comum (Ex: Soma de 1 a N)
+              </span>
+              <span class="text-xs font-mono font-bold text-neutral-400">Trabalho na Volta</span>
+            </div>
+            <h4 class="text-sm font-bold uppercase font-oswald text-neutral-900 mb-2">Como você talvez estava acostumado:</h4>
+            <div class="bg-neutral-100 p-3 rounded-xl border border-neutral-200 text-xs font-mono text-neutral-800 mb-2">
+              return n + soma(n - 1);
+            </div>
+            <p class="text-xs text-neutral-600 leading-relaxed">
+              O computador <b>não consegue calcular o total na ida</b>! Ele precisa descer até o caso base e só depois, na volta de cada chamada, realizar a soma <code class="bg-neutral-200 px-1 rounded font-mono">+</code>. Cada chamada fica esperando a filha responder para somar.
+            </p>
+          </div>
+
+          <div class="bg-white rounded-2xl p-4 border border-emerald-300 shadow-sm relative overflow-hidden">
+            <div class="absolute -right-4 -top-4 w-16 h-16 bg-emerald-500/10 rounded-full pointer-events-none"></div>
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-bold font-mono uppercase text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-300">
+                Recursão de Cauda (Ex17.c - Com Acumulador)
+              </span>
+              <span class="text-xs font-mono font-bold text-emerald-600">Trabalho na IDA!</span>
+            </div>
+            <h4 class="text-sm font-bold uppercase font-oswald text-neutral-900 mb-2">O Segredo do Ex17.c:</h4>
+            <div class="bg-neutral-950 p-3 rounded-xl border border-neutral-800 text-xs font-mono text-emerald-400 font-bold mb-2">
+              return inverter(n / 10, acum * 10 + (n % 10));
+            </div>
+            <p class="text-xs text-neutral-600 leading-relaxed">
+              <b>Não há nenhuma conta pendente após a chamada!</b> A conta inteira é calculada <i>antes</i> de chamar a próxima função e passada no argumento <code class="bg-emerald-100 text-emerald-900 px-1 rounded font-mono font-bold">acum</code>. Quando atinge <code class="font-mono font-bold text-neutral-900">n == 0</code>, a resposta já está 100% pronta dentro de <code class="font-mono font-bold text-neutral-900">acum</code> e apenas "escorrega" de volta limpa!
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Barra de Controle da Simulação (Presets & Playback) -->
+    <section class="relative z-20 mb-8 bg-neutral-200/90 border border-neutral-300 rounded-3xl p-6 shadow-sm">
+      <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+        
+        <!-- Input do Número e Presets -->
+        <div class="flex flex-wrap items-center gap-4">
+          <div class="flex items-center gap-2">
+            <label for="input-number" class="text-xs font-mono font-bold uppercase tracking-widest text-neutral-700">
+              Número (n):
+            </label>
+            <div class="relative">
+              <input type="number" id="input-number" value="1234" min="0" max="9999999" class="w-36 px-4 py-2 bg-white rounded-xl border border-neutral-400 font-mono text-base font-bold text-neutral-900 focus:outline-none focus:ring-2 focus:ring-orange-500 shadow-inner"/>
+            </div>
+          </div>
+
+          <div class="h-6 w-[1px] bg-neutral-300 hidden sm:block"></div>
+
+          <!-- Presets Rápidos Didáticos -->
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="text-[0.65rem] font-mono uppercase text-neutral-500 font-bold">Casos:</span>
+            <button onclick="setPreset(1234)" class="preset-btn px-3 py-1 bg-white border border-neutral-300 hover:border-neutral-950 rounded-lg text-xs font-mono font-bold transition-all shadow-sm active:scale-95" title="Exemplo clássico de 4 dígitos">
+              1234
+            </button>
+            <button onclick="setPreset(98765)" class="preset-btn px-3 py-1 bg-white border border-neutral-300 hover:border-neutral-950 rounded-lg text-xs font-mono font-bold transition-all shadow-sm active:scale-95" title="Cinco dígitos">
+              98765
+            </button>
+            <button onclick="setPreset(402)" class="preset-btn px-3 py-1 bg-white border border-neutral-300 hover:border-neutral-950 rounded-lg text-xs font-mono font-bold transition-all shadow-sm active:scale-95" title="Com zero intermediário para ver o acum*10 em ação">
+              402 (com zero)
+            </button>
+            <button onclick="setPreset(7)" class="preset-btn px-3 py-1 bg-white border border-neutral-300 hover:border-neutral-950 rounded-lg text-xs font-mono font-bold transition-all shadow-sm active:scale-95" title="Apenas um dígito">
+              7 (1 dígito)
+            </button>
+            <button onclick="setPreset(2026)" class="preset-btn px-3 py-1 bg-white border border-neutral-300 hover:border-neutral-950 rounded-lg text-xs font-mono font-bold transition-all shadow-sm active:scale-95" title="Ano atual">
+              2026
+            </button>
+          </div>
+        </div>
+
+        <!-- Botões de Playback & Controles de Fluxo -->
+        <div class="flex flex-wrap items-center gap-3">
+          <!-- Reiniciar -->
+          <button id="btn-reset" onclick="resetSimulation()" class="px-3.5 py-2 rounded-xl bg-white border border-neutral-400 text-neutral-800 hover:bg-neutral-100 active:scale-95 transition-all text-xs font-mono font-bold flex items-center gap-1.5 shadow-sm" title="Reiniciar do início">
+            <i data-lucide="rotate-ccw" class="w-4 h-4"></i> Reiniciar
+          </button>
+
+          <!-- Passo Anterior -->
+          <button id="btn-prev" onclick="stepBackward()" class="px-3.5 py-2 rounded-xl bg-white border border-neutral-400 text-neutral-800 hover:bg-neutral-100 active:scale-95 transition-all text-xs font-mono font-bold flex items-center gap-1.5 shadow-sm disabled:opacity-40 disabled:pointer-events-none" title="Voltar 1 passo">
+            <i data-lucide="chevron-left" class="w-4 h-4"></i> Passo
+          </button>
+
+          <!-- Play / Pause Principal -->
+          <button id="btn-play" onclick="togglePlay()" class="px-5 py-2 rounded-xl bg-gradient-to-r from-neutral-800 to-neutral-950 text-white hover:from-neutral-700 hover:to-neutral-900 active:scale-95 transition-all text-xs font-mono font-bold flex items-center gap-2 shadow-md">
+            <i id="play-icon" data-lucide="play" class="w-4 h-4 text-orange-400"></i>
+            <span id="play-text">Executar</span>
+          </button>
+
+          <!-- Próximo Passo -->
+          <button id="btn-next" onclick="stepForward()" class="px-3.5 py-2 rounded-xl bg-white border border-neutral-400 text-neutral-800 hover:bg-neutral-100 active:scale-95 transition-all text-xs font-mono font-bold flex items-center gap-1.5 shadow-sm disabled:opacity-40 disabled:pointer-events-none" title="Avançar 1 passo">
+            Passo <i data-lucide="chevron-right" class="w-4 h-4"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Barra de Linha do Tempo & Velocidade -->
+      <div class="mt-6 pt-5 border-t border-neutral-300/80 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <!-- Scrubber de Passos -->
+        <div class="flex items-center gap-3 flex-1">
+          <span class="text-[0.7rem] font-mono font-bold uppercase text-neutral-600 whitespace-nowrap" id="step-counter">
+            Passo 0 / 0
+          </span>
+          <input type="range" id="timeline-slider" min="0" max="0" value="0" oninput="goToStep(this.value)" class="w-full"/>
+        </div>
+
+        <!-- Controle de Velocidade -->
+        <div class="flex items-center gap-2 self-end md:self-auto">
+          <i data-lucide="gauge" class="w-3.5 h-3.5 text-neutral-500"></i>
+          <span class="text-[0.65rem] font-mono uppercase text-neutral-600 font-bold">Velocidade:</span>
+          <div class="flex items-center gap-1 bg-white border border-neutral-300 rounded-lg p-0.5">
+            <button onclick="setSpeed(1200, this)" class="speed-btn px-2 py-0.5 text-[0.65rem] font-mono rounded font-bold text-neutral-700 hover:bg-neutral-100">0.5x</button>
+            <button onclick="setSpeed(750, this)" class="speed-btn px-2 py-0.5 text-[0.65rem] font-mono rounded font-bold bg-neutral-900 text-white">1x</button>
+            <button onclick="setSpeed(350, this)" class="speed-btn px-2 py-0.5 text-[0.65rem] font-mono rounded font-bold text-neutral-700 hover:bg-neutral-100">2x</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Área de Exibição Principal: Mesa Visual de Transferência & Inspetor Matemático -->
+    <div class="relative z-20 grid grid-cols-1 lg:grid-cols-12 gap-8 mb-8">
+      
+      <!-- Coluna Esquerda: A Mesa Visual de Desmontagem e Montagem de Dígitos (7 cols) -->
+      <div class="lg:col-span-7 flex flex-col gap-6">
+        
+        <!-- Mesa Visual: Transferência de Dígitos -->
+        <div class="bg-neutral-900 border border-neutral-800 rounded-3xl p-6 shadow-xl text-white relative overflow-hidden flex flex-col justify-between min-h-[360px]">
+          <div class="flex items-center justify-between mb-4 pb-3 border-b border-neutral-800">
+            <div class="flex items-center gap-2.5">
+              <div class="w-3 h-3 rounded-full bg-orange-500 animate-ping"></div>
+              <span class="text-xs font-mono font-bold tracking-widest uppercase text-neutral-200">
+                MESA VISUAL · TRANSFERÊNCIA DE DÍGITOS DA BASE 10
+              </span>
+            </div>
+            <span id="workbench-phase-badge" class="text-[0.65rem] font-mono font-bold uppercase px-2.5 py-0.5 rounded-full bg-orange-500/20 text-orange-400 border border-orange-500/30">
+              IDA · RECURSÃO ATIVA
+            </span>
+          </div>
+
+          <!-- Coração Visual: Reservatório N vs Reservatório ACUM -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 my-auto py-4">
+            
+            <!-- Reservatório N (Número a ser descascado) -->
+            <div class="bg-neutral-950/80 border border-neutral-800 rounded-2xl p-4 flex flex-col items-center justify-between relative shadow-inner">
+              <div class="w-full flex items-center justify-between mb-2">
+                <span class="text-[0.7rem] font-mono font-bold uppercase text-neutral-400 flex items-center gap-1.5">
+                  <i data-lucide="arrow-down-left" class="w-3.5 h-3.5 text-orange-400"></i> Número Atual (n)
+                </span>
+                <span class="text-[0.65rem] font-mono text-neutral-500" id="n-length-label">4 dígitos</span>
+              </div>
+
+              <!-- Dígitos de N renderizados como blocos táteis -->
+              <div id="digits-container-n" class="flex items-center justify-center gap-1.5 min-h-[72px] my-3 flex-wrap">
+                <!-- Preenchido via JS -->
+              </div>
+
+              <!-- Ação atual em N -->
+              <div class="w-full pt-2 border-t border-neutral-800/80 text-center">
+                <span id="n-action-hint" class="text-[0.7rem] font-mono text-orange-400 font-semibold block">
+                  Último dígito em destaque: n % 10
+                </span>
+              </div>
+            </div>
+
+            <!-- Reservatório ACUM (Número sendo construído invertido) -->
+            <div class="bg-neutral-950/80 border border-neutral-800 rounded-2xl p-4 flex flex-col items-center justify-between relative shadow-inner" id="acum-box-card">
+              <div class="w-full flex items-center justify-between mb-2">
+                <span class="text-[0.7rem] font-mono font-bold uppercase text-neutral-400 flex items-center gap-1.5">
+                  <i data-lucide="layers" class="w-3.5 h-3.5 text-emerald-400"></i> Acumulador (acum)
+                </span>
+                <span class="text-[0.65rem] font-mono text-emerald-400 font-bold" id="acum-length-label">acum * 10 + resto</span>
+              </div>
+
+              <!-- Dígitos de ACUM renderizados como blocos táteis -->
+              <div id="digits-container-acum" class="flex items-center justify-center gap-1.5 min-h-[72px] my-3 flex-wrap">
+                <!-- Preenchido via JS -->
+              </div>
+
+              <!-- Ação atual em ACUM -->
+              <div class="w-full pt-2 border-t border-neutral-800/80 text-center">
+                <span id="acum-action-hint" class="text-[0.7rem] font-mono text-emerald-400 font-semibold block">
+                  Empurra casas anteriores e recebe dígito
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Rodapé da Mesa Visual: Fórmula Aplicada Neste Exato Instante -->
+          <div class="mt-4 pt-3 border-t border-neutral-800 flex flex-wrap items-center justify-between gap-3 text-xs font-mono">
+            <div class="flex items-center gap-2">
+              <span class="text-neutral-400 text-[0.7rem] uppercase font-bold">Operação da vez:</span>
+              <span id="current-formula-eval" class="bg-neutral-800 px-3 py-1 rounded-lg text-yellow-300 font-bold">
+                inverter(1234, 0)
+              </span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-neutral-500 text-[0.65rem] uppercase">Destino da Chamada:</span>
+              <span id="next-call-preview" class="text-orange-400 font-bold">
+                inverter(123, 4)
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Inspetor Matemático em Tempo Real (Cálculos Passo a Passo) -->
+        <div class="bg-white border border-neutral-300 rounded-3xl p-6 shadow-sm">
+          <div class="flex items-center justify-between mb-4 pb-3 border-b border-neutral-200">
+            <div class="flex items-center gap-2">
+              <i data-lucide="calculator" class="w-4 h-4 text-orange-600"></i>
+              <h3 class="text-xs font-mono font-bold tracking-widest uppercase text-neutral-900">
+                INSPETOR MATEMÁTICO AO VIVO
+              </h3>
+            </div>
+            <span class="text-[0.65rem] font-mono uppercase bg-neutral-100 border border-neutral-300 px-2 py-0.5 rounded text-neutral-600">
+              Aritmética Inteira em C
+            </span>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3" id="math-inspector-cards">
+            <!-- Card 1: Resto (% 10) -->
+            <div class="bg-neutral-50 border border-neutral-200 rounded-xl p-3">
+              <div class="text-[0.65rem] font-mono uppercase text-orange-600 font-bold mb-1">
+                1. Extrair Unidade (% 10)
+              </div>
+              <div class="font-mono text-xs font-bold text-neutral-900" id="calc-mod">
+                1234 % 10 = 4
+              </div>
+              <div class="text-[0.65rem] text-neutral-500 mt-1 font-mono">
+                dígito = <span id="val-digit" class="font-bold text-orange-600">4</span>
+              </div>
+            </div>
+
+            <!-- Card 2: Divisão (/ 10) -->
+            <div class="bg-neutral-50 border border-neutral-200 rounded-xl p-3">
+              <div class="text-[0.65rem] font-mono uppercase text-blue-600 font-bold mb-1">
+                2. Encolher Número (/ 10)
+              </div>
+              <div class="font-mono text-xs font-bold text-neutral-900" id="calc-div">
+                1234 / 10 = 123
+              </div>
+              <div class="text-[0.65rem] text-neutral-500 mt-1 font-mono">
+                novo_n = <span id="val-new-n" class="font-bold text-blue-600">123</span>
+              </div>
+            </div>
+
+            <!-- Card 3: Montagem (* 10 + d) -->
+            <div class="bg-neutral-50 border border-neutral-200 rounded-xl p-3">
+              <div class="text-[0.65rem] font-mono uppercase text-emerald-600 font-bold mb-1">
+                3. Deslocar &amp; Somar
+              </div>
+              <div class="font-mono text-xs font-bold text-neutral-900" id="calc-shift">
+                (0 * 10) + 4 = 4
+              </div>
+              <div class="text-[0.65rem] text-neutral-500 mt-1 font-mono">
+                novo_acum = <span id="val-new-acum" class="font-bold text-emerald-600">4</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Coluna Direita: Pilha de Execução & Código C Sincronizado (5 cols) -->
+      <div class="lg:col-span-5 flex flex-col gap-6">
+        
+        <!-- Pilha de Execução (Call Stack) -->
+        <div class="bg-white border border-neutral-300 rounded-3xl p-6 shadow-sm flex flex-col justify-between min-h-[300px]">
+          <div>
+            <div class="flex items-center justify-between mb-3 pb-3 border-b border-neutral-200">
+              <div class="flex items-center gap-2">
+                <i data-lucide="layers" class="w-4 h-4 text-neutral-800"></i>
+                <h3 class="text-xs font-mono font-bold tracking-widest uppercase text-neutral-900">
+                  PILHA DE EXECUÇÃO (CALL STACK)
+                </h3>
+              </div>
+              <span id="stack-count-badge" class="text-[0.65rem] font-mono font-bold px-2 py-0.5 rounded-full bg-neutral-200 text-neutral-800">
+                1 Frame(s)
+              </span>
+            </div>
+
+            <!-- Lista de Frames da Pilha -->
+            <div id="call-stack-container" class="space-y-2 max-h-[220px] overflow-y-auto pr-1">
+              <!-- Frames preenchidos dinamicamente via JS -->
+            </div>
+          </div>
+
+          <!-- Destaque de Tail Recursion: Explicação da Pilha -->
+          <div class="mt-4 pt-3 border-t border-neutral-200 text-[0.7rem] font-mono text-neutral-600 flex items-center justify-between">
+            <span class="flex items-center gap-1.5">
+              <i data-lucide="shield-check" class="w-3.5 h-3.5 text-emerald-600"></i>
+              Otimização de Cauda Possível
+            </span>
+            <span class="text-neutral-400 font-semibold" id="stack-behavior-hint">Acumulando na ida</span>
+          </div>
+        </div>
+
+        <!-- Painel de Código C (Ex17.c) Sincronizado com Linha Ativa -->
+        <div class="bg-neutral-950 border border-neutral-800 rounded-3xl p-6 shadow-xl text-white font-mono text-xs flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-3 pb-3 border-b border-neutral-800">
+              <div class="flex items-center gap-2">
+                <i data-lucide="file-code" class="w-4 h-4 text-orange-400"></i>
+                <span class="text-[0.7rem] font-bold uppercase tracking-wider text-neutral-200">
+                  Ex17.c — Código em Execução
+                </span>
+              </div>
+              <span class="text-[0.65rem] font-mono text-neutral-500">Linhas 13-19</span>
+            </div>
+
+            <!-- Código com realce sincronizado -->
+            <div class="space-y-1 text-[0.74rem] leading-relaxed select-none" id="code-panel">
+              <div id="code-line-13" class="code-line px-2.5 py-1 rounded transition-colors flex items-center gap-3">
+                <span class="text-neutral-600 select-none text-[0.65rem] w-4 text-right">13</span>
+                <span class="whitespace-nowrap"><span class="text-purple-400">int</span> <span class="text-blue-400">inverter</span>(<span class="text-purple-400">int</span> n, <span class="text-purple-400">int</span> acum) {</span>
+              </div>
+              <div id="code-line-14" class="code-line px-2.5 py-1 rounded transition-colors flex items-center gap-3">
+                <span class="text-neutral-600 select-none text-[0.65rem] w-4 text-right">14</span>
+                <span class="whitespace-nowrap pl-4"><span class="text-orange-400">if</span> (n == <span class="text-emerald-400">0</span>) {</span>
+              </div>
+              <div id="code-line-15" class="code-line px-2.5 py-1 rounded transition-colors flex items-center gap-3">
+                <span class="text-neutral-600 select-none text-[0.65rem] w-4 text-right">15</span>
+                <span class="whitespace-nowrap pl-8"><span class="text-orange-400">return</span> acum;</span>
+              </div>
+              <div id="code-line-16" class="code-line px-2.5 py-1 rounded transition-colors flex items-center gap-3">
+                <span class="text-neutral-600 select-none text-[0.65rem] w-4 text-right">16</span>
+                <span class="whitespace-nowrap pl-4">} <span class="text-orange-400">else</span> {</span>
+              </div>
+              <div id="code-line-17" class="code-line px-2.5 py-1 rounded transition-colors flex items-center gap-3">
+                <span class="text-neutral-600 select-none text-[0.65rem] w-4 text-right">17</span>
+                <span class="whitespace-nowrap pl-8"><span class="text-orange-400">return</span> <span class="text-blue-400">inverter</span>(n / <span class="text-emerald-400">10</span>, acum * <span class="text-emerald-400">10</span> + (n % <span class="text-emerald-400">10</span>));</span>
+              </div>
+              <div id="code-line-18" class="code-line px-2.5 py-1 rounded transition-colors flex items-center gap-3">
+                <span class="text-neutral-600 select-none text-[0.65rem] w-4 text-right">18</span>
+                <span class="whitespace-nowrap pl-4">}</span>
+              </div>
+              <div id="code-line-19" class="code-line px-2.5 py-1 rounded transition-colors flex items-center gap-3">
+                <span class="text-neutral-600 select-none text-[0.65rem] w-4 text-right">19</span>
+                <span class="whitespace-nowrap">}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Radar Cognitivo: Tradução para Linguagem Humana -->
+          <div class="mt-4 pt-3 border-t border-neutral-800">
+            <div class="text-[0.65rem] font-mono uppercase text-orange-400 font-bold mb-1 flex items-center gap-1.5">
+              <i data-lucide="radio" class="w-3.5 h-3.5 animate-pulse"></i> Radar Cognitivo (O que a sua mente deve pensar agora):
+            </div>
+            <p id="cognitive-radar-text" class="text-xs text-neutral-300 font-sans leading-relaxed">
+              Iniciando a função com o número original. O acumulador começa com zero.
+            </p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Terminal Simulado de Execução de Saída -->
+    <section class="relative z-20 bg-neutral-900 border border-neutral-800 rounded-3xl p-6 text-white font-mono shadow-xl">
+      <div class="flex items-center justify-between mb-3 pb-3 border-b border-neutral-800">
+        <div class="flex items-center gap-2">
+          <div class="flex gap-1.5">
+            <div class="w-2.5 h-2.5 rounded-full bg-red-500/80"></div>
+            <div class="w-2.5 h-2.5 rounded-full bg-yellow-500/80"></div>
+            <div class="w-2.5 h-2.5 rounded-full bg-green-500/80"></div>
+          </div>
+          <span class="text-xs text-neutral-400 uppercase tracking-widest pl-2 font-bold">
+            TERMINAL DE EXECUÇÃO EM C (SAÍDA PADRÃO / STDOUT)
+          </span>
+        </div>
+        <button onclick="clearTerminalLogs()" class="text-[0.65rem] text-neutral-500 hover:text-neutral-300 uppercase tracking-wider">
+          Limpar
+        </button>
+      </div>
+      
+      <div id="terminal-stdout" class="space-y-1.5 text-xs text-neutral-300 max-h-[120px] overflow-y-auto">
+        <div class="text-neutral-500"># Compilando Ex17.c via gcc...</div>
+        <div class="text-neutral-400">$ ./Ex17</div>
+        <div class="text-emerald-400 font-bold" id="terminal-last-line">Pronto para execução. Selecione um número ou clique em "Executar".</div>
+      </div>
+    </section>
+
+    <!-- Rodapé Monumental -->
+    <footer class="relative z-20 mt-8 pt-6 border-t border-neutral-300 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-mono text-neutral-600">
+      <div class="flex items-center gap-2">
+        <span class="w-2 h-2 rounded-full bg-neutral-950"></span>
+        <span class="uppercase font-bold tracking-wider">FUTURE UI DESIGN SYSTEM</span>
+        <span>— Exercício 17 (Recursão de Cauda com Acumulador)</span>
+      </div>
+      <div class="flex items-center gap-4">
+        <a href="visualizador-recursao.html" class="hover:text-neutral-950 underline transition-colors">Ex. 1</a>
+        <a href="visualizador-ex21.html" class="hover:text-neutral-950 underline transition-colors">Ex. 21</a>
+        <span>HTML + Vanilla JS + Tailwind Play</span>
+      </div>
+    </footer>
+
+  </main>
+
+  <!-- Lógica da Aplicação em Vanilla JavaScript -->
+  <script>
+    // Estado Global da Simulação
+    let simulationSteps = [];
+    let currentStepIndex = 0;
+    let isPlaying = false;
+    let playbackInterval = null;
+    let playbackSpeed = 750; // ms
+
+    // Inicialização ao carregar a página
+    document.addEventListener('DOMContentLoaded', () => {
+      lucide.createIcons();
+      buildSimulation();
+      renderCurrentStep();
+    });
+
+    // Alternador das Abas Didáticas (Laboratório Mental)
+    function switchDidacticTab(tabKey) {
+      const tabs = ['math', 'pseudo', 'tail'];
+      tabs.forEach(t => {
+        const btn = document.getElementById(`tab-btn-${t}`);
+        const content = document.getElementById(`tab-content-${t}`);
+        if (t === tabKey) {
+          btn.className = "px-3.5 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all bg-neutral-950 text-white shadow-sm flex items-center gap-1.5";
+          content.classList.remove('hidden');
+          content.classList.add('block');
+        } else {
+          btn.className = "px-3.5 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all text-neutral-700 hover:text-neutral-950 flex items-center gap-1.5";
+          content.classList.remove('block');
+          content.classList.add('hidden');
+        }
+      });
+      lucide.createIcons();
+    }
+
+    // Configurar Preset de Número
+    function setPreset(val) {
+      document.getElementById('input-number').value = val;
+      resetSimulation();
+    }
+
+    // Gerador dos Passos Discretos da Recursão de Cauda
+    function buildSimulation() {
+      const inputVal = parseInt(document.getElementById('input-number').value, 10);
+      const originalN = isNaN(inputVal) || inputVal < 0 ? 0 : inputVal;
+      
+      simulationSteps = [];
+      const stackHistory = [];
+
+      function simulateInverter(n, acum, depth) {
+        const frameId = `frame-${depth}`;
+        const currentFrame = {
+          id: frameId,
+          depth: depth,
+          n: n,
+          acum: acum,
+          status: 'executing'
+        };
+
+        // Passo 1: Entrada na função (Linha 13)
+        stackHistory.push({ ...currentFrame });
+        simulationSteps.push({
+          type: 'ENTER_FUNCTION',
+          activeLine: 13,
+          n: n,
+          acum: acum,
+          depth: depth,
+          digit: n % 10,
+          newN: Math.floor(n / 10),
+          newAcum: (acum * 10) + (n % 10),
+          stack: JSON.parse(JSON.stringify(stackHistory)),
+          phase: 'IDA',
+          cognitiveText: `Entrando na chamada <b>inverter(n = ${n}, acum = ${acum})</b>. A pilha de execução adiciona este frame.`,
+          terminalMsg: `Chamada: inverter(${n}, ${acum})`
+        });
+
+        // Passo 2: Verificação do Caso Base (Linha 14)
+        const isBaseCase = (n === 0);
+        simulationSteps.push({
+          type: 'CHECK_BASE',
+          activeLine: 14,
+          n: n,
+          acum: acum,
+          depth: depth,
+          digit: n % 10,
+          newN: Math.floor(n / 10),
+          newAcum: (acum * 10) + (n % 10),
+          stack: JSON.parse(JSON.stringify(stackHistory)),
+          phase: 'IDA',
+          cognitiveText: isBaseCase
+            ? `<b>Verificação de parada: n == 0 é VERDADEIRO!</b> Não há mais dígitos no número original. Hora de parar e retornar o resultado acumulado.`
+            : `<b>Verificação de parada: n == 0 é FALSO (${n} ≠ 0).</b> O número ainda possui dígitos. Vamos para o bloco else para extrair o próximo dígito.`,
+          terminalMsg: isBaseCase ? `[CASO BASE] n == 0 detectado!` : null
+        });
+
+        if (isBaseCase) {
+          // Passo 3: Retorno do Caso Base (Linha 15)
+          const baseFrame = stackHistory[stackHistory.length - 1];
+          baseFrame.status = 'returning';
+          baseFrame.returnValue = acum;
+
+          simulationSteps.push({
+            type: 'BASE_RETURN',
+            activeLine: 15,
+            n: n,
+            acum: acum,
+            depth: depth,
+            digit: 0,
+            newN: 0,
+            newAcum: acum,
+            returnValue: acum,
+            stack: JSON.parse(JSON.stringify(stackHistory)),
+            phase: 'VOLTA',
+            cognitiveText: `<b>Retorno do acumulador: return acum (${acum});</b> A resposta final já está 100% calculada dentro de acum!`,
+            terminalMsg: `Retorno do Caso Base: ${acum}`
+          });
+
+          stackHistory.pop();
+          return acum;
+        } else {
+          // Passo 4: O Passo Matemático da Base 10 (Linha 17 antes da chamada)
+          const digit = n % 10;
+          const newN = Math.floor(n / 10);
+          const newAcum = (acum * 10) + digit;
+
+          simulationSteps.push({
+            type: 'MATH_STEP',
+            activeLine: 17,
+            n: n,
+            acum: acum,
+            depth: depth,
+            digit: digit,
+            newN: newN,
+            newAcum: newAcum,
+            stack: JSON.parse(JSON.stringify(stackHistory)),
+            phase: 'IDA',
+            cognitiveText: `<b>Passo Matemático:</b> Extraímos a unidade <b>${n} % 10 = ${digit}</b>. Encolhemos para <b>${n} / 10 = ${newN}</b>. Deslocamos o acumulador <b>(${acum} * 10) + ${digit} = ${newAcum}</b>. Chamando próxima função com estes novos valores!`,
+            terminalMsg: `[Matemática] digito=${digit}, novo_n=${newN}, novo_acum=${newAcum}`
+          });
+
+          // Chamada recursiva para o filho
+          const result = simulateInverter(newN, newAcum, depth + 1);
+
+          // Passo 5: Retorno da Recursão de Cauda (Unwinding - Linha 17)
+          const parentFrame = stackHistory[stackHistory.length - 1];
+          if (parentFrame) {
+            parentFrame.status = 'returning';
+            parentFrame.returnValue = result;
+          }
+
+          simulationSteps.push({
+            type: 'TAIL_RETURN',
+            activeLine: 17,
+            n: n,
+            acum: acum,
+            depth: depth,
+            digit: digit,
+            newN: newN,
+            newAcum: newAcum,
+            returnValue: result,
+            stack: JSON.parse(JSON.stringify(stackHistory)),
+            phase: 'VOLTA',
+            cognitiveText: `<b>Desempilhamento Tail:</b> A chamada filha devolveu <b>${result}</b>. Como é recursão de cauda pura, esta chamada não faz nenhuma conta extra e apenas repassa <b>${result}</b> para cima!`,
+            terminalMsg: `Unwinding: inverter(${n}, ${acum}) repassa ${result}`
+          });
+
+          stackHistory.pop();
+          return result;
+        }
+      }
+
+      // Dispara a simulação inicial (i = 0 no main)
+      const finalVal = simulateInverter(originalN, 0, 0);
+
+      // Passo Final: Conclusão no main (printf)
+      simulationSteps.push({
+        type: 'FINAL_RESULT',
+        activeLine: 9,
+        n: originalN,
+        acum: finalVal,
+        depth: 0,
+        digit: 0,
+        newN: 0,
+        newAcum: finalVal,
+        returnValue: finalVal,
+        stack: [],
+        phase: 'CONCLUIDO',
+        cognitiveText: `<b>Finalizado!</b> A função inverter retornou <b>${finalVal}</b> ao main, que foi impresso pelo printf("%d", ...). Inversão concluída com sucesso!`,
+        terminalMsg: `SAÍDA IMPRESSA NO TERMINAL: ${finalVal}`
+      });
+
+      // Atualiza o slider da linha do tempo
+      const slider = document.getElementById('timeline-slider');
+      slider.max = simulationSteps.length - 1;
+      slider.value = 0;
+      currentStepIndex = 0;
+    }
+
+    // Renderização do Estado no Passo Atual
+    function renderCurrentStep() {
+      if (simulationSteps.length === 0) return;
+      const step = simulationSteps[currentStepIndex];
+
+      // 1. Contador e Slider
+      document.getElementById('step-counter').textContent = `Passo ${currentStepIndex + 1} / ${simulationSteps.length}`;
+      document.getElementById('timeline-slider').value = currentStepIndex;
+
+      // 2. Botões Anterior / Próximo
+      document.getElementById('btn-prev').disabled = (currentStepIndex === 0);
+      document.getElementById('btn-next').disabled = (currentStepIndex === simulationSteps.length - 1);
+
+      // 3. Fase e Badges
+      const phaseBadge = document.getElementById('workbench-phase-badge');
+      if (step.phase === 'IDA') {
+        phaseBadge.className = "text-[0.65rem] font-mono font-bold uppercase px-2.5 py-0.5 rounded-full bg-orange-500/20 text-orange-400 border border-orange-500/30";
+        phaseBadge.textContent = "IDA · RECURSÃO ATIVA";
+        document.getElementById('stack-behavior-hint').textContent = "Acumulando na ida";
+      } else if (step.phase === 'VOLTA') {
+        phaseBadge.className = "text-[0.65rem] font-mono font-bold uppercase px-2.5 py-0.5 rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/30";
+        phaseBadge.textContent = "VOLTA · REPASSE LIMPO (TAIL)";
+        document.getElementById('stack-behavior-hint').textContent = "Repasse direto sem operações extras";
+      } else {
+        phaseBadge.className = "text-[0.65rem] font-mono font-bold uppercase px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30";
+        phaseBadge.textContent = "CONCLUÍDO COM SUCESSO";
+        document.getElementById('stack-behavior-hint').textContent = "Pilha vazia (Execução encerrada)";
+      }
+
+      // 4. Mesa Visual: Renderizar Dígitos de N
+      renderNDigits(step);
+
+      // 5. Mesa Visual: Renderizar Dígitos de ACUM
+      renderAcumDigits(step);
+
+      // 6. Rodapé da Mesa Visual (Fórmulas e Previews)
+      renderWorkbenchFooter(step);
+
+      // 7. Inspetor Matemático
+      renderMathInspector(step);
+
+      // 8. Pilha de Execução (Call Stack)
+      renderCallStack(step);
+
+      // 9. Realce do Código C Sincronizado
+      highlightCodeLine(step.activeLine);
+
+      // 10. Radar Cognitivo
+      document.getElementById('cognitive-radar-text').innerHTML = step.cognitiveText;
+
+      // 11. Terminal Log
+      if (step.terminalMsg) {
+        appendTerminalLog(step.terminalMsg, step.phase === 'CONCLUIDO');
+      }
+
+      lucide.createIcons();
+    }
+
+    // Renderizar Dígitos de N
+    function renderNDigits(step) {
+      const container = document.getElementById('digits-container-n');
+      container.innerHTML = '';
+
+      const nStr = step.n.toString();
+      document.getElementById('n-length-label').textContent = step.n === 0 ? '0 dígitos (vazio)' : `${nStr.length} dígito(s)`;
+
+      if (step.n === 0) {
+        container.innerHTML = `
+          <div class="px-4 py-2 rounded-xl bg-neutral-900 border border-neutral-700 text-neutral-500 font-mono text-xs italic">
+            N = 0 (Todos os dígitos foram transferidos)
+          </div>
+        `;
+        document.getElementById('n-action-hint').innerHTML = `<span class="text-emerald-400 font-bold">Caso Base Atingido: N == 0</span>`;
+        return;
+      }
+
+      for (let i = 0; i < nStr.length; i++) {
+        const char = nStr[i];
+        const isLastDigit = (i === nStr.length - 1);
+        const div = document.createElement('div');
+        
+        if (isLastDigit && step.phase === 'IDA') {
+          // Último dígito em destaque
+          div.className = "w-12 h-14 rounded-xl bg-gradient-to-b from-orange-500 to-orange-600 border-2 border-orange-300 text-white font-mono font-bold text-xl flex flex-col items-center justify-center shadow-lg digit-pulse relative";
+          div.innerHTML = `
+            <span>${char}</span>
+            <span class="text-[0.55rem] uppercase font-bold text-orange-200 tracking-tighter">n % 10</span>
+          `;
+        } else {
+          div.className = "w-11 h-14 rounded-xl bg-neutral-800 border border-neutral-700 text-neutral-300 font-mono font-bold text-lg flex flex-col items-center justify-center shadow";
+          div.innerHTML = `
+            <span>${char}</span>
+            <span class="text-[0.55rem] text-neutral-500">d</span>
+          `;
+        }
+        container.appendChild(div);
+      }
+
+      if (step.phase === 'IDA') {
+        document.getElementById('n-action-hint').innerHTML = `
+          Último dígito destacado: <span class="text-orange-400 font-bold font-mono">${step.n % 10}</span> (será transferido)
+        `;
+      } else {
+        document.getElementById('n-action-hint').innerHTML = `
+          Número atual desta chamada: <span class="text-neutral-300 font-mono font-bold">${step.n}</span>
+        `;
+      }
+    }
+
+    // Renderizar Dígitos de ACUM
+    function renderAcumDigits(step) {
+      const container = document.getElementById('digits-container-acum');
+      container.innerHTML = '';
+      const card = document.getElementById('acum-box-card');
+
+      const acumStr = step.acum.toString();
+
+      if (step.phase === 'CONCLUIDO' || step.type === 'BASE_RETURN') {
+        card.classList.add('glow-success');
+      } else {
+        card.classList.remove('glow-success');
+      }
+
+      if (step.acum === 0 && step.type !== 'FINAL_RESULT') {
+        container.innerHTML = `
+          <div class="px-4 py-2 rounded-xl bg-neutral-900 border border-neutral-700 text-neutral-500 font-mono text-xs italic">
+            acum = 0 (Aguardando primeiro dígito)
+          </div>
+        `;
+        document.getElementById('acum-action-hint').innerHTML = `
+          O acumulador inicia em 0 pelo <code class="text-orange-400 font-bold">main</code>
+        `;
+        return;
+      }
+
+      for (let i = 0; i < acumStr.length; i++) {
+        const char = acumStr[i];
+        const isNewestDigit = (i === acumStr.length - 1 && step.phase === 'IDA');
+        const div = document.createElement('div');
+
+        if (step.phase === 'CONCLUIDO') {
+          div.className = "w-12 h-14 rounded-xl bg-gradient-to-b from-emerald-600 to-emerald-700 border-2 border-emerald-300 text-white font-mono font-bold text-xl flex flex-col items-center justify-center shadow-lg";
+          div.innerHTML = `
+            <span>${char}</span>
+            <span class="text-[0.55rem] text-emerald-200 uppercase font-bold">ok</span>
+          `;
+        } else if (isNewestDigit) {
+          div.className = "w-11 h-14 rounded-xl bg-gradient-to-b from-emerald-700 to-emerald-800 border border-emerald-400 text-emerald-100 font-mono font-bold text-lg flex flex-col items-center justify-center shadow";
+          div.innerHTML = `
+            <span>${char}</span>
+            <span class="text-[0.55rem] text-emerald-300 uppercase">novo</span>
+          `;
+        } else {
+          div.className = "w-11 h-14 rounded-xl bg-neutral-800 border border-neutral-700 text-neutral-300 font-mono font-bold text-lg flex flex-col items-center justify-center shadow";
+          div.innerHTML = `
+            <span>${char}</span>
+            <span class="text-[0.55rem] text-neutral-500">acum</span>
+          `;
+        }
+        container.appendChild(div);
+      }
+
+      if (step.phase === 'CONCLUIDO') {
+        document.getElementById('acum-action-hint').innerHTML = `
+          <span class="text-emerald-400 font-bold uppercase">Resultado Final Pronto: ${step.returnValue}</span>
+        `;
+      } else if (step.type === 'MATH_STEP') {
+        document.getElementById('acum-action-hint').innerHTML = `
+          Evoluindo: (<span class="text-neutral-300">${step.acum}</span> * 10) + <span class="text-orange-400">${step.digit}</span> = <span class="text-emerald-400 font-bold">${step.newAcum}</span>
+        `;
+      } else {
+        document.getElementById('acum-action-hint').innerHTML = `
+          Valor atual no frame: <span class="text-emerald-400 font-mono font-bold">${step.acum}</span>
+        `;
+      }
+    }
+
+    // Rodapé da Mesa Visual
+    function renderWorkbenchFooter(step) {
+      document.getElementById('current-formula-eval').textContent = `inverter(${step.n}, ${step.acum})`;
+      if (step.type === 'FINAL_RESULT') {
+        document.getElementById('next-call-preview').textContent = `Concluído -> ${step.returnValue}`;
+      } else if (step.n === 0) {
+        document.getElementById('next-call-preview').textContent = `Retorna ${step.acum} (Caso Base)`;
+      } else {
+        document.getElementById('next-call-preview').textContent = `inverter(${step.newN}, ${step.newAcum})`;
+      }
+    }
+
+    // Inspetor Matemático
+    function renderMathInspector(step) {
+      if (step.n === 0 || step.type === 'FINAL_RESULT') {
+        document.getElementById('calc-mod').textContent = `n == 0 (Não divide)`;
+        document.getElementById('val-digit').textContent = `0`;
+        document.getElementById('calc-div').textContent = `0 / 10 = 0`;
+        document.getElementById('val-new-n').textContent = `0`;
+        document.getElementById('calc-shift').textContent = `Retorna acum = ${step.acum}`;
+        document.getElementById('val-new-acum').textContent = `${step.acum}`;
+      } else {
+        document.getElementById('calc-mod').textContent = `${step.n} % 10 = ${step.digit}`;
+        document.getElementById('val-digit').textContent = `${step.digit}`;
+        document.getElementById('calc-div').textContent = `${step.n} / 10 = ${step.newN}`;
+        document.getElementById('val-new-n').textContent = `${step.newN}`;
+        document.getElementById('calc-shift').textContent = `(${step.acum} * 10) + ${step.digit} = ${step.newAcum}`;
+        document.getElementById('val-new-acum').textContent = `${step.newAcum}`;
+      }
+    }
+
+    // Pilha de Execução (Call Stack)
+    function renderCallStack(step) {
+      const container = document.getElementById('call-stack-container');
+      container.innerHTML = '';
+
+      const stack = step.stack || [];
+      document.getElementById('stack-count-badge').textContent = `${stack.length} Frame(s)`;
+
+      if (stack.length === 0) {
+        container.innerHTML = `
+          <div class="p-3 bg-neutral-100 rounded-xl text-center text-xs font-mono text-neutral-500">
+            A pilha está vazia (retorno ao main completo).
+          </div>
+        `;
+        return;
+      }
+
+      // Exibe os frames de cima para baixo (o topo da pilha no topo)
+      for (let i = stack.length - 1; i >= 0; i--) {
+        const frame = stack[i];
+        const isTop = (i === stack.length - 1);
+        const div = document.createElement('div');
+
+        if (isTop && step.phase === 'IDA') {
+          div.className = "stack-frame-anim p-2.5 rounded-xl bg-orange-50 border border-orange-300 text-neutral-900 font-mono text-xs flex items-center justify-between shadow-sm";
+          div.innerHTML = `
+            <div class="flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-orange-500 animate-pulse"></span>
+              <span class="font-bold text-orange-950">inverter(${frame.n}, ${frame.acum})</span>
+            </div>
+            <span class="text-[0.65rem] font-bold uppercase bg-orange-200 text-orange-900 px-2 py-0.5 rounded">TOPO ATIVO</span>
+          `;
+        } else if (frame.status === 'returning') {
+          div.className = "stack-frame-anim p-2.5 rounded-xl bg-blue-50 border border-blue-300 text-neutral-900 font-mono text-xs flex items-center justify-between shadow-sm";
+          div.innerHTML = `
+            <div class="flex items-center gap-2">
+              <i data-lucide="corner-down-left" class="w-3.5 h-3.5 text-blue-600"></i>
+              <span class="font-bold text-blue-950">inverter(${frame.n}, ${frame.acum})</span>
+            </div>
+            <span class="text-[0.65rem] font-bold uppercase bg-blue-200 text-blue-900 px-2 py-0.5 rounded">RETORNANDO: ${frame.returnValue}</span>
+          `;
+        } else {
+          div.className = "p-2.5 rounded-xl bg-neutral-100 border border-neutral-200 text-neutral-700 font-mono text-xs flex items-center justify-between";
+          div.innerHTML = `
+            <div class="flex items-center gap-2">
+              <span class="w-1.5 h-1.5 rounded-full bg-neutral-400"></span>
+              <span>inverter(${frame.n}, ${frame.acum})</span>
+            </div>
+            <span class="text-[0.65rem] text-neutral-500">Aguardando</span>
+          `;
+        }
+        container.appendChild(div);
+      }
+    }
+
+    // Realce de Linha de Código C
+    function highlightCodeLine(lineNum) {
+      document.querySelectorAll('.code-line').forEach(el => {
+        el.classList.remove('bg-orange-500/20', 'text-orange-300', 'font-bold', 'border-l-4', 'border-orange-500');
+      });
+
+      const activeEl = document.getElementById(`code-line-${lineNum}`);
+      if (activeEl) {
+        activeEl.classList.add('bg-orange-500/20', 'text-orange-300', 'font-bold', 'border-l-4', 'border-orange-500');
+      }
+    }
+
+    // Terminal Logger
+    function appendTerminalLog(msg, isHighlight = false) {
+      const terminal = document.getElementById('terminal-stdout');
+      const div = document.createElement('div');
+      if (isHighlight) {
+        div.className = "text-emerald-400 font-bold bg-emerald-950/40 px-2 py-1 rounded border border-emerald-500/30";
+        div.innerHTML = `✔ ${msg}`;
+      } else {
+        div.className = "text-neutral-300";
+        div.textContent = `> ${msg}`;
+      }
+      terminal.appendChild(div);
+      terminal.scrollTop = terminal.scrollHeight;
+    }
+
+    function clearTerminalLogs() {
+      document.getElementById('terminal-stdout').innerHTML = `
+        <div class="text-neutral-500"># Log limpo. Simulador ativo.</div>
+      `;
+    }
+
+    // Controles de Playback
+    function togglePlay() {
+      if (isPlaying) {
+        pausePlayback();
+      } else {
+        startPlayback();
+      }
+    }
+
+    function startPlayback() {
+      if (currentStepIndex >= simulationSteps.length - 1) {
+        currentStepIndex = 0;
+      }
+      isPlaying = true;
+      document.getElementById('play-icon').setAttribute('data-lucide', 'pause');
+      document.getElementById('play-text').textContent = 'Pausar';
+      lucide.createIcons();
+
+      playbackInterval = setInterval(() => {
+        if (currentStepIndex < simulationSteps.length - 1) {
+          currentStepIndex++;
+          renderCurrentStep();
+        } else {
+          pausePlayback();
+        }
+      }, playbackSpeed);
+    }
+
+    function pausePlayback() {
+      isPlaying = false;
+      clearInterval(playbackInterval);
+      document.getElementById('play-icon').setAttribute('data-lucide', 'play');
+      document.getElementById('play-text').textContent = 'Executar';
+      lucide.createIcons();
+    }
+
+    function stepForward() {
+      pausePlayback();
+      if (currentStepIndex < simulationSteps.length - 1) {
+        currentStepIndex++;
+        renderCurrentStep();
+      }
+    }
+
+    function stepBackward() {
+      pausePlayback();
+      if (currentStepIndex > 0) {
+        currentStepIndex--;
+        renderCurrentStep();
+      }
+    }
+
+    function resetSimulation() {
+      pausePlayback();
+      clearTerminalLogs();
+      buildSimulation();
+      renderCurrentStep();
+    }
+
+    function goToStep(stepIdx) {
+      pausePlayback();
+      currentStepIndex = parseInt(stepIdx, 10);
+      renderCurrentStep();
+    }
+
+    function setSpeed(ms, btn) {
+      playbackSpeed = ms;
+      document.querySelectorAll('.speed-btn').forEach(b => {
+        b.className = "speed-btn px-2 py-0.5 text-[0.65rem] font-mono rounded font-bold text-neutral-700 hover:bg-neutral-100";
+      });
+      btn.className = "speed-btn px-2 py-0.5 text-[0.65rem] font-mono rounded font-bold bg-neutral-900 text-white";
+
+      if (isPlaying) {
+        pausePlayback();
+        startPlayback();
+      }
+    }
+
+    // Recalcular quando o usuário digita um novo número
+    document.getElementById('input-number').addEventListener('change', () => {
+      resetSimulation();
+    });
+  </script>
+</body>
+</html>

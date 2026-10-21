@@ -1,0 +1,32 @@
+---
+BasedOnStyle: LLVM
+Language: Cpp
+
+# Indentacao e chaves
+IndentWidth: 4
+TabWidth: 4
+UseTab: Never
+BreakBeforeBraces: Attach
+
+# Alinhamento para facilitar a leitura
+AlignOperands: true
+AlignConsecutiveAssignments: true
+AlignConsecutiveDeclarations: false
+AlignTrailingComments: true
+
+# Espacamento e quebras
+ColumnLimit: 78
+BinPackArguments: false
+BinPackParameters: false
+AllowShortFunctionsOnASingleLine: Empty
+AllowShortIfStatementsOnASingleLine: Never
+BreakBeforeBinaryOperators: All
+
+# Ponteiros, referencias e includes
+PointerAlignment: Left
+DerivePointerAlignment: false
+SpaceBeforeParens: ControlStatements
+IndentCaseLabels: true
+SortIncludes: Never
+IncludeBlocks: Preserve
+...

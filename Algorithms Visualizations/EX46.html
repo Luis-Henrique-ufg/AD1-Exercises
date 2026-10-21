@@ -1,0 +1,1241 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>Visualizador do Exercício 46 — Crivo de Eratóstenes, Mapeamento de Primos &amp; Bubble Sort (BOCA)</title>
+
+  <!-- Assets Locais do Design System -->
+  <script src="Design System/assets/resource_3fa48481346f.js"></script>
+  <script src="Design System/assets/lucide_latest_2eebd0ebe8c2.js"></script>
+  <link href="Design System/assets/css2_e01beb4f8743.css" rel="stylesheet"/>
+  <link href="Design System/assets/css2_8e191ef32247.css" rel="stylesheet"/>
+  <link href="Design System/assets/css2_62759cd015bd.css" rel="stylesheet"/>
+
+  <!-- Google Fonts Fallback & Resiliência -->
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    .font-oswald { font-family: 'Oswald', sans-serif; }
+    .font-space { font-family: 'Space Grotesk', sans-serif; }
+    .font-inter { font-family: 'Inter', sans-serif; }
+    .font-mono { font-family: 'Geist Mono', 'Space Mono', monospace; }
+
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.18); border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(0, 0, 0, 0.35); }
+
+    /* Estilo de borda degradê compartilhada do Design System */
+    [style*="--border-gradient"]::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      padding: 1px;
+      border-radius: var(--border-radius-before, inherit);
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      background: var(--border-gradient);
+      pointer-events: none;
+    }
+
+    /* Slider de progresso customizado no estilo Future UI */
+    input[type=range] {
+      -webkit-appearance: none;
+      background: #cbd5e1;
+      border-radius: 9999px;
+      height: 6px;
+      outline: none;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #0a0a0a;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.35);
+      transition: transform 0.15s ease, background 0.15s ease;
+    }
+    input[type=range]::-webkit-slider-thumb:hover {
+      transform: scale(1.2);
+      background: #ea580c;
+    }
+    input[type=range]::-moz-range-thumb {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #0a0a0a;
+      cursor: pointer;
+      border: none;
+    }
+
+    /* Linhas de Código C */
+    .code-line {
+      display: flex;
+      align-items: baseline;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-family: 'Geist Mono', monospace;
+      font-size: 11px;
+      line-height: 17px;
+      transition: all 0.15s ease;
+      cursor: pointer;
+      user-select: none;
+    }
+    .code-line:hover {
+      background: rgba(255, 255, 255, 0.05);
+    }
+    .code-line.active-line {
+      background: rgba(16, 185, 129, 0.22) !important;
+      border-left: 3px solid #10b981;
+      font-weight: 600;
+    }
+    .code-line.active-line .line-num {
+      color: #34d399;
+      font-weight: bold;
+    }
+    .code-line.active-line .line-text {
+      color: #ffffff;
+    }
+
+    .code-line.focus-sieve {
+      background: rgba(14, 165, 233, 0.22) !important;
+      border-left: 3px solid #0ea5e9;
+    }
+    .code-line.focus-map {
+      background: rgba(245, 158, 11, 0.22) !important;
+      border-left: 3px solid #f59e0b;
+    }
+    .code-line.focus-bubble {
+      background: rgba(168, 85, 247, 0.22) !important;
+      border-left: 3px solid #a855f7;
+    }
+
+    /* Células do Crivo */
+    .sieve-cell {
+      transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.2s ease, opacity 0.2s ease;
+    }
+    .sieve-cell.current-p {
+      box-shadow: 0 0 0 2px #0ea5e9, 0 4px 10px rgba(14, 165, 233, 0.4);
+      transform: scale(1.12);
+      z-index: 10;
+    }
+    .sieve-cell.current-multiple {
+      box-shadow: 0 0 0 2px #ef4444, 0 4px 10px rgba(239, 68, 68, 0.4);
+      transform: scale(1.1);
+      z-index: 10;
+    }
+    .sieve-cell.eliminated {
+      text-decoration: line-through;
+      opacity: 0.35;
+      background-color: #e5e5e5 !important;
+      color: #a3a3a3 !important;
+    }
+
+    /* Animação do Swap do Bubble */
+    .bubble-card {
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
+    }
+    .bubble-card.swapping {
+      animation: swapAnim 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    @keyframes swapAnim {
+      0% { transform: scale(1); }
+      50% { transform: translateY(-8px) scale(1.08); filter: drop-shadow(0 8px 12px rgba(168, 85, 247, 0.4)); }
+      100% { transform: scale(1); }
+    }
+
+    /* Pulso do Odômetro */
+    @keyframes pulseCounter {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.15); filter: drop-shadow(0 0 10px rgba(16, 185, 129, 0.8)); }
+      100% { transform: scale(1); }
+    }
+    .counter-pulse {
+      animation: pulseCounter 0.35s ease-out;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased xl:items-center xl:justify-center xl:p-8 text-neutral-950 font-space bg-neutral-400 px-0 py-0">
+
+  <!-- Container Principal do Design System -->
+  <main class="xl:rounded-[3.5rem] xl:p-12 overflow-hidden flex flex-col xl:max-w-[96rem] xl:shadow-2xl bg-[#E6E6E6] w-full rounded-none pt-6 pr-6 pb-6 pl-6 relative shadow-none border border-neutral-300">
+    
+    <!-- Efeito de Luz Difusa de Fundo -->
+    <div class="pointer-events-none bg-gradient-to-br from-white/50 via-transparent to-neutral-400/20 w-full h-full absolute top-0 left-0"></div>
+
+    <!-- Barra de Navegação e Marca -->
+    <nav class="relative z-20 flex flex-wrap items-center justify-between gap-6 pb-6 border-b border-neutral-300 mb-8">
+      
+      <!-- Logo do Design System: 3 Barras Características -->
+      <div class="flex items-center gap-3 group cursor-default">
+        <div class="flex gap-1">
+          <div class="w-3 h-8 bg-neutral-950 rounded-full"></div>
+          <div class="w-3 h-8 bg-neutral-950 rounded-full group-hover:h-5 transition-all duration-300"></div>
+          <div class="w-3 h-8 bg-neutral-950 rounded-full"></div>
+        </div>
+        <div>
+          <span class="text-xs font-mono font-bold tracking-widest uppercase text-neutral-950 block">FUTURE UI // PRIME PIPELINE LAB (EX46.C)</span>
+          <span class="text-[0.65rem] text-neutral-500 uppercase tracking-widest block font-medium">Crivo de Eratóstenes · Mapeamento do K-ésimo Primo · Bubble Sort</span>
+        </div>
+      </div>
+
+      <!-- Links e Badges de Estado -->
+      <div class="flex flex-wrap items-center gap-2 sm:gap-3">
+        <a href="EX44.html" class="px-3.5 py-1.5 rounded-full border border-neutral-400 text-[0.65rem] font-bold uppercase tracking-widest hover:bg-neutral-300 transition-colors flex items-center gap-1.5 text-neutral-800" title="Ver Duelo de Inserção vs Seleção">
+          <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i> Ex. 44 (Duelo)
+        </a>
+        <a href="EX43.html" class="px-3.5 py-1.5 rounded-full border border-neutral-400 text-[0.65rem] font-bold uppercase tracking-widest hover:bg-neutral-300 transition-colors flex items-center gap-1.5 text-neutral-800" title="Ver Structs e Alunos">
+          Ex. 43 (Structs) <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+        </a>
+        <div class="bg-[#E6E6E6] border border-neutral-400 rounded-full px-3.5 py-1.5 shadow-sm items-center gap-2 hidden md:flex">
+          <div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+          <span class="text-[0.65rem] font-bold uppercase tracking-widest text-neutral-800">Simulador Ativo</span>
+        </div>
+        <div class="text-white bg-neutral-950 rounded-full px-4 py-1.5 shadow-md flex items-center gap-2">
+          <i data-lucide="hash" class="w-3.5 h-3.5 text-amber-400"></i>
+          <span class="text-[0.65rem] font-bold uppercase tracking-widest font-mono">BOCA · EX46</span>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Cabeçalho Monumental Hero -->
+    <header class="relative z-20 mb-8">
+      <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-8">
+        <div class="max-w-3xl">
+          <div class="flex items-center gap-3 text-xs font-semibold tracking-widest uppercase text-neutral-500 mb-3">
+            <span>Exercício 46 · Teoria dos Números &amp; Ordenação</span>
+            <span class="w-4 h-[1px] bg-neutral-400"></span>
+            <span class="text-neutral-800 font-bold">Pipeline do K-ésimo Primo</span>
+          </div>
+          <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-7xl uppercase font-medium text-neutral-950 tracking-tighter font-oswald leading-none mb-3">
+            Visualizador do <span class="text-neutral-600">Exercício 46</span>
+          </h1>
+          <p class="text-xs sm:text-sm text-neutral-700 leading-relaxed uppercase tracking-wide font-normal max-w-2xl">
+            Acompanhe a esteira de processamento completa: o vetor <code class="bg-neutral-300/80 px-2 py-0.5 rounded font-mono text-neutral-900 font-bold">V[i]</code> informa índices ordinais. O algoritmo roda o <b>Crivo de Eratóstenes</b> até <code class="bg-sky-100 text-sky-950 px-2 py-0.5 rounded font-mono font-bold">U = max_v * 20 + 10</code>, extrai a sequência de primos, mapeia <code class="bg-amber-100 text-amber-950 px-2 py-0.5 rounded font-mono font-bold">resultado[i] = primos[V[i] - 1]</code> e ordena via <b>Bubble Sort</b>!
+          </p>
+        </div>
+
+        <!-- Card de Dica de Ouro Didática (Orange/Amber Accent Card) -->
+        <div class="w-full lg:w-96 overflow-hidden bg-amber-400 border border-white/40 rounded-2xl p-5 shadow-lg shadow-amber-900/20 relative">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-[0.65rem] font-bold uppercase tracking-widest text-amber-950/80 flex items-center gap-1.5 font-mono">
+              <i data-lucide="zap" class="w-3.5 h-3.5 text-amber-950"></i> O Pulo do Gato (1-based &rarr; 0-based)
+            </span>
+            <span class="text-[0.65rem] font-mono font-bold bg-amber-950/15 px-2 py-0.5 rounded-full text-amber-950">CRIVO + BUBBLE</span>
+          </div>
+          <p class="text-xs text-amber-950 font-medium leading-relaxed">
+            Se $V[i] = 1$, o usuário quer o <b>1º número primo</b> ($2$). No vetor em C, ele está na posição zero: <code class="bg-amber-950/20 px-1 rounded font-bold font-mono">primos[V[i] - 1]</code>! Por isso a subtração <code class="bg-amber-950/20 px-1 rounded font-bold font-mono">- 1</code> é fundamental para não ter off-by-one!
+          </p>
+        </div>
+      </div>
+    </header>
+
+    <!-- Indicador de Fases do Pipeline (Passo a Passo Arquitetural) -->
+    <section class="relative z-20 mb-8 bg-neutral-200/50 border border-neutral-300 rounded-3xl p-5 shadow-sm">
+      <div class="flex items-center justify-between pb-3 border-b border-neutral-300 mb-4">
+        <span class="text-xs font-mono font-bold uppercase tracking-wider text-neutral-800 flex items-center gap-2">
+          <i data-lucide="git-merge" class="w-4 h-4 text-neutral-800"></i> Fases da Execução de EX46.c
+        </span>
+        <span id="currentPhaseTag" class="text-xs font-mono font-bold px-3 py-1 rounded-full bg-neutral-950 text-white uppercase tracking-wider">
+          Fase 1: Entrada &amp; max_v
+        </span>
+      </div>
+
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs font-mono">
+        <!-- Fase 1 -->
+        <div id="phasePill1" class="p-3 rounded-2xl border border-neutral-300 bg-white flex flex-col justify-between">
+          <span class="text-[0.65rem] text-neutral-500 font-bold block mb-1">1. Entrada &amp; Limite</span>
+          <span class="font-bold text-neutral-900 block">max_v e U</span>
+          <span class="text-[0.65rem] text-neutral-600 mt-1">U = max_v * 20 + 10</span>
+        </div>
+
+        <!-- Fase 2 -->
+        <div id="phasePill2" class="p-3 rounded-2xl border border-neutral-300 bg-white flex flex-col justify-between">
+          <span class="text-[0.65rem] text-neutral-500 font-bold block mb-1">2. Crivo Eratóstenes</span>
+          <span class="font-bold text-neutral-900 block">crivo(prime, U)</span>
+          <span class="text-[0.65rem] text-neutral-600 mt-1">Elimina múltiplos p * p</span>
+        </div>
+
+        <!-- Fase 3 -->
+        <div id="phasePill3" class="p-3 rounded-2xl border border-neutral-300 bg-white flex flex-col justify-between">
+          <span class="text-[0.65rem] text-neutral-500 font-bold block mb-1">3. Mapeamento</span>
+          <span class="font-bold text-neutral-900 block">primos[V[i] - 1]</span>
+          <span class="text-[0.65rem] text-neutral-600 mt-1">Converte índice &rarr; primo</span>
+        </div>
+
+        <!-- Fase 4 -->
+        <div id="phasePill4" class="p-3 rounded-2xl border border-neutral-300 bg-white flex flex-col justify-between">
+          <span class="text-[0.65rem] text-neutral-500 font-bold block mb-1">4. Ordenação Final</span>
+          <span class="font-bold text-neutral-900 block">bubble(resultado, n)</span>
+          <span class="text-[0.65rem] text-neutral-600 mt-1">Ordem crescente</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Escaninho de Presets Oficiais -->
+    <section class="relative z-20 mb-8 bg-neutral-200/50 border border-neutral-300 rounded-3xl p-6 shadow-sm">
+      <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-4 border-b border-neutral-300 mb-5">
+        <div class="flex items-center gap-2">
+          <i data-lucide="sliders" class="w-4 h-4 text-neutral-800"></i>
+          <h2 class="text-xs font-semibold uppercase tracking-widest text-neutral-900">Escaninho de Vetores e Casos de Teste</h2>
+        </div>
+        
+        <!-- Presets -->
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="text-[0.65rem] font-mono uppercase text-neutral-500 font-bold">Presets:</span>
+          <button onclick="carregarPreset(1)" id="presetBtn1" class="px-3.5 py-1.5 rounded-full border border-neutral-950 bg-neutral-950 text-white text-[0.65rem] font-semibold uppercase tracking-widest transition-all shadow-sm">
+            Exemplo 1: [4, 1, 3, 2, 5] &rarr; 2 3 5 7 11
+          </button>
+          <button onclick="carregarPreset(2)" id="presetBtn2" class="px-3.5 py-1.5 rounded-full border border-neutral-400 text-[0.65rem] font-semibold uppercase tracking-widest hover:bg-neutral-300 transition-all text-neutral-800">
+            Exemplo 2: [10, 1, 5, 3, 2, 4] &rarr; até 29
+          </button>
+          <button onclick="carregarPreset(3)" id="presetBtn3" class="px-3.5 py-1.5 rounded-full border border-neutral-400 text-[0.65rem] font-semibold uppercase tracking-widest hover:bg-neutral-300 transition-all text-neutral-800">
+            Exemplo 3: Repetições [3, 1, 3, 2, 6, 1]
+          </button>
+          <button onclick="carregarPreset(4)" id="presetBtn4" class="px-3.5 py-1.5 rounded-full border border-neutral-400 text-[0.65rem] font-semibold uppercase tracking-widest hover:bg-neutral-300 transition-all text-neutral-800">
+            Mini: [3, 2, 1] &rarr; 2 3 5
+          </button>
+        </div>
+      </div>
+
+      <!-- Configuração Rápida -->
+      <div class="flex flex-wrap items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+          <span class="text-xs font-mono font-bold text-neutral-800">Tamanho do Vetor (N): <span id="labelTamanhoN" class="bg-neutral-300/80 px-2 py-0.5 rounded">5</span></span>
+          <span class="text-xs font-mono font-bold text-neutral-800">Maior Índice (max_v): <span id="labelMaxV" class="bg-neutral-300/80 px-2 py-0.5 rounded">5</span></span>
+          <span class="text-xs font-mono font-bold text-neutral-800">Limite Crivo (U): <span id="labelLimiteU" class="bg-sky-100 text-sky-950 px-2 py-0.5 rounded">110</span></span>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button onclick="inverterVetorAtual()" class="px-3.5 py-2 bg-neutral-300/80 hover:bg-neutral-300 text-neutral-800 text-xs font-semibold uppercase tracking-wider rounded-xl border border-neutral-400 transition-colors flex items-center gap-1.5">
+            <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Inverter Índices
+          </button>
+          <button onclick="aleatorizarVetor()" class="px-3.5 py-2 bg-neutral-950 hover:bg-neutral-800 text-white text-xs font-semibold uppercase tracking-wider rounded-xl transition-colors flex items-center gap-1.5 shadow-sm">
+            <i data-lucide="shuffle" class="w-3.5 h-3.5"></i> Aleatório
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Layout Principal: Visualizadores Gráficos + Código C -->
+    <div class="relative z-20 grid grid-cols-1 lg:grid-cols-12 gap-8 mb-8 items-start">
+      
+      <!-- Coluna da Esquerda: Tabuleiro do Crivo, Mapeamento e Bubble Sort (7 Colunas) -->
+      <div class="lg:col-span-7 flex flex-col gap-6">
+
+        <!-- 1. Painel Visual do Crivo de Eratóstenes -->
+        <div class="bg-white border border-neutral-300 rounded-3xl p-6 shadow-md relative overflow-hidden" id="cardCrivo">
+          <div class="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-neutral-200 mb-4">
+            <div class="flex items-center gap-2">
+              <span class="w-3 h-3 rounded-full bg-sky-500"></span>
+              <h3 class="text-xs font-mono font-bold uppercase tracking-wider text-neutral-900">
+                1. Crivo de Eratóstenes: crivo(prime, U)
+              </h3>
+            </div>
+            
+            <div class="flex items-center gap-2 text-xs font-mono">
+              <span class="bg-sky-50 text-sky-900 px-2 py-0.5 rounded font-bold">p atual: <span id="crivoPVal">-</span></span>
+              <span class="bg-rose-50 text-rose-900 px-2 py-0.5 rounded font-bold">múltiplo: <span id="crivoMVal">-</span></span>
+            </div>
+          </div>
+
+          <!-- Grade Compacta do Crivo (Exibe até os primeiros números relevantes) -->
+          <div class="bg-neutral-100/70 p-3 rounded-2xl border border-neutral-200 mb-3 max-h-[170px] overflow-y-auto">
+            <div id="sieveGridContainer" class="grid grid-cols-8 sm:grid-cols-10 md:grid-cols-12 gap-1.5 text-center font-mono text-[0.65rem]">
+              <!-- Gerado via JS -->
+            </div>
+          </div>
+
+          <div class="text-xs text-neutral-600 font-mono flex items-center justify-between">
+            <span id="crivoActionText">Pronto para inicializar tabela do crivo.</span>
+            <span class="text-[0.65rem] text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded">Primos Coletados: <span id="crivoPrimosCount">0</span> / <span id="crivoMaxVTarget">5</span></span>
+          </div>
+        </div>
+
+        <!-- 2. Painel de Mapeamento: V[i] &rarr; primos[V[i] - 1] -->
+        <div class="bg-white border border-neutral-300 rounded-3xl p-6 shadow-md relative overflow-hidden" id="cardMapeamento">
+          <div class="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-neutral-200 mb-4">
+            <div class="flex items-center gap-2">
+              <span class="w-3 h-3 rounded-full bg-amber-500"></span>
+              <h3 class="text-xs font-mono font-bold uppercase tracking-wider text-neutral-900">
+                2. Mapeamento Ordinal: resultado[i] = primos[V[i] - 1]
+              </h3>
+            </div>
+            
+            <span id="mapStatusBadge" class="text-[0.65rem] font-mono font-bold px-2 py-0.5 rounded-full bg-neutral-100 text-neutral-600 border border-neutral-300">
+              Aguardando
+            </span>
+          </div>
+
+          <!-- Comparativo Visual: Vetor Original V versus Vetor Resultado de Primos -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-3">
+            <!-- Vetor de Entrada V -->
+            <div class="p-3 bg-neutral-50 rounded-2xl border border-neutral-200">
+              <span class="text-[0.6rem] font-mono font-bold uppercase text-neutral-500 block mb-2">Vetor Original V (Índices)</span>
+              <div id="vInputContainer" class="flex flex-wrap gap-2">
+                <!-- Gerado via JS -->
+              </div>
+            </div>
+
+            <!-- Vetor resultado de Primos -->
+            <div class="p-3 bg-amber-50/70 rounded-2xl border border-amber-200">
+              <span class="text-[0.6rem] font-mono font-bold uppercase text-amber-800 block mb-2">Vetor resultado (Primos Mapeados)</span>
+              <div id="vResultadoContainer" class="flex flex-wrap gap-2">
+                <!-- Gerado via JS -->
+              </div>
+            </div>
+          </div>
+
+          <div class="text-xs text-neutral-600 font-mono" id="mapActionText">
+            Aguardando a extração dos números primos para iniciar o mapeamento.
+          </div>
+        </div>
+
+        <!-- 3. Painel do Bubble Sort -->
+        <div class="bg-white border border-neutral-300 rounded-3xl p-6 shadow-md relative overflow-hidden" id="cardBubble">
+          <div class="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-neutral-200 mb-4">
+            <div class="flex items-center gap-2">
+              <span class="w-3 h-3 rounded-full bg-purple-500"></span>
+              <h3 class="text-xs font-mono font-bold uppercase tracking-wider text-neutral-900">
+                3. Ordenação Final: bubble(resultado, n)
+              </h3>
+            </div>
+            
+            <div class="flex items-center gap-3 text-xs font-mono">
+              <span class="bg-purple-50 text-purple-900 px-2 py-0.5 rounded font-bold">i = <span id="bubbleIVal">0</span></span>
+              <span class="bg-purple-50 text-purple-900 px-2 py-0.5 rounded font-bold">j = <span id="bubbleJVal">0</span></span>
+            </div>
+          </div>
+
+          <!-- Cards dos Primos em Ordenação -->
+          <div class="bg-neutral-100/70 p-4 rounded-2xl border border-neutral-200 mb-3 min-h-[90px] flex items-center">
+            <div id="bubbleCardsContainer" class="flex flex-wrap items-center gap-2.5 w-full">
+              <!-- Gerado via JS -->
+            </div>
+          </div>
+
+          <div class="text-xs text-neutral-600 font-mono flex items-center justify-between">
+            <span id="bubbleActionText">Aguardando início do Bubble Sort.</span>
+            <span class="text-[0.65rem] text-purple-700 font-bold bg-purple-50 px-2 py-0.5 rounded">Swaps: <span id="bubbleSwapsCount">0</span></span>
+          </div>
+        </div>
+
+        <!-- Painel de Controles de Reprodução e Barra de Scrubbing -->
+        <div class="bg-neutral-100/90 border border-neutral-300 rounded-3xl p-6 shadow-md flex flex-col gap-4">
+          <div class="flex items-center justify-between text-xs font-mono font-bold uppercase tracking-wider text-neutral-700">
+            <span class="flex items-center gap-1.5"><i data-lucide="sliders-horizontal" class="w-4 h-4"></i> Linha do Tempo da Simulação</span>
+            <span id="sliderStepText">Passo 0 de 0</span>
+          </div>
+
+          <!-- Slider de Passos -->
+          <input type="range" id="simSlider" min="0" max="0" value="0" oninput="irParaPasso(parseInt(this.value))" class="w-full cursor-pointer"/>
+
+          <!-- Botões de Ação Rápida -->
+          <div class="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-neutral-200">
+            <div class="flex items-center gap-1.5 sm:gap-2">
+              <button onclick="reiniciarSimulacao()" class="p-2 sm:px-3 sm:py-2 rounded-xl bg-white hover:bg-neutral-200 border border-neutral-300 text-neutral-800 text-xs font-bold uppercase transition-all shadow-sm flex items-center gap-1" title="Reiniciar do Início">
+                <i data-lucide="rotate-ccw" class="w-4 h-4"></i> <span class="hidden sm:inline">Reiniciar</span>
+              </button>
+              <button onclick="passoAnterior()" class="p-2 sm:px-3 sm:py-2 rounded-xl bg-white hover:bg-neutral-200 border border-neutral-300 text-neutral-800 text-xs font-bold uppercase transition-all shadow-sm flex items-center gap-1" title="Passo Anterior">
+                <i data-lucide="skip-back" class="w-4 h-4"></i> <span class="hidden sm:inline">Voltar</span>
+              </button>
+              <button id="playPauseBtn" onclick="togglePlayPause()" class="px-4 py-2 rounded-xl bg-neutral-950 hover:bg-neutral-800 text-white text-xs font-bold uppercase transition-all shadow-sm flex items-center gap-1.5">
+                <i data-lucide="play" class="w-4 h-4 text-emerald-400"></i> <span id="playBtnText">Play</span>
+              </button>
+              <button onclick="proximoPasso()" class="p-2 sm:px-3 sm:py-2 rounded-xl bg-white hover:bg-neutral-200 border border-neutral-300 text-neutral-800 text-xs font-bold uppercase transition-all shadow-sm flex items-center gap-1" title="Próximo Passo">
+                <span class="hidden sm:inline">Avançar</span> <i data-lucide="skip-forward" class="w-4 h-4"></i>
+              </button>
+            </div>
+
+            <!-- Botões de Salto Estratégico de Fase -->
+            <div class="flex items-center gap-2">
+              <button onclick="pularParaMapeamento()" class="px-3 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-amber-950 border border-amber-500 text-xs font-bold uppercase tracking-wider transition-all shadow-sm flex items-center gap-1.5" title="Pular Crivo e ir para o Mapeamento">
+                <i data-lucide="arrow-right-circle" class="w-3.5 h-3.5"></i> <span>Mapeamento</span>
+              </button>
+              <button onclick="pularParaBubble()" class="px-3 py-2 rounded-xl bg-purple-100 hover:bg-purple-200 text-purple-950 border border-purple-300 text-xs font-bold uppercase tracking-wider transition-all shadow-sm flex items-center gap-1.5" title="Ir para o Bubble Sort">
+                <i data-lucide="arrow-down-right" class="w-3.5 h-3.5 text-purple-700"></i> <span class="hidden md:inline">Bubble Sort</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Controle de Velocidade -->
+          <div class="flex items-center justify-between text-[0.65rem] font-mono text-neutral-500 pt-1">
+            <span>Velocidade de Reprodução</span>
+            <div class="flex items-center gap-2">
+              <button onclick="ajustarVelocidade(1200)" class="speed-btn px-2 py-0.5 rounded border border-neutral-300 hover:bg-neutral-200">0.5x</button>
+              <button onclick="ajustarVelocidade(600)" class="speed-btn px-2 py-0.5 rounded border border-neutral-950 bg-neutral-950 text-white font-bold">1x</button>
+              <button onclick="ajustarVelocidade(200)" class="speed-btn px-2 py-0.5 rounded border border-neutral-300 hover:bg-neutral-200">2x</button>
+              <button onclick="ajustarVelocidade(50)" class="speed-btn px-2 py-0.5 rounded border border-neutral-300 hover:bg-neutral-200">Turbo</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Coluna da Direita: Código C Sincronizado + Terminal BOCA (5 Colunas) -->
+      <div class="lg:col-span-5 flex flex-col gap-6">
+
+        <!-- Caixa de Código C Sincronizado -->
+        <div class="bg-neutral-950 text-white rounded-3xl p-5 shadow-xl border border-neutral-800 flex flex-col">
+          <div class="flex items-center justify-between pb-3 border-b border-neutral-800 mb-3">
+            <div class="flex items-center gap-2">
+              <i data-lucide="code" class="w-4 h-4 text-emerald-400"></i>
+              <span class="text-xs font-mono font-bold uppercase tracking-wider text-neutral-300">Código C Original · EX46.c</span>
+            </div>
+            <span class="text-[0.65rem] font-mono bg-neutral-800 text-neutral-400 px-2 py-0.5 rounded">
+              Crivo + Primos + Bubble
+            </span>
+          </div>
+
+          <!-- Bloco com Rolagem e Numeração de Linhas -->
+          <div class="overflow-x-auto max-h-[440px] rounded-xl bg-neutral-900/80 p-2 border border-neutral-800/80" id="codeContainer">
+            <div class="code-line" id="line-24"><span class="line-num w-7 text-neutral-600 font-mono text-right pr-2">24</span><span class="line-text text-neutral-300">int max_v = 0;</span></div>
+            <div class="code-line" id="line-25"><span class="line-num w-7 text-neutral-600 font-mono text-right pr-2">25</span><span class="line-text text-neutral-300">for (int i = 0; i &lt; n; i++) if (V[i] &gt; max_v) max_v = V[i];</span></div>
+            <div class="code-line" id="line-31"><span class="line-num w-7 text-neutral-600 font-mono text-right pr-2">31</span><span class="line-text text-neutral-300">int U = max_v * 20 + 10;</span></div>
+            <div class="code-line" id="line-32"><span class="line-num w-7 text-neutral-600 font-mono text-right pr-2">32</span><span class="line-text text-neutral-300">bool prime[U + 1];</span></div>
+            <div class="code-line" id="line-34"><span class="line-num w-7 text-neutral-600 font-mono text-right pr-2">34</span><span class="line-text text-sky-400 font-bold">crivo(prime, U);</span></div>
+            <div class="code-line" id="line-39"><span class="line-num w-7 text-neutral-600 font-mono text-right pr-2">39</span><span class="line-text text-sky-300">for (int k = 2; k &lt; U; k++) {</span></div>
+            <div class="code-line" id="line-40"><span class="line-num w-7 text-neutral-600 font-mono text-right pr-2">40</span><span class="line-text text-sky-300 pl-3">if (prime[k] == 1 &amp;&amp; cont &lt; max_v) {</span></div>
+            <div class="code-line" id="line-41"><span class="line-num w-7 text-neutral-600 font-mono text-right pr-2">41</span><span class="line-text text-sky-400 font-bold pl-6">primos[cont++] = k;</span></div>
+            <div class="code-line" id="line-42"><span class="line-num w-7 text-neutral-600 font-mono text-right pr-2">42</span><span class="line-text text-sky-300 pl-3">}</span></div>
+            <div class="code-line" id="line-43"><span class="line-num w-7 text-neutral-600 font-mono text-right pr-2">43</span><span class="line-text text-sky-300">}</span></div>
+            <div class="code-line" id="line-47"><span class="line-num w-7 text-neutral-600 font-mono text-right pr-2">47</span><span class="line-text text-amber-300">for (int i = 0; i &lt; n; i++) {</span></div>
+            <div class="code-line" id="line-48"><span class="line-num w-7 text-neutral-600 font-mono text-right pr-2">48</span><span class="line-text text-amber-400 font-bold pl-3">resultado[i] = primos[V[i] - 1];</span></div>
+            <div class="code-line" id="line-49"><span class="line-num w-7 text-neutral-600 font-mono text-right pr-2">49</span><span class="line-text text-amber-300">}</span></div>
+            <div class="code-line" id="line-51"><span class="line-num w-7 text-neutral-600 font-mono text-right pr-2">51</span><span class="line-text text-purple-400 font-bold">bubble(resultado, n);</span></div>
+            <div class="code-line" id="line-57"><span class="line-num w-7 text-neutral-600 font-mono text-right pr-2">57</span><span class="line-text text-emerald-400 font-bold">printf("%d\n", resultado[n - 1]);</span></div>
+            <div class="code-line" id="line-60"><span class="line-num w-7 text-neutral-600 font-mono text-right pr-2">60</span><span class="line-text text-neutral-500">// void crivo(bool sieve[], int U)</span></div>
+            <div class="code-line" id="line-66"><span class="line-num w-7 text-neutral-600 font-mono text-right pr-2">66</span><span class="line-text text-sky-300">for (int p = 2; p * p &lt; U; p++) {</span></div>
+            <div class="code-line" id="line-67"><span class="line-num w-7 text-neutral-600 font-mono text-right pr-2">67</span><span class="line-text text-sky-300 pl-3">if (sieve[p] == true) {</span></div>
+            <div class="code-line" id="line-68"><span class="line-num w-7 text-neutral-600 font-mono text-right pr-2">68</span><span class="line-text text-sky-300 pl-6">for (int i = p * p; i &lt; U; i += p) {</span></div>
+            <div class="code-line" id="line-69"><span class="line-num w-7 text-neutral-600 font-mono text-right pr-2">69</span><span class="line-text text-rose-400 font-bold pl-9">sieve[i] = false;</span></div>
+            <div class="code-line" id="line-70"><span class="line-num w-7 text-neutral-600 font-mono text-right pr-2">70</span><span class="line-text text-sky-300 pl-6">}</span></div>
+            <div class="code-line" id="line-71"><span class="line-num w-7 text-neutral-600 font-mono text-right pr-2">71</span><span class="line-text text-sky-300 pl-3">}</span></div>
+            <div class="code-line" id="line-72"><span class="line-num w-7 text-neutral-600 font-mono text-right pr-2">72</span><span class="line-text text-sky-300">}</span></div>
+            <div class="code-line" id="line-75"><span class="line-num w-7 text-neutral-600 font-mono text-right pr-2">75</span><span class="line-text text-neutral-500">// void bubble(int resultado[], int n)</span></div>
+            <div class="code-line" id="line-78"><span class="line-num w-7 text-neutral-600 font-mono text-right pr-2">78</span><span class="line-text text-purple-300">if (resultado[j] &gt; resultado[j + 1]) {</span></div>
+            <div class="code-line" id="line-79"><span class="line-num w-7 text-neutral-600 font-mono text-right pr-2">79</span><span class="line-text text-purple-400 font-bold pl-3">swap(&amp;resultado[j], &amp;resultado[j + 1]);</span></div>
+            <div class="code-line" id="line-80"><span class="line-num w-7 text-neutral-600 font-mono text-right pr-2">80</span><span class="line-text text-purple-300">}</span></div>
+          </div>
+        </div>
+
+        <!-- Terminal BOCA stdout Console -->
+        <div class="bg-neutral-950 text-white rounded-3xl p-5 shadow-xl border border-neutral-800 flex flex-col font-mono">
+          <div class="flex items-center justify-between pb-3 border-b border-neutral-800 mb-3">
+            <div class="flex items-center gap-2">
+              <i data-lucide="terminal" class="w-4 h-4 text-amber-400"></i>
+              <span class="text-xs font-bold uppercase tracking-wider text-neutral-300">Terminal stdout (BOCA)</span>
+            </div>
+            <span class="text-[0.65rem] text-emerald-400 flex items-center gap-1 font-semibold">
+              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> ONLINE
+            </span>
+          </div>
+
+          <div class="bg-black/80 rounded-xl p-3 border border-neutral-800/80 text-xs text-neutral-300 space-y-1 min-h-[90px]">
+            <div class="text-neutral-500">// Entrada Atual:</div>
+            <div class="text-amber-300" id="terminalStdin">5<br/>4 1 3 2 5</div>
+            <div class="text-neutral-500 pt-2">// Saída Formatada BOCA:</div>
+            <div class="text-emerald-400 font-bold text-base" id="terminalStdout">2 3 5 7 11</div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- Abas Didáticas com Teoria dos Números & Complexidade -->
+    <section class="relative z-20 mt-4 bg-neutral-100/90 border border-neutral-300 rounded-3xl p-6 shadow-md">
+      <div class="flex flex-wrap items-center gap-2 border-b border-neutral-300 pb-4 mb-6">
+        <button onclick="mudarAba('crivo')" id="tabBtn-crivo" class="px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wider bg-neutral-950 text-white shadow-sm transition-all">
+          1. O Crivo de Eratóstenes
+        </button>
+        <button onclick="mudarAba('mapeamento')" id="tabBtn-mapeamento" class="px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wider bg-neutral-200 text-neutral-700 hover:bg-neutral-300 transition-all">
+          2. A Estimativa U e o V[i] - 1
+        </button>
+        <button onclick="mudarAba('complexidade')" id="tabBtn-complexidade" class="px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wider bg-neutral-200 text-neutral-700 hover:bg-neutral-300 transition-all">
+          3. Análise de Complexidade
+        </button>
+      </div>
+
+      <!-- Conteúdo da Aba 1 -->
+      <div id="tabContent-crivo" class="space-y-4 text-xs text-neutral-700 leading-relaxed">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="bg-white p-5 rounded-2xl border border-neutral-200 shadow-sm">
+            <h4 class="font-bold text-sm text-neutral-900 mb-2 uppercase tracking-wide flex items-center gap-2">
+              <span class="w-3 h-3 rounded-full bg-sky-500"></span> Por que o laço externo vai até p * p &lt; U?
+            </h4>
+            <p>
+              Qualquer número composto $C \le U$ tem pelo menos um fator primo menor ou igual a $\sqrt{U}$. Logo, se nenhum primo $p \le \sqrt{U}$ dividiu um número, ele é <b>obrigatoriamente primo</b>! Não é necessário testar $p$ além de $\sqrt{U}$.
+            </p>
+          </div>
+
+          <div class="bg-white p-5 rounded-2xl border border-neutral-200 shadow-sm">
+            <h4 class="font-bold text-sm text-neutral-900 mb-2 uppercase tracking-wide flex items-center gap-2">
+              <span class="w-3 h-3 rounded-full bg-rose-500"></span> Por que o laço interno começa em p * p?
+            </h4>
+            <p>
+              Os múltiplos anteriores de $p$, como $2p, 3p, \dots, (p - 1)p$, já foram eliminados pelos primos anteriores ($2, 3, \dots$). Portanto, o primeiro múltiplo inédito de $p$ a ser eliminado é sempre $p^2$!
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Conteúdo da Aba 2 -->
+      <div id="tabContent-mapeamento" class="hidden space-y-4 text-xs text-neutral-700 leading-relaxed">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="bg-white p-5 rounded-2xl border border-neutral-200 shadow-sm">
+            <h4 class="font-bold text-sm text-neutral-900 mb-2 uppercase tracking-wide">
+              A Fórmula da Margem: U = max_v * 20 + 10
+            </h4>
+            <p>
+              Pelo <b>Teorema dos Números Primos</b>, o $k$-ésimo número primo cresce aproximadamente como $p_k \approx k \ln k$. Para valores razoáveis de $k$, multiplicar por $20$ garante com folga que o crivo gerará mais de `max_v` números primos sem estourar a memória.
+            </p>
+          </div>
+
+          <div class="bg-white p-5 rounded-2xl border border-neutral-200 shadow-sm">
+            <h4 class="font-bold text-sm text-neutral-900 mb-2 uppercase tracking-wide">
+              O Ajuste de Base: V[i] - 1
+            </h4>
+            <p>
+              Na matemática humana, os ordinais começam em 1: o 1º primo é 2, o 2º é 3, o 3º é 5... Já em C, os vetores começam em 0: <code class="font-mono font-bold">primos[0] = 2</code>. Portanto, para acessar o $V[i]$-ésimo primo, subtrai-se 1: <code class="font-mono font-bold">primos[V[i] - 1]</code>.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Conteúdo da Aba 3 -->
+      <div id="tabContent-complexidade" class="hidden space-y-4 text-xs text-neutral-700 leading-relaxed">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div class="bg-white p-5 rounded-2xl border border-neutral-200 shadow-sm">
+            <h4 class="font-bold text-sm text-neutral-900 mb-2 uppercase tracking-wide">Crivo de Eratóstenes</h4>
+            <div class="text-xl font-mono font-bold text-sky-700 mb-2">O(U &middot; log(log U))</div>
+            <p>Praticamente linear. Roda uma única vez para gerar todos os primos necessários.</p>
+          </div>
+
+          <div class="bg-white p-5 rounded-2xl border border-neutral-200 shadow-sm">
+            <h4 class="font-bold text-sm text-neutral-900 mb-2 uppercase tracking-wide">Mapeamento</h4>
+            <div class="text-xl font-mono font-bold text-amber-700 mb-2">O(N)</div>
+            <p>Acesso indexado direto em memória $O(1)$ para cada um dos $N$ elementos de $V$.</p>
+          </div>
+
+          <div class="bg-white p-5 rounded-2xl border border-neutral-200 shadow-sm">
+            <h4 class="font-bold text-sm text-neutral-900 mb-2 uppercase tracking-wide">Bubble Sort</h4>
+            <div class="text-xl font-mono font-bold text-purple-700 mb-2">O(N²)</div>
+            <p>Ordena os $N$ primos resultantes com no máximo $\frac{N(N-1)}{2}$ comparações.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Rodapé Minimalista -->
+    <footer class="relative z-20 mt-8 pt-4 border-t border-neutral-300 flex flex-wrap items-center justify-between text-[0.65rem] font-mono text-neutral-500 uppercase tracking-widest">
+      <span>Future UI Industrial Standard · BOCA EX46.c</span>
+      <span>Algoritmos e Estruturas de Dados · Crivo de Eratóstenes, Primos e Bubble Sort</span>
+    </footer>
+
+  </main>
+
+  <script>
+    // --- ESTADO GLOBAL DA SIMULAÇÃO ---
+    let currentV = [4, 1, 3, 2, 5];
+    let simulationSteps = [];
+    let currentStepIdx = 0;
+    let isPlaying = false;
+    let playInterval = null;
+    let playSpeed = 600;
+
+    // Presets Oficiais
+    const PRESETS = {
+      1: [4, 1, 3, 2, 5],       // Primos: 7, 2, 5, 3, 11 -> Ordenado: 2 3 5 7 11
+      2: [10, 1, 5, 3, 2, 4],   // Até o 10º primo (29) -> Ordenado: 2 3 5 7 11 29
+      3: [3, 1, 3, 2, 6, 1],    // Com duplicatas -> Ordenado: 2 2 3 5 5 13
+      4: [3, 2, 1]              // Mini Didático -> 2 3 5
+    };
+
+    // --- GERADOR EXATO DE PASSOS DE EX46.C ---
+    function gerarPassosSimulacao(vOrig) {
+      const steps = [];
+      const n = vOrig.length;
+      const v = [...vOrig];
+
+      // 1. Achar max_v
+      let max_v = 0;
+      for (let i = 0; i < n; i++) {
+        if (v[i] > max_v) max_v = v[i];
+      }
+      const U = max_v * 20 + 10;
+      const sieve = Array(U).fill(true);
+      sieve[0] = false;
+      sieve[1] = false;
+
+      // Passo Inicial
+      steps.push({
+        phase: 'INIT',
+        v: [...v],
+        max_v: max_v,
+        U: U,
+        sieve: [...sieve],
+        primos: [],
+        resultado: [],
+        activeLines: [24, 25, 31, 32],
+        pVal: null,
+        mVal: null,
+        title: 'Inicialização & Cálculo de Limites',
+        desc: `Vetor V com N=${n} elementos. max_v = ${max_v}. Limite do Crivo U = ${max_v} * 20 + 10 = ${U}.`
+      });
+
+      // 2. Crivo de Eratóstenes (linhas 60-73)
+      for (let p = 2; p * p < U; p++) {
+        if (sieve[p]) {
+          // Primo base encontrado
+          steps.push({
+            phase: 'SIEVE_P',
+            v: [...v],
+            max_v: max_v,
+            U: U,
+            sieve: [...sieve],
+            primos: [],
+            resultado: [],
+            activeLines: [66, 67],
+            pVal: p,
+            mVal: null,
+            title: `Crivo: Primo Base p = ${p}`,
+            desc: `O número ${p} não foi riscado por nenhum primo anterior &rarr; É PRIMO! Riscando seus múltiplos a partir de ${p} * ${p} = ${p * p}.`
+          });
+
+          // Riscando múltiplos
+          for (let i = p * p; i < U; i += p) {
+            sieve[i] = false;
+
+            // Registra passos visíveis apenas para os primeiros múltiplos para não gerar passos em excesso
+            if (i <= Math.min(U, 60)) {
+              steps.push({
+                phase: 'SIEVE_MULTIPLE',
+                v: [...v],
+                max_v: max_v,
+                U: U,
+                sieve: [...sieve],
+                primos: [],
+                resultado: [],
+                activeLines: [68, 69],
+                pVal: p,
+                mVal: i,
+                title: `Crivo: Riscando Múltiplo ${i}`,
+                desc: `${i} = múltiplo de ${p} &rarr; Marcado como composto (sieve[${i}] = false).`
+              });
+            }
+          }
+        }
+      }
+
+      // 3. Extração dos max_v primos (linhas 36-44)
+      const primos = [];
+      for (let k = 2; k < U && primos.length < max_v; k++) {
+        if (sieve[k]) {
+          primos.push(k);
+          steps.push({
+            phase: 'EXTRACT_PRIME',
+            v: [...v],
+            max_v: max_v,
+            U: U,
+            sieve: [...sieve],
+            primos: [...primos],
+            resultado: [],
+            activeLines: [39, 40, 41],
+            pVal: k,
+            mVal: null,
+            title: `Extraindo Primos: primos[${primos.length - 1}] = ${k}`,
+            desc: `Encontrado o ${primos.length}º primo: <b>${k}</b>. Salvo na lista de primos.`
+          });
+        }
+      }
+
+      // 4. Mapeamento resultado[i] = primos[V[i] - 1] (linhas 46-49)
+      const resultado = Array(n).fill(null);
+      for (let i = 0; i < n; i++) {
+        const primeIdx = v[i] - 1;
+        const primeVal = primos[primeIdx];
+        resultado[i] = primeVal;
+
+        steps.push({
+          phase: 'MAP',
+          v: [...v],
+          max_v: max_v,
+          U: U,
+          sieve: [...sieve],
+          primos: [...primos],
+          resultado: [...resultado],
+          mapI: i,
+          mapTargetVal: primeVal,
+          activeLines: [47, 48],
+          title: `Mapeamento: V[${i}] = ${v[i]} &rarr; ${primeVal}`,
+          desc: `O elemento V[${i}] pede o ${v[i]}º primo. Como vetores em C começam em zero, acessamos primos[${v[i]} - 1] = primos[${primeIdx}] = <b>${primeVal}</b>.`
+        });
+      }
+
+      // 5. Bubble Sort em resultado[] (linhas 51 e 75-83)
+      let bubbleSwaps = 0;
+      for (let i = 0; i < n; i++) {
+        for (let j = 0; j < n - 1 - i; j++) {
+          const willSwap = resultado[j] > resultado[j + 1];
+
+          steps.push({
+            phase: 'BUBBLE_COMPARE',
+            v: [...v],
+            max_v: max_v,
+            U: U,
+            sieve: [...sieve],
+            primos: [...primos],
+            resultado: [...resultado],
+            bubbleI: i,
+            bubbleJ: j,
+            bubbleSwaps: bubbleSwaps,
+            willSwap: willSwap,
+            activeLines: [77, 78],
+            title: `Bubble Sort: Comparando posições ${j} e ${j + 1}`,
+            desc: `Comparando resultado[${j}] (${resultado[j]}) com resultado[${j + 1}] (${resultado[j + 1]}). ` +
+                  (willSwap ? `Como ${resultado[j]} > ${resultado[j + 1]}, precisamos trocar!` : 'Já estão em ordem crescente.')
+          });
+
+          if (willSwap) {
+            bubbleSwaps++;
+            const temp = resultado[j];
+            resultado[j] = resultado[j + 1];
+            resultado[j + 1] = temp;
+
+            steps.push({
+              phase: 'BUBBLE_SWAP',
+              v: [...v],
+              max_v: max_v,
+              U: U,
+              sieve: [...sieve],
+              primos: [...primos],
+              resultado: [...resultado],
+              bubbleI: i,
+              bubbleJ: j,
+              bubbleSwaps: bubbleSwaps,
+              isSwap: true,
+              activeLines: [79, 86, 87, 88, 89],
+              title: `Bubble Sort: Troca efetuada!`,
+              desc: `Trocou ${resultado[j + 1]} com ${resultado[j]}. Vetor agora: [${resultado.join(', ')}].`
+            });
+          }
+        }
+      }
+
+      // 6. Conclusão e Impressão (linhas 53-57)
+      steps.push({
+        phase: 'FINISHED',
+        v: [...v],
+        max_v: max_v,
+        U: U,
+        sieve: [...sieve],
+        primos: [...primos],
+        resultado: [...resultado],
+        bubbleSwaps: bubbleSwaps,
+        activeLines: [53, 54, 57],
+        title: 'Execução Concluída!',
+        desc: `Todos os passos finalizados. Saída formatada BOCA gerada com sucesso: <b>${resultado.join(' ')}</b>.`
+      });
+
+      return steps;
+    }
+
+    // --- RENDERIZAÇÃO DA GRADE DO CRIVO ---
+    function renderizarCrivoGrid(step) {
+      const container = document.getElementById('sieveGridContainer');
+      container.innerHTML = '';
+
+      // Mostramos números de 2 até min(U, 60) para visualização clara e responsiva
+      const displayLimit = Math.min(step.U, 60);
+
+      for (let num = 2; num < displayLimit; num++) {
+        const isPrime = step.sieve[num];
+        const isCurrentP = step.pVal === num;
+        const isCurrentMultiple = step.mVal === num;
+
+        const cell = document.createElement('div');
+        let cellClass = 'sieve-cell rounded-lg p-1.5 font-mono font-bold text-xs select-none border ';
+
+        if (isCurrentMultiple) {
+          cellClass += 'current-multiple bg-rose-500 text-white border-rose-600 animate-pulse';
+        } else if (isCurrentP) {
+          cellClass += 'current-p bg-sky-500 text-white border-sky-600';
+        } else if (!isPrime) {
+          cellClass += 'eliminated';
+        } else {
+          cellClass += 'bg-white text-neutral-800 border-neutral-300';
+        }
+
+        cell.className = cellClass;
+        cell.textContent = num;
+        cell.title = `Número ${num}: ${isPrime ? 'Primo Candidato' : 'Composto Eliminado'}`;
+        container.appendChild(cell);
+      }
+    }
+
+    // --- RENDERIZAÇÃO DOS VETORES V E RESULTADO ---
+    function renderizarMapeamento(step) {
+      const vInputBox = document.getElementById('vInputContainer');
+      const vResBox = document.getElementById('vResultadoContainer');
+      vInputBox.innerHTML = '';
+      vResBox.innerHTML = '';
+
+      step.v.forEach((val, idx) => {
+        const isCurrentMap = step.mapI === idx;
+
+        // Bloco de entrada V[i]
+        const vEl = document.createElement('div');
+        vEl.className = `px-3 py-2 rounded-xl font-mono text-center border ${isCurrentMap ? 'bg-amber-400 text-amber-950 font-bold border-amber-500 ring-2 ring-amber-300 scale-105' : 'bg-white text-neutral-800 border-neutral-300'}`;
+        vEl.innerHTML = `
+          <div class="text-xs font-bold">${val}º</div>
+          <div class="text-[0.55rem] text-neutral-500">V[${idx}]</div>
+        `;
+        vInputBox.appendChild(vEl);
+
+        // Bloco de resultado[i]
+        const resVal = step.resultado[idx];
+        const resEl = document.createElement('div');
+        resEl.className = `px-3 py-2 rounded-xl font-mono text-center border ${resVal !== null ? (isCurrentMap ? 'bg-emerald-500 text-white font-bold border-emerald-600 ring-2 ring-emerald-300 scale-105' : 'bg-white text-emerald-700 font-bold border-neutral-300') : 'bg-neutral-200 text-neutral-400 border-dashed border-neutral-300'}`;
+        resEl.innerHTML = `
+          <div class="text-xs font-bold">${resVal !== null ? resVal : '?'}</div>
+          <div class="text-[0.55rem] opacity-60">res[${idx}]</div>
+        `;
+        vResBox.appendChild(resEl);
+      });
+    }
+
+    // --- RENDERIZAÇÃO DO BUBBLE SORT ---
+    function renderizarBubble(step) {
+      const container = document.getElementById('bubbleCardsContainer');
+      container.innerHTML = '';
+
+      if (!step.resultado || step.resultado.length === 0) {
+        container.innerHTML = '<span class="text-xs font-mono text-neutral-400">Aguardando mapeamento dos números primos...</span>';
+        return;
+      }
+
+      step.resultado.forEach((val, idx) => {
+        const isJ = step.bubbleJ === idx;
+        const isJNext = step.bubbleJ + 1 === idx;
+        const isFinished = step.phase === 'FINISHED';
+
+        const card = document.createElement('div');
+        let cardClass = 'bubble-card px-3.5 py-2.5 rounded-2xl font-mono text-center border shadow-sm flex flex-col items-center ';
+
+        if (isFinished) {
+          cardClass += 'bg-emerald-600 text-white border-emerald-700 font-bold';
+        } else if (isJ || isJNext) {
+          cardClass += 'bg-purple-600 text-white border-purple-700 font-bold ring-2 ring-purple-300';
+          if (step.isSwap) cardClass += ' swapping';
+        } else {
+          cardClass += 'bg-white text-neutral-900 border-neutral-300';
+        }
+
+        card.className = cardClass;
+        card.innerHTML = `
+          <span class="text-sm font-bold leading-tight">${val}</span>
+          <span class="text-[0.55rem] opacity-60 font-mono mt-0.5">pos ${idx}</span>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    // --- ATUALIZAÇÃO DA TELA PARA UM DETERMINADO PASSO ---
+    function renderizarPasso(idx) {
+      if (!simulationSteps || simulationSteps.length === 0) return;
+      if (idx < 0) idx = 0;
+      if (idx >= simulationSteps.length) idx = simulationSteps.length - 1;
+      currentStepIdx = idx;
+
+      const step = simulationSteps[idx];
+
+      // 1. Atualizar Badges de Fase e Textos
+      document.getElementById('currentPhaseTag').textContent = step.title;
+      document.getElementById('sliderStepText').textContent = `Passo ${idx + 1} de ${simulationSteps.length}`;
+      document.getElementById('simSlider').value = idx;
+
+      // Pílulas das 4 Fases
+      for (let p = 1; p <= 4; p++) {
+        const pill = document.getElementById(`phasePill${p}`);
+        if (pill) {
+          pill.className = 'p-3 rounded-2xl border border-neutral-300 bg-white flex flex-col justify-between';
+        }
+      }
+      if (step.phase.startsWith('SIEVE') || step.phase === 'EXTRACT_PRIME') {
+        document.getElementById('phasePill2').className = 'p-3 rounded-2xl border border-sky-400 bg-sky-50 flex flex-col justify-between shadow-sm';
+      } else if (step.phase === 'MAP') {
+        document.getElementById('phasePill3').className = 'p-3 rounded-2xl border border-amber-400 bg-amber-50 flex flex-col justify-between shadow-sm';
+      } else if (step.phase.startsWith('BUBBLE') || step.phase === 'FINISHED') {
+        document.getElementById('phasePill4').className = 'p-3 rounded-2xl border border-purple-400 bg-purple-50 flex flex-col justify-between shadow-sm';
+      } else {
+        document.getElementById('phasePill1').className = 'p-3 rounded-2xl border border-neutral-900 bg-neutral-100 flex flex-col justify-between shadow-sm';
+      }
+
+      // Painel Crivo
+      document.getElementById('crivoPVal').textContent = step.pVal !== null ? step.pVal : '-';
+      document.getElementById('crivoMVal').textContent = step.mVal !== null ? step.mVal : '-';
+      document.getElementById('crivoActionText').textContent = step.desc;
+      document.getElementById('crivoPrimosCount').textContent = step.primos ? step.primos.length : 0;
+      document.getElementById('crivoMaxVTarget').textContent = step.max_v;
+
+      // Painel Mapeamento
+      document.getElementById('mapActionText').textContent = step.desc;
+      const mapBadge = document.getElementById('mapStatusBadge');
+      if (step.phase === 'MAP') {
+        mapBadge.className = 'text-[0.65rem] font-mono font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300 animate-pulse';
+        mapBadge.textContent = 'MAPEANDO';
+      } else if (step.resultado && step.resultado.length > 0 && !step.resultado.includes(null)) {
+        mapBadge.className = 'text-[0.65rem] font-mono font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-900 border border-emerald-300';
+        mapBadge.textContent = 'CONCLUÍDO';
+      } else {
+        mapBadge.className = 'text-[0.65rem] font-mono font-bold px-2 py-0.5 rounded-full bg-neutral-100 text-neutral-600 border border-neutral-300';
+        mapBadge.textContent = 'AGUARDANDO';
+      }
+
+      // Painel Bubble Sort
+      document.getElementById('bubbleIVal').textContent = step.bubbleI !== undefined ? step.bubbleI : '-';
+      document.getElementById('bubbleJVal').textContent = step.bubbleJ !== undefined ? step.bubbleJ : '-';
+      document.getElementById('bubbleSwapsCount').textContent = step.bubbleSwaps !== undefined ? step.bubbleSwaps : 0;
+      document.getElementById('bubbleActionText').textContent = step.desc;
+
+      // 2. Renderizar Elementos Gráficos
+      renderizarCrivoGrid(step);
+      renderizarMapeamento(step);
+      renderizarBubble(step);
+
+      // 3. Atualizar Código C
+      atualizarLinhasCodigo(step.activeLines, step.phase);
+
+      // 4. Terminal BOCA
+      if (step.phase === 'FINISHED') {
+        document.getElementById('terminalStdout').textContent = step.resultado.join(' ');
+      }
+
+      if (window.lucide) lucide.createIcons();
+    }
+
+    // --- DESTAQUE DE CÓDIGO C ---
+    function atualizarLinhasCodigo(activeLineNumbers, phase) {
+      const lines = document.querySelectorAll('.code-line');
+      lines.forEach(l => {
+        l.classList.remove('active-line', 'focus-sieve', 'focus-map', 'focus-bubble');
+      });
+
+      if (!activeLineNumbers || activeLineNumbers.length === 0) return;
+
+      activeLineNumbers.forEach(num => {
+        const el = document.getElementById(`line-${num}`);
+        if (el) {
+          el.classList.add('active-line');
+          if (phase.startsWith('SIEVE') || phase === 'EXTRACT_PRIME') el.classList.add('focus-sieve');
+          else if (phase === 'MAP') el.classList.add('focus-map');
+          else if (phase.startsWith('BUBBLE')) el.classList.add('focus-bubble');
+        }
+      });
+
+      const firstActive = document.getElementById(`line-${activeLineNumbers[0]}`);
+      if (firstActive) {
+        const container = document.getElementById('codeContainer');
+        const offset = firstActive.offsetTop - container.offsetTop;
+        if (offset < container.scrollTop || offset > container.scrollTop + container.clientHeight - 60) {
+          container.scrollTo({ top: Math.max(0, offset - 40), behavior: 'smooth' });
+        }
+      }
+    }
+
+    // --- CONTROLES DE REPRODUÇÃO ---
+    function proximoPasso() {
+      if (currentStepIdx < simulationSteps.length - 1) {
+        renderizarPasso(currentStepIdx + 1);
+      } else {
+        pausar();
+      }
+    }
+
+    function passoAnterior() {
+      if (currentStepIdx > 0) {
+        renderizarPasso(currentStepIdx - 1);
+      }
+    }
+
+    function irParaPasso(idx) {
+      renderizarPasso(idx);
+    }
+
+    function reiniciarSimulacao() {
+      pausar();
+      renderizarPasso(0);
+    }
+
+    function togglePlayPause() {
+      if (isPlaying) {
+        pausar();
+      } else {
+        iniciarPlay();
+      }
+    }
+
+    function iniciarPlay() {
+      if (currentStepIdx >= simulationSteps.length - 1) {
+        currentStepIdx = 0;
+      }
+      isPlaying = true;
+      document.getElementById('playBtnText').textContent = 'Pausar';
+      const playIcon = document.querySelector('#playPauseBtn i');
+      if (playIcon) playIcon.setAttribute('data-lucide', 'pause');
+
+      if (playInterval) clearInterval(playInterval);
+      playInterval = setInterval(() => {
+        if (currentStepIdx < simulationSteps.length - 1) {
+          proximoPasso();
+        } else {
+          pausar();
+        }
+      }, playSpeed);
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function pausar() {
+      isPlaying = false;
+      if (playInterval) {
+        clearInterval(playInterval);
+        playInterval = null;
+      }
+      document.getElementById('playBtnText').textContent = 'Play';
+      const playIcon = document.querySelector('#playPauseBtn i');
+      if (playIcon) playIcon.setAttribute('data-lucide', 'play');
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function ajustarVelocidade(speedMs) {
+      playSpeed = speedMs;
+      document.querySelectorAll('.speed-btn').forEach(btn => {
+        btn.className = 'speed-btn px-2 py-0.5 rounded border border-neutral-300 hover:bg-neutral-200';
+      });
+      event.target.className = 'speed-btn px-2 py-0.5 rounded border border-neutral-950 bg-neutral-950 text-white font-bold';
+      if (isPlaying) {
+        iniciarPlay();
+      }
+    }
+
+    // --- SALTO INTELIGENTE ---
+    function pularParaMapeamento() {
+      pausar();
+      for (let i = 0; i < simulationSteps.length; i++) {
+        if (simulationSteps[i].phase === 'MAP') {
+          renderizarPasso(i);
+          return;
+        }
+      }
+    }
+
+    function pularParaBubble() {
+      pausar();
+      for (let i = 0; i < simulationSteps.length; i++) {
+        if (simulationSteps[i].phase.startsWith('BUBBLE')) {
+          renderizarPasso(i);
+          return;
+        }
+      }
+    }
+
+    // --- PRESETS ---
+    function carregarPreset(presetId) {
+      pausar();
+      const p = PRESETS[presetId];
+      if (!p) return;
+
+      currentV = [...p];
+
+      for (let i = 1; i <= 4; i++) {
+        const btn = document.getElementById(`presetBtn${i}`);
+        if (btn) {
+          if (i === presetId) {
+            btn.className = 'px-3.5 py-1.5 rounded-full border border-neutral-950 bg-neutral-950 text-white text-[0.65rem] font-semibold uppercase tracking-widest transition-all shadow-sm';
+          } else {
+            btn.className = 'px-3.5 py-1.5 rounded-full border border-neutral-400 text-[0.65rem] font-semibold uppercase tracking-widest hover:bg-neutral-300 transition-all text-neutral-800';
+          }
+        }
+      }
+
+      recompilarSimulacao();
+    }
+
+    function inverterVetorAtual() {
+      pausar();
+      currentV.reverse();
+      recompilarSimulacao();
+    }
+
+    function aleatorizarVetor() {
+      pausar();
+      for (let i = currentV.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [currentV[i], currentV[j]] = [currentV[j], currentV[i]];
+      }
+      recompilarSimulacao();
+    }
+
+    function recompilarSimulacao() {
+      const max_v = Math.max(...currentV);
+      document.getElementById('labelTamanhoN').textContent = currentV.length;
+      document.getElementById('labelMaxV').textContent = max_v;
+      document.getElementById('labelLimiteU').textContent = max_v * 20 + 10;
+
+      simulationSteps = gerarPassosSimulacao(currentV);
+      document.getElementById('simSlider').max = simulationSteps.length - 1;
+
+      // Atualizar Terminal Stdin
+      document.getElementById('terminalStdin').innerHTML = `${currentV.length}<br/>${currentV.join(' ')}`;
+
+      // Pré-calcular saída esperada para visualização imediata
+      const sortedResult = [...currentV].map(idx => {
+        // Encontra o k-ésimo primo
+        let primes = [];
+        for (let num = 2; primes.length < max_v; num++) {
+          let isP = true;
+          for (let d = 2; d * d <= num; d++) {
+            if (num % d === 0) { isP = false; break; }
+          }
+          if (isP) primes.push(num);
+        }
+        return primes[idx - 1];
+      }).sort((a, b) => a - b);
+
+      document.getElementById('terminalStdout').textContent = sortedResult.join(' ');
+
+      renderizarPasso(0);
+    }
+
+    // --- ABAS DIDÁTICAS ---
+    function mudarAba(abaId) {
+      const abas = ['crivo', 'mapeamento', 'complexidade'];
+      abas.forEach(a => {
+        const btn = document.getElementById(`tabBtn-${a}`);
+        const content = document.getElementById(`tabContent-${a}`);
+        if (a === abaId) {
+          btn.className = 'px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wider bg-neutral-950 text-white shadow-sm transition-all';
+          content.classList.remove('hidden');
+        } else {
+          btn.className = 'px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wider bg-neutral-200 text-neutral-700 hover:bg-neutral-300 transition-all';
+          content.classList.add('hidden');
+        }
+      });
+      if (window.lucide) lucide.createIcons();
+    }
+
+    // --- INICIALIZAÇÃO ---
+    window.addEventListener('DOMContentLoaded', () => {
+      carregarPreset(1);
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,1521 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+  <title>Fatorial Duplo Recursivo (EX20.c) — Visualizador Interativo</title>
+
+  <!-- Assets Locais do Design System -->
+  <script src="Design System/assets/resource_3fa48481346f.js"></script>
+  <script src="Design System/assets/lucide_latest_2eebd0ebe8c2.js"></script>
+  <link href="Design System/assets/css2_e01beb4f8743.css" rel="stylesheet"/>
+  <link href="Design System/assets/css2_8e191ef32247.css" rel="stylesheet"/>
+  <link href="Design System/assets/css2_62759cd015bd.css" rel="stylesheet"/>
+
+  <!-- Google Fonts Fallback & Resiliência -->
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
+
+  <style>
+    :root {
+      --bg: #090d14;
+      --panel: #111722;
+      --panel-elevated: #171f2d;
+      --border: #222c3d;
+      --border-subtle: #1a2332;
+      --text: #e6edf3;
+      --text-muted: #8b949e;
+      --amber: #f59e0b;
+      --cyan: #06b6d4;
+      --emerald: #10b981;
+      --purple: #a855f7;
+      --rose: #f43f5e;
+      --blue: #3b82f6;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      max-width: 100vw;
+      margin: 0;
+      padding: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+      touch-action: manipulation;
+    }
+
+    /* Otimização Desktop: painel compacto integrado sem rolagem vertical */
+    @media (min-width: 1024px) {
+      body {
+        height: 100vh;
+        overflow: hidden;
+      }
+      .app-layout {
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+      .main-grid {
+        flex: 1;
+        min-height: 0;
+      }
+    }
+
+    /* Redução de movimento para acessibilidade */
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+
+    /* Barras de rolagem discretas */
+    ::-webkit-scrollbar { width: 4px; height: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #222c3d; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #334155; }
+
+    .font-mono { font-family: 'Geist Mono', 'IBM Plex Mono', monospace; }
+    .font-oswald { font-family: 'Oswald', sans-serif; }
+    .font-space { font-family: 'Space Grotesk', sans-serif; }
+
+    /* Custom range slider compacto */
+    input[type=range] {
+      -webkit-appearance: none;
+      appearance: none;
+      background: #1e293b;
+      border-radius: 9999px;
+      height: 4px;
+      outline: none;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #10b981;
+      cursor: pointer;
+      box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
+      transition: transform 0.15s ease;
+    }
+    input[type=range]::-webkit-slider-thumb:hover {
+      transform: scale(1.2);
+    }
+
+    /* Linhas de Código C */
+    .code-line {
+      display: flex;
+      align-items: baseline;
+      padding: 1.5px 6px;
+      border-radius: 4px;
+      font-family: 'Geist Mono', monospace;
+      font-size: 11px;
+      line-height: 16px;
+      transition: all 0.15s ease;
+      cursor: pointer;
+      user-select: none;
+    }
+    .code-line:hover {
+      background: rgba(255, 255, 255, 0.04);
+    }
+    .code-line.active-line {
+      background: rgba(16, 185, 129, 0.15) !important;
+      border-left: 2px solid #10b981;
+      font-weight: 600;
+    }
+    .code-line.active-line .line-num {
+      color: #34d399;
+    }
+    .code-line.active-line .line-text {
+      color: #ffffff;
+    }
+
+    /* Animações de Nós da Escada Recursiva */
+    @keyframes nodeEnter {
+      from { opacity: 0; transform: translateY(-8px) scale(0.96); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .node-anim {
+      animation: nodeEnter 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    /* Pulsação do nó ativo */
+    .node-active-ring {
+      box-shadow: 0 0 0 2px #10b981, 0 0 16px rgba(16, 185, 129, 0.3);
+    }
+  </style>
+</head>
+<body class="p-2 sm:p-3">
+
+  <div class="app-layout max-w-[1700px] mx-auto flex flex-col gap-2">
+
+    <!-- Topbar Future UI com Logo, Presets e Links Rápidos -->
+    <header class="bg-[#111722] border border-[#222c3d] rounded-xl px-3 py-2 flex flex-wrap items-center justify-between gap-2 shrink-0">
+      
+      <!-- Marca e Identificação do Algoritmo -->
+      <div class="flex items-center gap-2.5">
+        <div class="flex gap-0.5">
+          <div class="w-2 h-6 bg-emerald-500 rounded-full"></div>
+          <div class="w-2 h-6 bg-cyan-400 rounded-full"></div>
+          <div class="w-2 h-6 bg-amber-400 rounded-full"></div>
+        </div>
+        <div>
+          <div class="flex items-center gap-1.5">
+            <span class="text-xs font-mono font-bold tracking-wider uppercase text-white">FUTURE UI // DOUBLE FACTORIAL LAB</span>
+            <span class="px-1.5 py-0.2 rounded text-[0.55rem] font-mono font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/40">EX20.c • BOCA</span>
+          </div>
+          <span class="text-[0.62rem] font-mono text-neutral-400 block">Fatorial Duplo &amp; Semifatorial • Recursão com Paridade e Casos Base Múltiplos</span>
+        </div>
+      </div>
+
+      <!-- Links para Outros Visualizadores da Coleção -->
+      <nav class="flex items-center gap-1 overflow-x-auto text-[0.6rem] font-mono">
+        <a href="visualizador-ex23.html" class="px-2 py-1 rounded bg-[#171f2d] hover:bg-neutral-800 text-neutral-300 border border-[#222c3d] transition-colors flex items-center gap-1" title="Torre de Hanói">
+          <i data-lucide="layers" class="w-3 h-3 text-emerald-400"></i> Hanói (EX23)
+        </a>
+        <a href="visualizador-ex22.html" class="px-2 py-1 rounded bg-[#171f2d] hover:bg-neutral-800 text-neutral-300 border border-[#222c3d] transition-colors flex items-center gap-1" title="DSU Union-Find">
+          <i data-lucide="git-merge" class="w-3 h-3 text-cyan-400"></i> DSU (EX22)
+        </a>
+        <a href="visualizador-ex21.html" class="px-2 py-1 rounded bg-[#171f2d] hover:bg-neutral-800 text-neutral-300 border border-[#222c3d] transition-colors flex items-center gap-1" title="Saque ATM">
+          <i data-lucide="cpu" class="w-3 h-3 text-amber-400"></i> ATM (EX21)
+        </a>
+        <span class="px-2 py-1 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-bold flex items-center gap-1">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> EX20 Ativo
+        </span>
+      </nav>
+    </header>
+
+    <!-- Barra de Controles, Entrada Editável e Presets -->
+    <section class="bg-[#111722] border border-[#222c3d] rounded-xl p-2 flex flex-wrap items-center justify-between gap-2 shrink-0">
+      
+      <!-- Entrada Editável de N e Presets Rápidos -->
+      <div class="flex items-center gap-1.5 flex-wrap">
+        <div class="flex items-center gap-1">
+          <span class="text-[0.62rem] font-mono text-cyan-400 font-bold uppercase">Entrada (n):</span>
+          <input id="inputN" type="number" min="0" max="15" value="5" class="w-12 bg-[#171f2d] border border-[#263246] rounded px-1.5 py-0.5 text-[0.68rem] font-mono font-bold text-white text-center outline-none focus:border-cyan-400"/>
+          <button id="btnAplicarN" class="px-2 py-0.5 rounded bg-cyan-600 hover:bg-cyan-500 text-white text-[0.6rem] font-mono font-bold uppercase transition-colors">
+            Calcular
+          </button>
+        </div>
+
+        <div class="h-4 w-[1px] bg-[#222c3d] mx-1"></div>
+
+        <span class="text-[0.6rem] font-mono text-neutral-400 uppercase">Presets:</span>
+        <button onclick="carregarPreset(5)" class="px-2 py-0.5 rounded bg-[#171f2d] hover:bg-neutral-800 text-[0.6rem] font-mono text-cyan-300 border border-[#222c3d]">n = 5 (Ímpar · 15)</button>
+        <button onclick="carregarPreset(6)" class="px-2 py-0.5 rounded bg-[#171f2d] hover:bg-neutral-800 text-[0.6rem] font-mono text-amber-300 border border-[#222c3d]">n = 6 (Degrau Par · 15)</button>
+        <button onclick="carregarPreset(7)" class="px-2 py-0.5 rounded bg-[#171f2d] hover:bg-neutral-800 text-[0.6rem] font-mono text-purple-300 border border-[#222c3d]">n = 7 (Ímpar · 105)</button>
+        <button onclick="carregarPreset(2)" class="px-2 py-0.5 rounded bg-[#171f2d] hover:bg-neutral-800 text-[0.6rem] font-mono text-emerald-300 border border-[#222c3d]">n = 2 (Caso Base 2 · 1)</button>
+        <button onclick="carregarPreset(1)" class="px-2 py-0.5 rounded bg-[#171f2d] hover:bg-neutral-800 text-[0.6rem] font-mono text-neutral-300 border border-[#222c3d]">n = 1 (Caso Base 1 · 1)</button>
+        <button onclick="carregarPreset(0)" class="px-2 py-0.5 rounded bg-[#171f2d] hover:bg-neutral-800 text-[0.6rem] font-mono text-neutral-400 border border-[#222c3d]">n = 0 (Limite · 1)</button>
+      </div>
+
+      <!-- Playback e Scrubber Slider -->
+      <div class="flex items-center gap-2 flex-wrap">
+        <button id="btnPrev" class="px-2 py-1 rounded bg-[#171f2d] hover:bg-neutral-800 text-neutral-300 border border-[#222c3d] text-[0.65rem] font-mono font-bold flex items-center gap-1" title="Passo Anterior (Seta Esquerda)">
+          <i data-lucide="chevron-left" class="w-3 h-3"></i> Anterior
+        </button>
+
+        <button id="btnPlay" class="px-3 py-1 rounded bg-emerald-600 hover:bg-emerald-500 text-white text-[0.65rem] font-mono font-bold uppercase flex items-center gap-1.5 shadow-sm transition-colors" title="Play/Pause (Espaço)">
+          <i data-lucide="play" id="iconPlay" class="w-3 h-3 fill-white"></i>
+          <span id="textPlay">Executar</span>
+        </button>
+
+        <button id="btnNext" class="px-2 py-1 rounded bg-[#171f2d] hover:bg-neutral-800 text-neutral-300 border border-[#222c3d] text-[0.65rem] font-mono font-bold flex items-center gap-1" title="Próximo Passo (Seta Direita)">
+          Próximo <i data-lucide="chevron-right" class="w-3 h-3"></i>
+        </button>
+
+        <button id="btnReset" class="p-1 rounded bg-[#171f2d] hover:bg-neutral-800 text-neutral-400 hover:text-white border border-[#222c3d]" title="Reiniciar (R)">
+          <i data-lucide="rotate-ccw" class="w-3 h-3"></i>
+        </button>
+
+        <!-- Scrubber Range Slider -->
+        <div class="flex items-center gap-1.5 pl-1">
+          <input id="sliderPasso" type="range" min="0" max="0" value="0" class="w-24 sm:w-32"/>
+          <span id="badgePasso" class="text-[0.65rem] font-mono text-neutral-400 w-12 text-right">0 / 0</span>
+        </div>
+
+        <!-- Velocidade -->
+        <div class="flex items-center gap-1 pl-1 border-l border-[#222c3d]">
+          <span class="text-[0.58rem] font-mono text-neutral-400 uppercase">Vel:</span>
+          <select id="selectVelocidade" class="bg-[#171f2d] border border-[#222c3d] rounded px-1 py-0.5 text-[0.6rem] font-mono text-neutral-200 outline-none">
+            <option value="1200">0.5x</option>
+            <option value="700" selected>1.0x</option>
+            <option value="350">1.5x</option>
+            <option value="150">Rápido</option>
+          </select>
+        </div>
+      </div>
+    </section>
+
+    <!-- Grid Principal (2 Colunas Compactas no Desktop, Zero Rolagem) -->
+    <div class="main-grid grid grid-cols-1 lg:grid-cols-12 gap-2.5">
+
+      <!-- COLUNA DA ESQUERDA: Arena Recursiva, Pilha, Micro-Dashboard e Console (Col 7/12) -->
+      <section class="lg:col-span-7 flex flex-col gap-2 min-h-0">
+
+        <!-- Card de Notificação do Passo Ativo -->
+        <div class="bg-[#111722] border border-[#222c3d] rounded-xl p-2.5 flex items-start gap-2.5 shadow-sm shrink-0">
+          <div class="p-2 rounded-lg bg-[#171f2d] border border-[#222c3d] text-cyan-400 shrink-0">
+            <i data-lucide="git-commit" class="w-4 h-4"></i>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2 mb-1 flex-wrap">
+              <span id="statusBadge" class="text-[0.6rem] font-mono font-bold px-1.5 py-0.2 rounded uppercase bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
+                INÍCIO
+              </span>
+              <span id="statusSubtext" class="text-[0.62rem] font-mono text-emerald-400 font-bold truncate">
+                fator(5);
+              </span>
+            </div>
+            <p id="statusMsg" class="text-[0.68rem] text-neutral-300 leading-snug m-0">
+              Carregando simulação...
+            </p>
+          </div>
+          <div id="actionPill" class="hidden sm:flex items-center gap-1 px-2 py-1 rounded bg-[#171f2d] border border-[#222c3d] text-[0.6rem] font-mono text-neutral-400 shrink-0">
+            <span class="text-neutral-500">Ação:</span>
+            <span id="actionPillText" class="text-cyan-300 font-bold">---</span>
+          </div>
+        </div>
+
+        <!-- Arena Central de Visualização da Escada Recursiva -->
+        <div class="bg-[#111722] border border-[#222c3d] rounded-xl p-2.5 flex-1 flex flex-col justify-between min-h-[220px] overflow-hidden relative">
+          
+          <!-- Cabeçalho da Arena com Legenda de Paridade e Casos Base -->
+          <div class="flex items-center justify-between pb-1.5 border-b border-[#1c2433] text-[0.6rem] font-mono shrink-0">
+            <div class="flex items-center gap-3">
+              <span class="text-neutral-400 uppercase font-bold flex items-center gap-1">
+                <i data-lucide="workflow" class="w-3.5 h-3.5 text-cyan-400"></i>
+                Escada de Recursão
+              </span>
+              <div class="flex items-center gap-1.5 text-[0.55rem]">
+                <span class="w-2 h-2 rounded bg-cyan-500"></span>
+                <span class="text-cyan-300">Ímpar (n * f(n-2))</span>
+              </div>
+              <div class="flex items-center gap-1.5 text-[0.55rem]">
+                <span class="w-2 h-2 rounded bg-amber-500"></span>
+                <span class="text-amber-300">Par (f(n-1))</span>
+              </div>
+              <div class="flex items-center gap-1.5 text-[0.55rem]">
+                <span class="w-2 h-2 rounded bg-emerald-500"></span>
+                <span class="text-emerald-300">Caso Base (1.0)</span>
+              </div>
+            </div>
+
+            <span id="arenaPhaseBadge" class="text-[0.55rem] text-neutral-400 font-mono">
+              Fase: Descida
+            </span>
+          </div>
+
+          <!-- Palco da Escada / Árvore Recursiva -->
+          <div id="recursionArena" class="my-auto py-2 flex items-center justify-around gap-1.5 overflow-x-auto min-h-[120px] px-2">
+            <!-- Gerado dinamicamente via JS -->
+          </div>
+
+          <!-- Equação Acumulada em Tempo Real -->
+          <div class="mx-1 mb-1 p-1.5 rounded-lg bg-[#0a101a] border border-[#1e2a3c] text-[0.62rem] font-mono flex items-center justify-between shrink-0">
+            <div class="flex items-center gap-1.5 overflow-hidden">
+              <span class="text-amber-400 font-bold shrink-0">🧮 Equação Acumulada:</span>
+              <span id="equationDisplayText" class="text-neutral-200 font-bold truncate">fator(5)</span>
+            </div>
+            <span id="equationValueBadge" class="text-emerald-400 font-bold text-[0.68rem] shrink-0 pl-2">= ?</span>
+          </div>
+
+          <!-- Rodapé da Arena -->
+          <div class="pt-1.5 border-t border-[#1c2433] flex items-center justify-between text-[0.6rem] font-mono text-neutral-400 shrink-0">
+            <div class="flex items-center gap-1.5">
+              <i data-lucide="info" class="w-3.5 h-3.5 text-cyan-400"></i>
+              <span id="recursionSummaryText">Aguardando início...</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-neutral-300 font-bold">Profundidade Máx: <b id="maxDepthDisplay" class="text-cyan-400">0</b></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Painel Duplo Compacto: Call Stack Visual (Esquerda) e Console de Saída (Direita) -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 shrink-0">
+          
+          <!-- Call Stack (Pilha de Chamadas Recursivas) -->
+          <div class="bg-[#111722] border border-[#222c3d] rounded-xl p-2 flex flex-col justify-between">
+            <div class="flex items-center justify-between pb-1 mb-1 border-b border-[#1c2433] text-[0.6rem] font-mono">
+              <div class="flex items-center gap-1 text-cyan-400 font-bold uppercase">
+                <i data-lucide="layers" class="w-3 h-3"></i>
+                <span>Call Stack (Pilha C)</span>
+              </div>
+              <span id="stackDepthBadge" class="text-neutral-400 text-[0.55rem]">Profundidade: 0</span>
+            </div>
+            
+            <div id="callStackContainer" class="space-y-1 max-h-[75px] overflow-y-auto pr-0.5">
+              <!-- Renderizado dinamicamente via JS -->
+            </div>
+          </div>
+
+          <!-- Console de Saída C (printf) -->
+          <div class="bg-[#111722] border border-[#222c3d] rounded-xl p-2 flex flex-col justify-between">
+            <div class="flex items-center justify-between pb-1 mb-1 border-b border-[#1c2433] text-[0.6rem] font-mono">
+              <div class="flex items-center gap-1 text-emerald-400 font-bold uppercase">
+                <i data-lucide="terminal" class="w-3 h-3"></i>
+                <span>Console printf("%.0f\\n")</span>
+              </div>
+              <span class="text-neutral-400 text-[0.55rem]">Saída Exata</span>
+            </div>
+
+            <div id="consoleContainer" class="bg-[#06090e] border border-[#1a2332] rounded p-1.5 font-mono text-[0.68rem] text-emerald-400 max-h-[75px] overflow-y-auto leading-relaxed">
+              <!-- Saída impressa gerada via JS -->
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Micro-Dashboard de Variáveis em Tempo Real -->
+        <div class="grid grid-cols-3 sm:grid-cols-6 gap-1.5 shrink-0">
+          <div class="bg-[#111722] border border-[#222c3d] rounded-lg p-1.5 text-center">
+            <span class="text-[0.55rem] font-mono uppercase text-cyan-400 block font-semibold">n Atual</span>
+            <span id="metricN" class="text-sm font-mono font-bold text-cyan-400">5</span>
+            <span class="text-[0.5rem] font-mono text-neutral-500 block">parâmetro</span>
+          </div>
+
+          <div class="bg-[#111722] border border-[#222c3d] rounded-lg p-1.5 text-center">
+            <span class="text-[0.55rem] font-mono uppercase text-amber-400 block font-semibold">Paridade</span>
+            <span id="metricParidade" class="text-xs font-mono font-bold text-amber-400">ÍMPAR</span>
+            <span class="text-[0.5rem] font-mono text-neutral-500 block">n % 2</span>
+          </div>
+
+          <div class="bg-[#111722] border border-[#222c3d] rounded-lg p-1.5 text-center">
+            <span class="text-[0.55rem] font-mono uppercase text-purple-400 block font-semibold">Regra Ativa</span>
+            <span id="metricRegra" class="text-xs font-mono font-bold text-purple-400 truncate block">n * f(n-2)</span>
+            <span class="text-[0.5rem] font-mono text-neutral-500 block">decisão if</span>
+          </div>
+
+          <div class="bg-[#111722] border border-[#222c3d] rounded-lg p-1.5 text-center">
+            <span class="text-[0.55rem] font-mono uppercase text-emerald-400 block font-semibold">Retorno Frame</span>
+            <span id="metricRetorno" class="text-sm font-mono font-bold text-emerald-400">---</span>
+            <span class="text-[0.5rem] font-mono text-neutral-500 block">return double</span>
+          </div>
+
+          <div class="bg-[#111722] border border-[#222c3d] rounded-lg p-1.5 text-center">
+            <span class="text-[0.55rem] font-mono uppercase text-blue-400 block font-semibold">Fase</span>
+            <span id="metricFase" class="text-xs font-mono font-bold text-blue-400">DESCIDA</span>
+            <span class="text-[0.5rem] font-mono text-neutral-500 block">pilha</span>
+          </div>
+
+          <div class="bg-[#111722] border border-[#222c3d] rounded-lg p-1.5 text-center">
+            <span class="text-[0.55rem] font-mono uppercase text-rose-400 block font-semibold">Resultado</span>
+            <span id="metricFinal" class="text-sm font-mono font-bold text-rose-400">15</span>
+            <span class="text-[0.5rem] font-mono text-neutral-500 block">fator(n)</span>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- COLUNA DA DIREITA: Código C de 26 Linhas & Abas Pedagógicas (Col 5/12) -->
+      <section class="lg:col-span-5 flex flex-col gap-2 min-h-0">
+
+        <!-- Abas de Navegação Compactas -->
+        <div class="bg-[#111722] border border-[#222c3d] rounded-xl p-1 flex items-center justify-between shrink-0">
+          <div class="grid grid-cols-4 gap-1 w-full">
+            <button id="tabBtnCode" onclick="switchTab('code')" class="py-1 rounded-lg text-[0.56rem] sm:text-[0.62rem] font-mono font-bold uppercase transition-colors bg-[#171f2d] text-emerald-400 border border-emerald-500/30 flex items-center justify-center gap-0.5 sm:gap-1">
+              <i data-lucide="code" class="w-3 h-3"></i> Código C
+            </button>
+            <button id="tabBtnTrace" onclick="switchTab('trace')" class="py-1 rounded-lg text-[0.56rem] sm:text-[0.62rem] font-mono font-bold uppercase transition-colors text-neutral-400 hover:text-white flex items-center justify-center gap-0.5 sm:gap-1">
+              <i data-lucide="list-ordered" class="w-3 h-3"></i> Linha a Linha
+            </button>
+            <button id="tabBtnTheory" onclick="switchTab('theory')" class="py-1 rounded-lg text-[0.56rem] sm:text-[0.62rem] font-mono font-bold uppercase transition-colors text-neutral-400 hover:text-white flex items-center justify-center gap-0.5 sm:gap-1">
+              <i data-lucide="sigma" class="w-3 h-3"></i> Semifatorial
+            </button>
+            <button id="tabBtnFlow" onclick="switchTab('flow')" class="py-1 rounded-lg text-[0.56rem] sm:text-[0.62rem] font-mono font-bold uppercase transition-colors text-neutral-400 hover:text-white flex items-center justify-center gap-0.5 sm:gap-1">
+              <i data-lucide="git-branch" class="w-3 h-3"></i> Fluxograma
+            </button>
+          </div>
+        </div>
+
+        <!-- CONTEÚDO DA ABA 1: Código C de 26 Linhas com Sincronização em Tempo Real -->
+        <div id="tabContentCode" class="bg-[#111722] border border-[#222c3d] rounded-xl p-2 flex-1 flex flex-col min-h-0 overflow-hidden">
+          
+          <div class="flex items-center justify-between pb-1.5 mb-1.5 border-b border-[#1c2433] text-[0.6rem] font-mono shrink-0">
+            <div class="flex items-center gap-1.5 text-neutral-400">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+              <span>EX20.c (26 Linhas Exatas)</span>
+            </div>
+            <span class="text-neutral-400">Clique na linha para ver explicação</span>
+          </div>
+
+          <!-- Lista das 26 Linhas -->
+          <div id="codeList" class="flex-1 overflow-y-auto space-y-0.5 pr-1 font-mono text-[0.68rem]">
+            <!-- Renderizado dinamicamente via JS -->
+          </div>
+
+          <!-- Micro-Card de Explicação da Linha Selecionada -->
+          <div id="lineExplainCard" class="mt-2 pt-2 border-t border-[#1c2433] shrink-0">
+            <div class="flex items-center gap-1.5 text-[0.62rem] font-mono font-bold text-emerald-400 mb-0.5">
+              <i data-lucide="info" class="w-3 h-3"></i>
+              <span id="explainLineTitle">Linha 9 — printf("%.0f\n", fator(n));</span>
+            </div>
+            <p id="explainLineDesc" class="text-[0.62rem] font-mono text-neutral-300 leading-tight m-0">
+              Chama a função recursiva fator(n) e imprime o valor double retornado sem casas decimais.
+            </p>
+          </div>
+        </div>
+
+        <!-- CONTEÚDO DA ABA 2: Rastreamento Linha a Linha Sem Saltos -->
+        <div id="tabContentTrace" class="hidden bg-[#111722] border border-[#222c3d] rounded-xl p-2.5 flex-1 flex flex-col min-h-0 overflow-hidden text-xs font-mono">
+          <div class="flex items-center justify-between pb-1.5 mb-1 border-b border-[#1c2433] shrink-0">
+            <div class="flex items-center gap-1.5 text-white font-bold uppercase text-[0.62rem]">
+              <i data-lucide="list-ordered" class="w-3.5 h-3.5 text-amber-400"></i>
+              <span>Rastreio Linha a Linha (Clique em qualquer linha para saltar ao passo)</span>
+            </div>
+            <span class="text-[0.55rem] text-neutral-400">Passos: <b id="traceTotalCount" class="text-amber-400">0</b></span>
+          </div>
+
+          <div id="traceTableContainer" class="flex-1 overflow-y-auto space-y-1 pr-1 font-mono text-[0.62rem]">
+            <!-- Renderizado dinamicamente via JS -->
+          </div>
+        </div>
+
+        <!-- CONTEÚDO DA ABA 3: Raio-X do Semifatorial (Teoria & Matemática) -->
+        <div id="tabContentTheory" class="hidden bg-[#111722] border border-[#222c3d] rounded-xl p-3 flex-1 flex flex-col gap-2.5 overflow-y-auto text-xs font-mono">
+          
+          <div class="flex items-center gap-2 pb-2 border-b border-[#1c2433]">
+            <i data-lucide="sigma" class="w-4 h-4 text-cyan-400"></i>
+            <span class="text-xs font-bold uppercase text-white">Raio-X: O que EX20.c Realmente Calcula?</span>
+          </div>
+
+          <!-- O Semifatorial Ímpar -->
+          <div class="bg-[#171f2d] border border-[#222c3d] rounded-lg p-2.5">
+            <div class="text-[0.65rem] text-cyan-400 font-bold uppercase mb-1">
+              1. Semifatorial Ímpar (n!!)
+            </div>
+            <p class="text-[0.68rem] text-neutral-300 leading-relaxed m-0">
+              Para números ímpares ($n \in \{1, 3, 5, 7, \dots\}$), a função calcula o <b>Fatorial Duplo</b>:
+              <br/><code class="text-emerald-300 font-bold">n!! = n × (n - 2) × (n - 4) × ... × 3 × 1</code>
+              <br/>Por exemplo: $5!! = 5 \times 3 \times 1 = 15$; $7!! = 7 \times 5 \times 3 \times 1 = 105$.
+            </p>
+          </div>
+
+          <!-- O Segredo dos Números Pares -->
+          <div class="bg-[#171f2d] border border-[#222c3d] rounded-lg p-2.5">
+            <div class="text-[0.65rem] text-amber-400 font-bold uppercase mb-1">
+              2. O Segredo dos Números Pares (Degrau n - 1)
+            </div>
+            <p class="text-[0.68rem] text-neutral-300 leading-relaxed m-0">
+              Na Linha 22, quando $n$ é par, o código faz:
+              <br/><code class="text-amber-300 font-bold">if (n % 2 == 0) return fator(n - 1);</code>
+              <br/>Ele <b>não multiplica nada</b>! Apenas "desce um degrau" para o ímpar anterior.
+              <br/>Portanto, para qualquer $n$ par ($n > 2$), o resultado é idêntico a $(n - 1)!!$:
+              <br/>• $fator(4) = fator(3) = 3$
+              <br/>• $fator(6) = fator(5) = 15$
+              <br/>• $fator(8) = fator(7) = 105$
+            </p>
+          </div>
+
+          <!-- Casos Base Múltiplos -->
+          <div class="bg-[#171f2d] border border-[#222c3d] rounded-lg p-2.5">
+            <div class="text-[0.65rem] text-emerald-400 font-bold uppercase mb-1">
+              3. Casos Base Múltiplos (Proteção e Parada)
+            </div>
+            <p class="text-[0.68rem] text-neutral-300 leading-relaxed m-0">
+              • <b>Linha 16 (n &le; 1)</b>: encerra a recursão ímpar quando chega em 1 (ou trata entradas &le; 0), retornando <b>1.0</b>.
+              <br/>• <b>Linha 19 (n == 2)</b>: caso base para o menor par positivo, retornando <b>1.0</b> sem precisar descer para 1.
+            </p>
+          </div>
+
+          <!-- Tabela de Comparação n! vs n!! -->
+          <div class="bg-[#171f2d] border border-[#222c3d] rounded-lg p-2 text-[0.62rem]">
+            <span class="text-neutral-400 block mb-1 font-bold">Tabela Comparativa: Fatorial Normal (n!) vs EX20.c</span>
+            <table class="w-full text-left text-neutral-300 font-mono">
+              <tr class="border-b border-[#222c3d] text-neutral-400">
+                <th class="py-0.5">n</th>
+                <th>Tipo</th>
+                <th>Cálculo em EX20.c</th>
+                <th>fator(n)</th>
+                <th>n! (Normal)</th>
+              </tr>
+              <tr class="border-b border-[#222c3d]/50">
+                <td class="font-bold text-cyan-300">1</td>
+                <td>Ímpar</td>
+                <td>Caso Base (n &le; 1)</td>
+                <td class="text-emerald-400 font-bold">1</td>
+                <td>1</td>
+              </tr>
+              <tr class="border-b border-[#222c3d]/50">
+                <td class="font-bold text-amber-300">2</td>
+                <td>Par</td>
+                <td>Caso Base (n == 2)</td>
+                <td class="text-emerald-400 font-bold">1</td>
+                <td>2</td>
+              </tr>
+              <tr class="border-b border-[#222c3d]/50">
+                <td class="font-bold text-cyan-300">3</td>
+                <td>Ímpar</td>
+                <td>3 × fator(1)</td>
+                <td class="text-emerald-400 font-bold">3</td>
+                <td>6</td>
+              </tr>
+              <tr class="border-b border-[#222c3d]/50">
+                <td class="font-bold text-amber-300">4</td>
+                <td>Par</td>
+                <td>fator(3) [degrau]</td>
+                <td class="text-emerald-400 font-bold">3</td>
+                <td>24</td>
+              </tr>
+              <tr class="border-b border-[#222c3d]/50">
+                <td class="font-bold text-cyan-300">5</td>
+                <td>Ímpar</td>
+                <td>5 × fator(3) = 5 × 3</td>
+                <td class="text-emerald-400 font-bold">15</td>
+                <td>120</td>
+              </tr>
+              <tr class="border-b border-[#222c3d]/50">
+                <td class="font-bold text-amber-300">6</td>
+                <td>Par</td>
+                <td>fator(5) [degrau]</td>
+                <td class="text-emerald-400 font-bold">15</td>
+                <td>720</td>
+              </tr>
+              <tr>
+                <td class="font-bold text-cyan-300">7</td>
+                <td>Ímpar</td>
+                <td>7 × fator(5) = 7 × 15</td>
+                <td class="text-emerald-400 font-bold">105</td>
+                <td>5040</td>
+              </tr>
+            </table>
+          </div>
+        </div>
+
+        <!-- CONTEÚDO DA ABA 4: Fluxograma de Decisão -->
+        <div id="tabContentFlow" class="hidden bg-[#111722] border border-[#222c3d] rounded-xl p-3 flex-1 flex flex-col gap-2 overflow-y-auto text-xs font-mono">
+          
+          <div class="flex items-center justify-between pb-1.5 border-b border-[#1c2433]">
+            <div class="flex items-center gap-1.5 text-white font-bold uppercase">
+              <i data-lucide="git-branch" class="w-4 h-4 text-purple-400"></i>
+              <span>Árvore de Decisão de fator(n)</span>
+            </div>
+            <span class="text-[0.6rem] text-emerald-400 font-bold">4 Ramos Possíveis</span>
+          </div>
+
+          <div class="bg-[#06090e] border border-[#1a2332] rounded-lg p-2.5 text-[0.65rem] leading-relaxed text-neutral-300 overflow-x-auto">
+            <pre class="m-0 font-mono text-neutral-300">
+             [ Início: fator(n) ]
+                     │
+            ┌────────┴────────┐
+            ▼                 ▼
+      [ n &lt;= 1? ] ──SIM──&gt; ( return 1.0 ) [Caso Base 1]
+            │ NÃO
+            ▼
+      [ n == 2? ] ──SIM──&gt; ( return 1.0 ) [Caso Base 2]
+            │ NÃO
+            ▼
+      [ n % 2 == 0? ]
+            │
+      ┌─────┴────────────────┐
+      │ SIM                  │ NÃO
+      ▼                      ▼
+  ( PAR )                ( ÍMPAR )
+  return fator(n - 1)    return n * fator(n - 2)
+  [Degrau p/ Ímpar]      [Multiplicação Indutiva]
+            </pre>
+          </div>
+
+          <p class="text-[0.62rem] text-neutral-400 leading-relaxed m-0">
+            <b>Regra de Ouro:</b> Qualquer número par faz exatamente 1 transição de degrau para o ímpar anterior ($n - 1$) e depois segue a cadeia ímpar descendo de 2 em 2 até atingir 1!
+          </p>
+        </div>
+
+      </section>
+
+    </div>
+
+    <!-- Rodapé Minimalista -->
+    <footer class="flex flex-wrap items-center justify-between text-[0.6rem] font-mono text-neutral-400 pt-1 border-t border-[#1c2433] shrink-0">
+      <div>
+        <span>Antigravity Engine · Visualizador Interativo de EX20.c (BOCA)</span>
+      </div>
+      <div class="flex items-center gap-3">
+        <span>Atalhos: <kbd class="px-1 py-0.2 rounded bg-neutral-800 text-neutral-300">Espaço</kbd> Play/Pause</span>
+        <span><kbd class="px-1 py-0.2 rounded bg-neutral-800 text-neutral-300">&larr;</kbd> / <kbd class="px-1 py-0.2 rounded bg-neutral-800 text-neutral-300">&rarr;</kbd> Passos</span>
+        <span><kbd class="px-1 py-0.2 rounded bg-neutral-800 text-neutral-300">R</kbd> Reiniciar</span>
+      </div>
+    </footer>
+
+  </div>
+
+  <script>
+    // Código C Fonte Original de EX20.c (26 Linhas)
+    const C_SOURCE_CODE = [
+      { line: 1, text: "#include <stdio.h>", explain: "Biblioteca padrão para entrada/saída (printf, scanf)." },
+      { line: 2, text: "", explain: "Linha em branco." },
+      { line: 3, text: "double fator(int n);", explain: "Declaração antecipada (protótipo) da função recursiva. Retorna double para suportar números grandes sem transbordar." },
+      { line: 4, text: "", explain: "Linha em branco." },
+      { line: 5, text: "int main(){", explain: "Ponto de entrada do programa C." },
+      { line: 6, text: "    int n;", explain: "Declaração da variável inteira n que armazenará o valor de entrada." },
+      { line: 7, text: "    scanf(\"%d\", &n);", explain: "Leitura do valor inteiro digitado pelo usuário." },
+      { line: 8, text: "", explain: "Linha em branco." },
+      { line: 9, text: "    printf(\"%.0f\\n\", fator(n));", explain: "Invoca a função recursiva fator(n) e imprime o valor double retornado sem casas decimais (%.0f)." },
+      { line: 10, text: "    ", explain: "Linha em branco." },
+      { line: 11, text: "    return 0;", explain: "Encerra o programa com código de sucesso 0." },
+      { line: 12, text: "}", explain: "Fim da função main." },
+      { line: 13, text: "", explain: "Linha em branco." },
+      { line: 14, text: "double fator(int n)", explain: "Início da definição da função recursiva fator com o parâmetro n." },
+      { line: 15, text: "{", explain: "Início do corpo da função." },
+      { line: 16, text: "    if (n <= 1)", explain: "CASO BASE 1: Testa se n <= 1 (para n=1, 0 ou negativos). Encerra a recursão ímpar." },
+      { line: 17, text: "        return 1.0;", explain: "Retorna o valor base 1.0 diretamente sem realizar chamadas recursivas." },
+      { line: 18, text: "    ", explain: "Linha em branco." },
+      { line: 19, text: "    if (n == 2)", explain: "CASO BASE 2: Testa se n == 2. Trata o menor número par positivo." },
+      { line: 20, text: "        return 1.0;", explain: "Retorna 1.0 diretamente para n == 2." },
+      { line: 21, text: "    ", explain: "Linha em branco." },
+      { line: 22, text: "    if (n % 2 == 0)", explain: "TESTE DE PARIDADE: Verifica se n é par (resto da divisão por 2 é 0)." },
+      { line: 23, text: "        return fator(n - 1);", explain: "DEGRAU PAR: Se n for par, delega para o ímpar anterior fator(n - 1) sem multiplicar." },
+      { line: 24, text: "    ", explain: "Linha em branco." },
+      { line: 25, text: "    return n * fator(n - 2);", explain: "PASSO ÍMPAR: Se n for ímpar, multiplica n pelo resultado de fator(n - 2), descendo de 2 em 2." },
+      { line: 26, text: "}", explain: "Fim da função recursiva fator." }
+    ];
+
+    // Estado da Aplicação
+    let currentN = 5;
+    let states = [];
+    let currentStepIndex = 0;
+    let isPlaying = false;
+    let playTimer = null;
+
+    function init() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const nParam = parseInt(urlParams.get('n'), 10);
+      if (!isNaN(nParam) && nParam >= 0 && nParam <= 15) {
+        currentN = nParam;
+      }
+      document.getElementById("inputN").value = currentN;
+
+      renderCodeLines();
+      gerarEstados(currentN);
+      renderTraceTable();
+
+      const stepParam = parseInt(urlParams.get('step'), 10);
+      const initialStep = (!isNaN(stepParam) && stepParam >= 0 && stepParam < states.length) ? stepParam : 0;
+      renderStep(initialStep);
+      setupEventListeners();
+      if (window.lucide) lucide.createIcons();
+    }
+
+    // Renderiza a listagem de código C
+    function renderCodeLines() {
+      const container = document.getElementById("codeList");
+      container.innerHTML = "";
+      C_SOURCE_CODE.forEach(item => {
+        const lineDiv = document.createElement("div");
+        lineDiv.className = "code-line";
+        lineDiv.id = `line-${item.line}`;
+        lineDiv.onclick = () => showLineExplanation(item.line);
+
+        const numSpan = document.createElement("span");
+        numSpan.className = "line-num w-6 shrink-0 text-neutral-500 select-none text-[0.62rem]";
+        numSpan.textContent = item.line.toString().padStart(2, ' ');
+
+        const textSpan = document.createElement("span");
+        textSpan.className = "line-text text-neutral-300";
+        textSpan.textContent = item.text || " ";
+
+        lineDiv.appendChild(numSpan);
+        lineDiv.appendChild(textSpan);
+        container.appendChild(lineDiv);
+      });
+    }
+
+    function showLineExplanation(lineNum) {
+      const item = C_SOURCE_CODE.find(x => x.line === lineNum);
+      if (!item) return;
+      document.getElementById("explainLineTitle").textContent = `Linha ${item.line} — ${item.text.trim() || 'Linha vazia'}`;
+      document.getElementById("explainLineDesc").textContent = item.explain;
+    }
+
+    // Gerador de Estados Determinísticos Fiel a EX20.c
+    function gerarEstados(inputVal) {
+      states = [];
+      const parsed = parseInt(inputVal, 10);
+      const n = isNaN(parsed) ? 5 : Math.max(0, Math.min(15, parsed));
+      currentN = n;
+
+      let callStack = [];
+      let consoleOutput = [];
+      let stepCounter = 0;
+      let frameCounter = 1;
+      let maxDepth = 0;
+
+      // Estado 0: Início na main() - Linha 7
+      states.push({
+        step: stepCounter++,
+        line: 7,
+        nInput: n,
+        callStack: [],
+        currFrame: null,
+        output: [],
+        badge: "INÍCIO NA MAIN",
+        badgeColor: "emerald",
+        codeSubtext: `scanf("%d", &n); // n = ${n}`,
+        msg: `Início da execução na função main(). O valor de n lido da entrada é ${n}. Próxima linha chamará fator(${n}).`,
+        action: "read",
+        equationText: `fator(${n})`,
+        equationVal: "?",
+        phase: "Inicialização",
+        activeRule: "Entrada lida",
+        maxDepth: 0
+      });
+
+      // Estado 1: Chamada na Linha 9
+      states.push({
+        step: stepCounter++,
+        line: 9,
+        nInput: n,
+        callStack: [],
+        currFrame: null,
+        output: [],
+        badge: "INVOCAÇÃO",
+        badgeColor: "cyan",
+        codeSubtext: `printf("%.0f\\n", fator(${n}));`,
+        msg: `Linha 9: main() invoca fator(${n}). Um novo frame será alocado na Call Stack do sistema operacional.`,
+        action: "call",
+        equationText: `fator(${n})`,
+        equationVal: "?",
+        phase: "Chamada Inicial",
+        activeRule: "fator(n)",
+        maxDepth: 1
+      });
+
+      // Função recursiva de simulação passo a passo
+      function simular(currN) {
+        const myId = frameCounter++;
+        const isEven = (currN % 2 === 0);
+        const myFrame = {
+          id: myId,
+          n: currN,
+          isEven: isEven,
+          line: 14,
+          phase: "Entrada na função",
+          pendingMult: (isEven || currN <= 1 || currN === 2) ? null : currN,
+          returnValue: null
+        };
+        callStack.push(myFrame);
+        if (callStack.length > maxDepth) maxDepth = callStack.length;
+
+        // Passo: Linha 14 - Cabeçalho da função
+        states.push({
+          step: stepCounter++,
+          line: 14,
+          nInput: n,
+          callStack: callStack.map(f => ({ ...f })),
+          currFrame: { ...myFrame },
+          output: [...consoleOutput],
+          badge: `FRAME #${myId}`,
+          badgeColor: "cyan",
+          codeSubtext: `double fator(int n = ${currN})`,
+          msg: `Frame #${myId}: Entrou na função com n = ${currN}. Inicia a sequência de verificações condicionais if.`,
+          action: "enter",
+          equationText: `fator(${currN})`,
+          equationVal: "?",
+          phase: "Descida (Winding)",
+          activeRule: `fator(${currN})`,
+          maxDepth: maxDepth
+        });
+
+        // Passo: Linha 16 - Teste if (n <= 1)
+        const isBase1 = (currN <= 1);
+        states.push({
+          step: stepCounter++,
+          line: 16,
+          nInput: n,
+          callStack: callStack.map(f => ({ ...f })),
+          currFrame: { ...myFrame },
+          output: [...consoleOutput],
+          badge: isBase1 ? "CASO BASE 1 ATINGIDO" : "TESTE (n <= 1)",
+          badgeColor: isBase1 ? "emerald" : "neutral",
+          codeSubtext: `if (n <= 1) // ${currN} <= 1 -> ${isBase1 ? "VERDADEIRO" : "FALSO"}`,
+          msg: isBase1
+            ? `Frame #${myId}: ${currN} <= 1 é VERDADEIRO! Atingiu o Caso Base 1. A função retornará 1.0 na Linha 17.`
+            : `Frame #${myId}: ${currN} <= 1 é Falso. O fluxo segue para a Linha 19.`,
+          action: "test",
+          equationText: `fator(${currN})`,
+          equationVal: isBase1 ? "1.0" : "?",
+          phase: isBase1 ? "Caso Base" : "Descida",
+          activeRule: `if (n <= 1)`,
+          maxDepth: maxDepth
+        });
+
+        if (isBase1) {
+          // Linha 17: return 1.0;
+          myFrame.line = 17;
+          myFrame.returnValue = 1.0;
+          myFrame.phase = "Retornando 1.0 (Caso Base)";
+          states.push({
+            step: stepCounter++,
+            line: 17,
+            nInput: n,
+            callStack: callStack.map(f => ({ ...f })),
+            currFrame: { ...myFrame },
+            output: [...consoleOutput],
+            badge: "RETORNO CASO BASE 1",
+            badgeColor: "emerald",
+            codeSubtext: `return 1.0;`,
+            msg: `Frame #${myId}: return 1.0; executado. Encerra este frame e desempilha da Call Stack.`,
+            action: "return",
+            equationText: `fator(${currN}) = 1.0`,
+            equationVal: "1.0",
+            phase: "Subida (Unwinding)",
+            activeRule: "return 1.0",
+            maxDepth: maxDepth
+          });
+          callStack.pop();
+          return 1.0;
+        }
+
+        // Passo: Linha 19 - Teste if (n == 2)
+        const isBase2 = (currN === 2);
+        states.push({
+          step: stepCounter++,
+          line: 19,
+          nInput: n,
+          callStack: callStack.map(f => ({ ...f })),
+          currFrame: { ...myFrame },
+          output: [...consoleOutput],
+          badge: isBase2 ? "CASO BASE 2 ATINGIDO" : "TESTE (n == 2)",
+          badgeColor: isBase2 ? "emerald" : "neutral",
+          codeSubtext: `if (n == 2) // ${currN} == 2 -> ${isBase2 ? "VERDADEIRO" : "FALSO"}`,
+          msg: isBase2
+            ? `Frame #${myId}: n == 2 é VERDADEIRO! Atingiu o Caso Base 2 (par). Retornará 1.0 na Linha 20.`
+            : `Frame #${myId}: ${currN} == 2 é Falso. O fluxo segue para a Linha 22 para checar a paridade.`,
+          action: "test",
+          equationText: `fator(${currN})`,
+          equationVal: isBase2 ? "1.0" : "?",
+          phase: isBase2 ? "Caso Base" : "Descida",
+          activeRule: `if (n == 2)`,
+          maxDepth: maxDepth
+        });
+
+        if (isBase2) {
+          // Linha 20: return 1.0;
+          myFrame.line = 20;
+          myFrame.returnValue = 1.0;
+          myFrame.phase = "Retornando 1.0 (Caso Base 2)";
+          states.push({
+            step: stepCounter++,
+            line: 20,
+            nInput: n,
+            callStack: callStack.map(f => ({ ...f })),
+            currFrame: { ...myFrame },
+            output: [...consoleOutput],
+            badge: "RETORNO CASO BASE 2",
+            badgeColor: "emerald",
+            codeSubtext: `return 1.0;`,
+            msg: `Frame #${myId}: return 1.0; executado para n == 2. Encerra e desempilha.`,
+            action: "return",
+            equationText: `fator(2) = 1.0`,
+            equationVal: "1.0",
+            phase: "Subida (Unwinding)",
+            activeRule: "return 1.0",
+            maxDepth: maxDepth
+          });
+          callStack.pop();
+          return 1.0;
+        }
+
+        // Passo: Linha 22 - Teste de Paridade if (n % 2 == 0)
+        states.push({
+          step: stepCounter++,
+          line: 22,
+          nInput: n,
+          callStack: callStack.map(f => ({ ...f })),
+          currFrame: { ...myFrame },
+          output: [...consoleOutput],
+          badge: isEven ? "N É PAR (n % 2 == 0)" : "N É ÍMPAR (n % 2 != 0)",
+          badgeColor: isEven ? "amber" : "cyan",
+          codeSubtext: `if (n % 2 == 0) // ${currN} % 2 == 0 -> ${isEven ? "PAR" : "ÍMPAR"}`,
+          msg: isEven
+            ? `Frame #${myId}: ${currN} é PAR! O algoritmo fará a redução de paridade chamando fator(${currN - 1}) na Linha 23.`
+            : `Frame #${myId}: ${currN} é ÍMPAR! Pula para a Linha 25 para fazer a multiplicação indutiva: ${currN} * fator(${currN - 2}).`,
+          action: "test",
+          equationText: `fator(${currN})`,
+          equationVal: "?",
+          phase: "Decisão de Paridade",
+          activeRule: isEven ? "Par -> fator(n-1)" : "Ímpar -> n * fator(n-2)",
+          maxDepth: maxDepth
+        });
+
+        if (isEven) {
+          // Linha 23: return fator(n - 1);
+          myFrame.line = 23;
+          myFrame.phase = `Pausado na L23 (esperando fator(${currN - 1}))`;
+          states.push({
+            step: stepCounter++,
+            line: 23,
+            nInput: n,
+            callStack: callStack.map(f => ({ ...f })),
+            currFrame: { ...myFrame },
+            output: [...consoleOutput],
+            badge: "DEGRAU PAR -> ÍMPAR",
+            badgeColor: "amber",
+            codeSubtext: `return fator(${currN - 1});`,
+            msg: `Frame #${myId}: Como ${currN} é par, invoca fator(${currN - 1}). Este frame fica PAUSADO na Linha 23 aguardando o retorno da chamada filha. Não há multiplicação por ${currN}!`,
+            action: "call",
+            equationText: `fator(${currN}) = fator(${currN - 1})`,
+            equationVal: "?",
+            phase: "Degrau Par (Pulo de 1)",
+            activeRule: `fator(n - 1)`,
+            maxDepth: maxDepth
+          });
+
+          const childRes = simular(currN - 1);
+
+          // Retorno na Linha 23 após a chamada filha
+          myFrame.line = 23;
+          myFrame.returnValue = childRes;
+          myFrame.phase = `Repassando retorno ${childRes}`;
+          states.push({
+            step: stepCounter++,
+            line: 23,
+            nInput: n,
+            callStack: callStack.map(f => ({ ...f })),
+            currFrame: { ...myFrame },
+            output: [...consoleOutput],
+            badge: "REPASSE DO VALOR PAR",
+            badgeColor: "amber",
+            codeSubtext: `return ${childRes}; // repassa resultado de fator(${currN - 1})`,
+            msg: `Frame #${myId}: fator(${currN - 1}) retornou ${childRes}. Como ${currN} é par, a função simplesmente repassa ${childRes} diretamente e desempilha.`,
+            action: "return",
+            equationText: `fator(${currN}) = ${childRes}`,
+            equationVal: `${childRes}`,
+            phase: "Subida (Repasse)",
+            activeRule: `return fator(n - 1)`,
+            maxDepth: maxDepth
+          });
+
+          callStack.pop();
+          return childRes;
+        } else {
+          // Linha 25: return n * fator(n - 2);
+          myFrame.line = 25;
+          myFrame.phase = `Pausado na L25 (esperando fator(${currN - 2}) para ${currN} * retorno)`;
+          states.push({
+            step: stepCounter++,
+            line: 25,
+            nInput: n,
+            callStack: callStack.map(f => ({ ...f })),
+            currFrame: { ...myFrame },
+            output: [...consoleOutput],
+            badge: "PASSO ÍMPAR: DESCIDA (-2)",
+            badgeColor: "cyan",
+            codeSubtext: `return ${currN} * fator(${currN - 2});`,
+            msg: `Frame #${myId}: ${currN} é ímpar! Prepara ${currN} * fator(${currN - 2}). O Frame #${myId} fica PAUSADO na Linha 25 aguardando o resultado de fator(${currN - 2}).`,
+            action: "call",
+            equationText: `${currN} × fator(${currN - 2})`,
+            equationVal: "?",
+            phase: "Descida Ímpar (Pulo de 2)",
+            activeRule: `n * fator(n - 2)`,
+            maxDepth: maxDepth
+          });
+
+          const childRes = simular(currN - 2);
+          const multRes = currN * childRes;
+
+          // Retorno na Linha 25 após calcular a multiplicação pendente
+          myFrame.line = 25;
+          myFrame.returnValue = multRes;
+          myFrame.phase = `Multiplicação: ${currN} * ${childRes} = ${multRes}`;
+          states.push({
+            step: stepCounter++,
+            line: 25,
+            nInput: n,
+            callStack: callStack.map(f => ({ ...f })),
+            currFrame: { ...myFrame },
+            output: [...consoleOutput],
+            badge: "MULTIPLICAÇÃO CONCLUÍDA",
+            badgeColor: "purple",
+            codeSubtext: `return ${currN} * ${childRes} = ${multRes};`,
+            msg: `Frame #${myId}: fator(${currN - 2}) retornou ${childRes}! Agora o Frame #${myId} calcula a multiplicação: ${currN} * ${childRes} = ${multRes}. Retorna ${multRes} e desempilha.`,
+            action: "return",
+            equationText: `${currN} × ${childRes} = ${multRes}`,
+            equationVal: `${multRes}`,
+            phase: "Subida (Multiplicação)",
+            activeRule: `return n * fator(n - 2)`,
+            maxDepth: maxDepth
+          });
+
+          callStack.pop();
+          return multRes;
+        }
+      }
+
+      // Dispara a simulação
+      callStack = [];
+      frameCounter = 1;
+      const finalResult = simular(n);
+      consoleOutput.push(`${Math.round(finalResult)}`);
+
+      // Estado: Linha 9 - printf na main
+      states.push({
+        step: stepCounter++,
+        line: 9,
+        nInput: n,
+        callStack: [],
+        currFrame: null,
+        output: [...consoleOutput],
+        badge: "PRINTF NA MAIN",
+        badgeColor: "emerald",
+        codeSubtext: `printf("%.0f\\n", ${finalResult}); // Saída impressa: ${Math.round(finalResult)}`,
+        msg: `Linha 9: A função fator(${n}) concluiu e retornou ${finalResult}. O comando printf("%.0f\\n", ...) imprime ${Math.round(finalResult)} no console.`,
+        action: "print",
+        equationText: `fator(${n})`,
+        equationVal: `${Math.round(finalResult)}`,
+        phase: "Impressão da Saída",
+        activeRule: `printf("%.0f\\n", fator(n))`,
+        maxDepth: maxDepth
+      });
+
+      // Estado Final: Linha 11 - return 0
+      states.push({
+        step: stepCounter++,
+        line: 11,
+        nInput: n,
+        callStack: [],
+        currFrame: null,
+        output: [...consoleOutput],
+        badge: "PROGRAMA FINALIZADO",
+        badgeColor: "emerald",
+        codeSubtext: `return 0;`,
+        msg: `Linha 11: main() retorna 0. Execução de EX20.c concluída com sucesso!`,
+        action: "finish",
+        equationText: `Resultado Final`,
+        equationVal: `${Math.round(finalResult)}`,
+        phase: "Concluído",
+        activeRule: "return 0",
+        maxDepth: maxDepth
+      });
+
+      const slider = document.getElementById("sliderPasso");
+      if (slider) {
+        slider.max = states.length - 1;
+        slider.value = 0;
+      }
+    }
+
+    // Renderiza um estado específico
+    function renderStep(index) {
+      if (index < 0 || index >= states.length) return;
+      currentStepIndex = index;
+      const state = states[index];
+
+      // 1. Status Badges e Mensagens
+      const badgeEl = document.getElementById("statusBadge");
+      badgeEl.textContent = state.badge;
+      badgeEl.className = `text-[0.6rem] font-mono font-bold px-1.5 py-0.2 rounded uppercase ${
+        state.badgeColor === 'emerald' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' :
+        state.badgeColor === 'cyan' ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30' :
+        state.badgeColor === 'purple' ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30' :
+        state.badgeColor === 'amber' ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' :
+        'bg-neutral-800 text-neutral-300 border border-neutral-700'
+      }`;
+      document.getElementById("statusSubtext").textContent = state.codeSubtext;
+      document.getElementById("statusMsg").textContent = state.msg;
+
+      // Pílula de Ação
+      const actionPill = document.getElementById("actionPill");
+      const actionPillText = document.getElementById("actionPillText");
+      if (state.action) {
+        actionPill.classList.remove("hidden");
+        actionPillText.textContent = state.action.toUpperCase();
+      } else {
+        actionPill.classList.add("hidden");
+      }
+
+      // 2. Arena da Escada Recursiva
+      renderRecursionArena(state);
+
+      // 3. Equação Acumulada
+      document.getElementById("equationDisplayText").textContent = state.equationText || "---";
+      document.getElementById("equationValueBadge").textContent = `= ${state.equationVal || "?"}`;
+      document.getElementById("arenaPhaseBadge").textContent = `Fase: ${state.phase}`;
+      document.getElementById("recursionSummaryText").textContent = state.msg;
+      document.getElementById("maxDepthDisplay").textContent = state.maxDepth || 0;
+
+      // 4. Micro-Dashboard
+      const topFrame = state.callStack.length > 0 ? state.callStack[state.callStack.length - 1] : null;
+      document.getElementById("metricN").textContent = topFrame ? topFrame.n : state.nInput;
+      
+      const currValN = topFrame ? topFrame.n : state.nInput;
+      const isEv = (currValN % 2 === 0);
+      const paridadeEl = document.getElementById("metricParidade");
+      paridadeEl.textContent = isEv ? "PAR" : "ÍMPAR";
+      paridadeEl.className = `text-xs font-mono font-bold ${isEv ? 'text-amber-400' : 'text-cyan-400'}`;
+
+      document.getElementById("metricRegra").textContent = state.activeRule;
+      document.getElementById("metricRetorno").textContent = (topFrame && topFrame.returnValue !== null) ? topFrame.returnValue : "---";
+      document.getElementById("metricFase").textContent = state.phase.toUpperCase().split(' ')[0];
+      
+      const finalState = states[states.length - 1];
+      document.getElementById("metricFinal").textContent = finalState ? finalState.equationVal : "---";
+
+      // 5. Call Stack
+      renderCallStack(state.callStack);
+
+      // 6. Console printf
+      renderConsole(state.output);
+
+      // 7. Scrubber Slider
+      document.getElementById("sliderPasso").value = index;
+      document.getElementById("badgePasso").textContent = `${index} / ${states.length - 1}`;
+
+      // 8. Destacar Linha no Código C
+      highlightCodeLine(state.line);
+
+      // 9. Destacar Linha na Tabela de Rastreio
+      highlightTraceRow(index);
+    }
+
+    // Renderiza a Escada / Árvore Recursiva Visual
+    function renderRecursionArena(state) {
+      const container = document.getElementById("recursionArena");
+      container.innerHTML = "";
+
+      // Coleta todos os números na cadeia de descida a partir de nInput
+      const chain = [];
+      let temp = state.nInput;
+      while (temp > 0) {
+        chain.push(temp);
+        if (temp <= 1) break;
+        if (temp === 2) break;
+        if (temp % 2 === 0) {
+          temp = temp - 1;
+        } else {
+          temp = temp - 2;
+        }
+      }
+      if (chain.length === 0) chain.push(state.nInput);
+
+      const topFrame = state.callStack.length > 0 ? state.callStack[state.callStack.length - 1] : null;
+
+      chain.forEach((val, idx) => {
+        const isCurrentlyInStack = state.callStack.some(f => f.n === val);
+        const isTop = topFrame && topFrame.n === val;
+        const isBase = (val <= 1 || val === 2);
+        const isEven = (val % 2 === 0);
+
+        // Card do Nó da Escada
+        const nodeCard = document.createElement("div");
+        nodeCard.className = `node-anim flex flex-col items-center p-2 rounded-xl border transition-all text-center min-w-[85px] sm:min-w-[100px] ${
+          isTop 
+            ? 'bg-[#152336] border-emerald-400 node-active-ring scale-105' 
+            : isCurrentlyInStack
+              ? 'bg-[#111722] border-cyan-500/50 text-white'
+              : 'bg-[#0b1018] border-[#1e2a3c] text-neutral-500 opacity-60'
+        }`;
+
+        nodeCard.innerHTML = `
+          <div class="flex items-center justify-between w-full mb-1">
+            <span class="text-[0.52rem] font-mono px-1 rounded ${
+              isBase 
+                ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' 
+                : isEven 
+                  ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40' 
+                  : 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40'
+            }">
+              ${isBase ? 'BASE' : isEven ? 'PAR' : 'ÍMPAR'}
+            </span>
+            <span class="text-[0.52rem] font-mono font-bold ${isTop ? 'text-emerald-400' : 'text-neutral-500'}">
+              ${isTop ? '● ATIVO' : isCurrentlyInStack ? 'Pilha' : ''}
+            </span>
+          </div>
+          <div class="text-base sm:text-lg font-mono font-bold ${isTop ? 'text-white' : isCurrentlyInStack ? 'text-cyan-300' : 'text-neutral-400'}">
+            fator(${val})
+          </div>
+          <div class="text-[0.58rem] font-mono mt-0.5 ${isBase ? 'text-emerald-400' : isEven ? 'text-amber-400' : 'text-purple-400'}">
+            ${isBase ? 'retorna 1.0' : isEven ? '→ fator(' + (val - 1) + ')' : val + ' × f(' + (val - 2) + ')'}
+          </div>
+        `;
+
+        container.appendChild(nodeCard);
+
+        // Seta de Conexão entre os nós
+        if (idx < chain.length - 1) {
+          const nextVal = chain[idx + 1];
+          const diff = val - nextVal;
+          const arrowEl = document.createElement("div");
+          arrowEl.className = "flex flex-col items-center justify-center shrink-0 px-0.5 text-neutral-500";
+          arrowEl.innerHTML = `
+            <span class="text-[0.52rem] font-mono font-bold ${diff === 1 ? 'text-amber-400' : 'text-cyan-400'}">-${diff}</span>
+            <i data-lucide="arrow-right" class="w-3.5 h-3.5 ${isCurrentlyInStack ? 'text-cyan-400' : 'text-neutral-600'}"></i>
+          `;
+          container.appendChild(arrowEl);
+        }
+      });
+
+      if (window.lucide) lucide.createIcons();
+    }
+
+    // Renderiza a Call Stack
+    function renderCallStack(stack) {
+      const container = document.getElementById("callStackContainer");
+      document.getElementById("stackDepthBadge").textContent = `Profundidade: ${stack.length}`;
+
+      if (stack.length === 0) {
+        container.innerHTML = `<div class="text-neutral-500 italic text-[0.58rem] p-1">Pilha vazia (execução na main).</div>`;
+        return;
+      }
+
+      container.innerHTML = "";
+      for (let i = stack.length - 1; i >= 0; i--) {
+        const frame = stack[i];
+        const isTop = (i === stack.length - 1);
+        const item = document.createElement("div");
+        item.className = `rounded p-1 text-[0.6rem] font-mono flex items-center justify-between border ${
+          isTop 
+            ? 'bg-emerald-950/40 border-emerald-500/50 text-white shadow-sm ring-1 ring-emerald-500/30' 
+            : 'bg-[#171f2d] border-[#222c3d] text-neutral-400'
+        }`;
+
+        item.innerHTML = `
+          <div class="flex items-center gap-1.5 truncate">
+            <span class="px-1 py-0.2 rounded text-[0.52rem] font-bold ${isTop ? 'bg-emerald-500 text-neutral-950' : 'bg-neutral-800 text-neutral-400'}">
+              #${i + 1}
+            </span>
+            <span class="font-bold truncate ${isTop ? 'text-emerald-300' : 'text-neutral-300'}">
+              fator(${frame.n})
+            </span>
+          </div>
+          <span class="text-[0.52rem] truncate ${isTop ? 'text-emerald-400 font-bold' : 'text-amber-400 font-medium'}">
+            ${isTop ? '● ATIVO' : `⏸ ${frame.phase}`}
+          </span>
+        `;
+        container.appendChild(item);
+      }
+    }
+
+    // Renderiza o Console de Saída C
+    function renderConsole(output) {
+      const container = document.getElementById("consoleContainer");
+      if (output.length === 0) {
+        container.innerHTML = `<span class="text-neutral-500 italic text-[0.6rem]">Aguardando printf...</span>`;
+        return;
+      }
+
+      container.innerHTML = output.map((line, idx) => {
+        const isLatest = (idx === output.length - 1);
+        return `<span class="${isLatest ? 'text-white font-bold bg-emerald-500/20 px-1 rounded inline-block' : 'text-emerald-400'}">${line}</span>`;
+      }).join(" ");
+
+      container.scrollTop = container.scrollHeight;
+    }
+
+    // Destaca Linha no Código C
+    function highlightCodeLine(lineNum) {
+      document.querySelectorAll(".code-line").forEach(el => el.classList.remove("active-line"));
+      const target = document.getElementById(`line-${lineNum}`);
+      if (target) {
+        target.classList.add("active-line");
+        showLineExplanation(lineNum);
+        const container = document.getElementById("codeList");
+        const offset = target.offsetTop - container.offsetTop;
+        const targetScroll = offset < 60 ? 0 : Math.max(0, offset - 40);
+        container.scrollTo({ top: targetScroll, behavior: 'smooth' });
+      }
+    }
+
+    // Rastreamento Linha a Linha (Aba Cronológica)
+    function renderTraceTable() {
+      const container = document.getElementById("traceTableContainer");
+      if (!container) return;
+      document.getElementById("traceTotalCount").textContent = states.length;
+      container.innerHTML = "";
+
+      states.forEach((s, idx) => {
+        const row = document.createElement("div");
+        row.id = `trace-row-${idx}`;
+        const topF = s.callStack.length > 0 ? s.callStack[s.callStack.length - 1] : null;
+        row.className = `trace-row p-1.5 rounded border border-[#1e2a3c] bg-[#111722] hover:bg-[#172233] cursor-pointer transition-all flex flex-col gap-0.5 ${idx === currentStepIndex ? 'ring-1 ring-emerald-400 border-emerald-500 bg-[#13222e]' : ''}`;
+        row.onclick = () => {
+          pause();
+          renderStep(idx);
+        };
+
+        row.innerHTML = `
+          <div class="flex items-center justify-between text-[0.58rem]">
+            <span class="font-bold text-amber-400">Passo #${idx} · Linha ${s.line}</span>
+            <span class="px-1 rounded bg-[#1c2738] text-[0.52rem] text-neutral-300 font-bold">${s.badge}</span>
+          </div>
+          <div class="text-[0.6rem] font-bold text-white flex items-center justify-between">
+            <code class="text-cyan-300">${s.codeSubtext}</code>
+            ${topF ? `<span class="text-emerald-400 text-[0.52rem]">(n=${topF.n})</span>` : ''}
+          </div>
+          <p class="text-[0.55rem] text-neutral-400 m-0 leading-tight">${s.msg}</p>
+        `;
+        container.appendChild(row);
+      });
+    }
+
+    function highlightTraceRow(idx) {
+      document.querySelectorAll(".trace-row").forEach(el => {
+        el.classList.remove("ring-1", "ring-emerald-400", "border-emerald-500", "bg-[#13222e]");
+      });
+      const activeRow = document.getElementById(`trace-row-${idx}`);
+      if (activeRow) {
+        activeRow.classList.add("ring-1", "ring-emerald-400", "border-emerald-500", "bg-[#13222e]");
+        activeRow.scrollIntoView({ block: "nearest", behavior: "smooth" });
+      }
+    }
+
+    // Alternar Abas
+    function switchTab(tabId) {
+      const codeTab = document.getElementById("tabContentCode");
+      const traceTab = document.getElementById("tabContentTrace");
+      const theoryTab = document.getElementById("tabContentTheory");
+      const flowTab = document.getElementById("tabContentFlow");
+
+      const btnCode = document.getElementById("tabBtnCode");
+      const btnTrace = document.getElementById("tabBtnTrace");
+      const btnTheory = document.getElementById("tabBtnTheory");
+      const btnFlow = document.getElementById("tabBtnFlow");
+
+      [codeTab, traceTab, theoryTab, flowTab].forEach(el => el && el.classList.add("hidden"));
+      [btnCode, btnTrace, btnTheory, btnFlow].forEach(btn => {
+        if (btn) btn.className = "py-1 rounded-lg text-[0.56rem] sm:text-[0.62rem] font-mono font-bold uppercase transition-colors text-neutral-400 hover:text-white flex items-center justify-center gap-0.5 sm:gap-1";
+      });
+
+      if (tabId === "code") {
+        codeTab.classList.remove("hidden");
+        btnCode.className = "py-1 rounded-lg text-[0.56rem] sm:text-[0.62rem] font-mono font-bold uppercase transition-colors bg-[#171f2d] text-emerald-400 border border-emerald-500/30 flex items-center justify-center gap-0.5 sm:gap-1";
+      } else if (tabId === "trace") {
+        traceTab.classList.remove("hidden");
+        btnTrace.className = "py-1 rounded-lg text-[0.56rem] sm:text-[0.62rem] font-mono font-bold uppercase transition-colors bg-[#171f2d] text-amber-400 border border-amber-500/30 flex items-center justify-center gap-0.5 sm:gap-1";
+        renderTraceTable();
+        highlightTraceRow(currentStepIndex);
+      } else if (tabId === "theory") {
+        theoryTab.classList.remove("hidden");
+        btnTheory.className = "py-1 rounded-lg text-[0.56rem] sm:text-[0.62rem] font-mono font-bold uppercase transition-colors bg-[#171f2d] text-cyan-400 border border-cyan-500/30 flex items-center justify-center gap-0.5 sm:gap-1";
+      } else if (tabId === "flow") {
+        flowTab.classList.remove("hidden");
+        btnFlow.className = "py-1 rounded-lg text-[0.56rem] sm:text-[0.62rem] font-mono font-bold uppercase transition-colors bg-[#171f2d] text-purple-400 border border-purple-500/30 flex items-center justify-center gap-0.5 sm:gap-1";
+      }
+    }
+
+    // Presets
+    function carregarPreset(val) {
+      pause();
+      document.getElementById("inputN").value = val;
+      gerarEstados(val);
+      renderTraceTable();
+      renderStep(0);
+    }
+
+    // Playback
+    function togglePlay() {
+      if (isPlaying) {
+        pause();
+      } else {
+        play();
+      }
+    }
+
+    function play() {
+      if (currentStepIndex >= states.length - 1) {
+        currentStepIndex = 0;
+      }
+      isPlaying = true;
+      document.getElementById("textPlay").textContent = "Pausar";
+      document.getElementById("iconPlay").setAttribute("data-lucide", "pause");
+      if (window.lucide) lucide.createIcons();
+
+      const vel = parseInt(document.getElementById("selectVelocidade").value, 10) || 700;
+      playTimer = setInterval(() => {
+        if (currentStepIndex < states.length - 1) {
+          renderStep(currentStepIndex + 1);
+        } else {
+          pause();
+        }
+      }, vel);
+    }
+
+    function pause() {
+      isPlaying = false;
+      if (playTimer) clearInterval(playTimer);
+      document.getElementById("textPlay").textContent = "Executar";
+      document.getElementById("iconPlay").setAttribute("data-lucide", "play");
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function nextStep() {
+      pause();
+      if (currentStepIndex < states.length - 1) {
+        renderStep(currentStepIndex + 1);
+      }
+    }
+
+    function prevStep() {
+      pause();
+      if (currentStepIndex > 0) {
+        renderStep(currentStepIndex - 1);
+      }
+    }
+
+    function resetSimulation() {
+      pause();
+      renderStep(0);
+    }
+
+    // Eventos
+    function setupEventListeners() {
+      document.getElementById("btnPlay").onclick = togglePlay;
+      document.getElementById("btnNext").onclick = nextStep;
+      document.getElementById("btnPrev").onclick = prevStep;
+      document.getElementById("btnReset").onclick = resetSimulation;
+
+      document.getElementById("btnAplicarN").onclick = () => {
+        pause();
+        const val = parseInt(document.getElementById("inputN").value, 10);
+        gerarEstados(val);
+        renderTraceTable();
+        renderStep(0);
+      };
+
+      document.getElementById("inputN").onkeydown = (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          document.getElementById("btnAplicarN").click();
+        }
+      };
+
+      document.getElementById("sliderPasso").oninput = (e) => {
+        pause();
+        renderStep(parseInt(e.target.value, 10));
+      };
+
+      document.getElementById("selectVelocidade").onchange = () => {
+        if (isPlaying) {
+          pause();
+          play();
+        }
+      };
+
+      // Atalhos de Teclado
+      window.addEventListener("keydown", (e) => {
+        if (e.target.tagName === "INPUT" || e.target.tagName === "SELECT") return;
+        if (e.code === "Space") {
+          e.preventDefault();
+          togglePlay();
+        } else if (e.code === "ArrowRight") {
+          e.preventDefault();
+          nextStep();
+        } else if (e.code === "ArrowLeft") {
+          e.preventDefault();
+          prevStep();
+        } else if (e.code === "KeyR") {
+          e.preventDefault();
+          resetSimulation();
+        }
+      });
+    }
+
+    window.onload = init;
+  </script>
+</body>
+</html>
