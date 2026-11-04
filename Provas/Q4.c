@@ -39,21 +39,3 @@ int contarprimos(int x, int y) {
         return contarprimos(x + 1, y);
     }
 }
-
-/*
-Um número é primo caso possua apenas 2 divisores: um e ele mesmo.
-
-Vou fazer duas funções uma para verificar se é primo e outra para contar os
-primos.
-
-tmnc... não passo nessa matéria não. So quero ir para casa, não sei resolver
-isso não.
-
-A recursão é dentro do ehprimos, até encontrar -> desempilhar.
-
-Mas contar primos precisa da ehprimo.
-
-Deu certo e eu não sei como. Tentativa e erro mais do que lógica.
-
-
-*/
